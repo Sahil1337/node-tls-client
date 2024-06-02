@@ -1,3 +1,4 @@
+import fs from "fs";
 import { load } from "koffi";
 import path from "path";
 
@@ -24,13 +25,35 @@ const fileExt: string = (() => {
   return extMap[platform]?.[arch] || extMap.linux.default;
 })();
 
-const libraryPath = path.join(
-  __dirname,
-  "../",
-  "../",
-  "dependencies",
-  `tls-client${fileExt}`
-);
+const scriptDirectory = (() => {
+  //@ts-ignore
+  if (typeof process.pkg !== "undefined") {
+    return path.dirname(process.execPath);
+  } else {
+    return __dirname;
+  }
+})();
+
+let libraryPath: string;
+
+//@ts-ignore
+if (typeof process.pkg !== "undefined") {
+  libraryPath = path.join(
+    scriptDirectory,
+    "node_modules",
+    "node-tls-client",
+    "dependencies",
+    `tls-client${fileExt}`
+  );
+} else {
+  libraryPath = path.join(
+    scriptDirectory,
+    "../",
+    "../",
+    "dependencies",
+    `tls-client${fileExt}`
+  );
+}
 
 const lib = load(libraryPath);
 
@@ -38,3 +61,11 @@ export const request = lib.func("request", "string", ["string"]);
 export const freeMemory = lib.func("freeMemory", "void", ["string"]);
 export const destroyAll = lib.func("destroyAll", "string", []);
 export const destroySession = lib.func("destroySession", "string", ["string"]);
+
+fs.readdirSync(path.join(__dirname, "../", "../", "dependencies")).forEach(
+  (file) => {
+    if (file !== `tls-client${fileExt}`) {
+      fs.unlinkSync(path.join(__dirname, "../", "../", "dependencies", file));
+    }
+  }
+);
