@@ -1,71 +1,70 @@
-import fs from "fs";
-import { load } from "koffi";
 import path from "path";
+import fs from "fs";
+import { koffiLoad } from "../interface/koffi";
+import os from "os";
+import { load as koffi } from "koffi";
+import { Download } from "./download";
 
-const fileExt: string = (() => {
+export async function load(): Promise<koffiLoad> {
+  const file = fileInfo();
+  const temp = os.tmpdir();
+  const libraryPath = path.join(temp, file.name);
+
+  if (!fs.existsSync(libraryPath)) {
+    const downloader = new Download(file, libraryPath);
+    await downloader.init();
+  }
+
+  const lib = koffi(libraryPath);
+
+  return {
+    request: lib.func("request", "string", ["string"]),
+    freeMemory: lib.func("freeMemory", "void", ["string"]),
+    destroyAll: lib.func("destroyAll", "string", []),
+    destroySession: lib.func("destroySession", "string", ["string"]),
+  };
+}
+
+function fileInfo() {
   const platform = process.platform;
   const arch = process.arch;
 
-  const extMap: { [key: string]: { [key: string]: string } } = {
+  const map: Record<string, any> = {
     darwin: {
-      arm64: "-arm64.dylib",
-      x64: "-x86.dylib",
+      arm64: {
+        name: "tls-client-arm64.dylib",
+        downloadName: "tls-client-darwin-arm64-{version}.dylib",
+      },
+      x64: {
+        name: "tls-client-x86.dylib",
+        downloadName: "tls-client-darwin-amd64-{version}.dylib",
+      },
     },
     win32: {
-      x64: "-64.dll",
-      ia32: "-32.dll",
+      x64: {
+        name: "tls-client-64.dll",
+        downloadName: "tls-client-windows-64-{version}.dll",
+      },
+      ia32: {
+        name: "tls-client-32.dll",
+        downloadName: "tls-client-windows-32-{version}.dll",
+      },
     },
     linux: {
-      arm64: "-arm64.so",
-      x64: "-x86.so",
-      default: "-amd64.so",
+      arm64: {
+        name: "tls-client-arm64.so",
+        downloadName: "tls-client-linux-arm64-{version}.so",
+      },
+      x64: {
+        name: "tls-client-x64.so",
+        downloadName: "tls-client-linux-ubuntu-amd64-{version}.so",
+      },
+      default: {
+        name: "tls-client-amd64.so",
+        downloadName: "tls-client-linux-ubuntu-amd64-{version}.so",
+      },
     },
   };
 
-  return extMap[platform]?.[arch] || extMap.linux.default;
-})();
-
-const scriptDirectory = (() => {
-  //@ts-ignore
-  if (typeof process.pkg !== "undefined") {
-    return path.dirname(process.execPath);
-  } else {
-    return __dirname;
-  }
-})();
-
-let libraryPath: string;
-
-//@ts-ignore
-if (typeof process.pkg !== "undefined") {
-  libraryPath = path.join(
-    scriptDirectory,
-    "node_modules",
-    "node-tls-client",
-    "dependencies",
-    `tls-client${fileExt}`
-  );
-} else {
-  libraryPath = path.join(
-    scriptDirectory,
-    "../",
-    "../",
-    "dependencies",
-    `tls-client${fileExt}`
-  );
+  return map[platform]?.[arch] || map.linux.default;
 }
-
-const lib = load(libraryPath);
-
-export const request = lib.func("request", "string", ["string"]);
-export const freeMemory = lib.func("freeMemory", "void", ["string"]);
-export const destroyAll = lib.func("destroyAll", "string", []);
-export const destroySession = lib.func("destroySession", "string", ["string"]);
-
-fs.readdirSync(path.join(__dirname, "../", "../", "dependencies")).forEach(
-  (file) => {
-    if (file !== `tls-client${fileExt}`) {
-      fs.unlinkSync(path.join(__dirname, "../", "../", "dependencies", file));
-    }
-  }
-);

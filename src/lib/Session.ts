@@ -19,9 +19,13 @@ import {
   OptionsRequestOptions,
   HeadRequestOptions,
 } from "../interface";
+import { koffiLoad } from "../interface/koffi";
 import { IncomingHttpHeaders } from "http";
 import { Cookies, Response } from ".";
-import { destroySession, freeMemory, request } from "../utils/koffi";
+import path from "path";
+import fs from "fs";
+import os from "os";
+import { load } from "../utils/koffi";
 
 // Version of the current session.
 const __version__ = "1";
@@ -54,30 +58,21 @@ export class Session {
   private alpnProtocols?: string[];
   private alpsProtocols: string[];
   private jar: Cookies = new Cookies();
+  private fetch: Promise<koffiLoad>;
 
-  /**
-   * Constructor for the Session class.
-   * It initializes the properties of the class with the values from the provided options object.
-   *
-   * @param options - The options object from which to initialize the class properties.
-   */
   constructor(options?: sessionOptions) {
+    this.fetch = load();
+
     this.sessionId = randomUUID();
     this.proxy = "";
-    this.alpnProtocols = options?.alpnProtocols
-      ? options?.alpnProtocols
-      : ["h2", "http/1.1"];
-    this.alpsProtocols = options?.alpsProtocols
-      ? options?.alpsProtocols
-      : ["http/1.1"];
-    this.headers = options?.headers
-      ? options.headers
-      : {
-          "User-Agent": `tls-client/${__version__}`,
-          "Accept-Encoding": "gzip, deflate, br",
-          Accept: "*/*",
-          Connection: "keep-alive",
-        };
+    this.alpnProtocols = options?.alpnProtocols || ["h2", "http/1.1"];
+    this.alpsProtocols = options?.alpsProtocols || ["http/1.1"];
+    this.headers = options?.headers || {
+      "User-Agent": `tls-client/${__version__}`,
+      "Accept-Encoding": "gzip, deflate, br",
+      Accept: "*/*",
+      Connection: "keep-alive",
+    };
     this.clientIdentifier = options?.clientIdentifier;
     this.ja3string = options?.ja3string;
     this.h2Settings = options?.h2Settings;
@@ -102,14 +97,14 @@ export class Session {
    *
    * @returns The response from the 'destroySession' function.
    */
-  public close() {
+  public async close() {
     const payload = JSON.stringify({
       sessionId: this.sessionId,
     });
 
-    const response = JSON.parse(destroySession(payload));
+    const response = JSON.parse((await this.fetch).destroySession(payload));
 
-    this.free(response.id);
+    await this.free(response.id);
 
     return response;
   }
@@ -121,8 +116,8 @@ export class Session {
    *
    * @returns The response from the 'destroySession' function.
    */
-  private free(id: string) {
-    return freeMemory(id);
+  private async free(id: string) {
+    return (await this.fetch).freeMemory(id);
   }
 
   /**
@@ -357,7 +352,7 @@ export class Session {
 
     const requestPayloadString = JSON.stringify(skeletonPayload);
 
-    const res = request(requestPayloadString);
+    const res = (await this.fetch).request(requestPayloadString);
 
     if (!res) throw new Error("No response from the server.");
 

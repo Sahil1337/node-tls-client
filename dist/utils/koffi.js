@@ -3,54 +3,67 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.destroySession = exports.destroyAll = exports.freeMemory = exports.request = void 0;
-const fs_1 = __importDefault(require("fs"));
-const koffi_1 = require("koffi");
+exports.load = void 0;
 const path_1 = __importDefault(require("path"));
-const fileExt = (() => {
+const fs_1 = __importDefault(require("fs"));
+const os_1 = __importDefault(require("os"));
+const koffi_1 = require("koffi");
+const download_1 = require("./download");
+async function load() {
+    const file = fileInfo();
+    const temp = os_1.default.tmpdir();
+    const libraryPath = path_1.default.join(temp, file.name);
+    if (!fs_1.default.existsSync(libraryPath)) {
+        const downloader = new download_1.Download(file, libraryPath);
+        await downloader.init();
+    }
+    const lib = (0, koffi_1.load)(libraryPath);
+    return {
+        request: lib.func("request", "string", ["string"]),
+        freeMemory: lib.func("freeMemory", "void", ["string"]),
+        destroyAll: lib.func("destroyAll", "string", []),
+        destroySession: lib.func("destroySession", "string", ["string"]),
+    };
+}
+exports.load = load;
+function fileInfo() {
     const platform = process.platform;
     const arch = process.arch;
-    const extMap = {
+    const map = {
         darwin: {
-            arm64: "-arm64.dylib",
-            x64: "-x86.dylib",
+            arm64: {
+                name: "tls-client-arm64.dylib",
+                downloadName: "tls-client-darwin-arm64-{version}.dylib",
+            },
+            x64: {
+                name: "tls-client-x86.dylib",
+                downloadName: "tls-client-darwin-amd64-{version}.dylib",
+            },
         },
         win32: {
-            x64: "-64.dll",
-            ia32: "-32.dll",
+            x64: {
+                name: "tls-client-64.dll",
+                downloadName: "tls-client-windows-64-{version}.dll",
+            },
+            ia32: {
+                name: "tls-client-32.dll",
+                downloadName: "tls-client-windows-32-{version}.dll",
+            },
         },
         linux: {
-            arm64: "-arm64.so",
-            x64: "-x86.so",
-            default: "-amd64.so",
+            arm64: {
+                name: "tls-client-arm64.so",
+                downloadName: "tls-client-linux-arm64-{version}.so",
+            },
+            x64: {
+                name: "tls-client-x64.so",
+                downloadName: "tls-client-linux-ubuntu-amd64-{version}.so",
+            },
+            default: {
+                name: "tls-client-amd64.so",
+                downloadName: "tls-client-linux-ubuntu-amd64-{version}.so",
+            },
         },
     };
-    return extMap[platform]?.[arch] || extMap.linux.default;
-})();
-const scriptDirectory = (() => {
-    //@ts-ignore
-    if (typeof process.pkg !== "undefined") {
-        return path_1.default.dirname(process.execPath);
-    }
-    else {
-        return __dirname;
-    }
-})();
-let libraryPath;
-//@ts-ignore
-if (typeof process.pkg !== "undefined") {
-    libraryPath = path_1.default.join(scriptDirectory, "node_modules", "node-tls-client", "dependencies", `tls-client${fileExt}`);
+    return map[platform]?.[arch] || map.linux.default;
 }
-else {
-    libraryPath = path_1.default.join(scriptDirectory, "../", "../", "dependencies", `tls-client${fileExt}`);
-}
-const lib = (0, koffi_1.load)(libraryPath);
-exports.request = lib.func("request", "string", ["string"]);
-exports.freeMemory = lib.func("freeMemory", "void", ["string"]);
-exports.destroyAll = lib.func("destroyAll", "string", []);
-exports.destroySession = lib.func("destroySession", "string", ["string"]);
-fs_1.default.readdirSync(path_1.default.join(__dirname, "../", "../", "dependencies")).forEach((file) => {
-    if (file !== `tls-client${fileExt}`) {
-        fs_1.default.unlinkSync(path_1.default.join(__dirname, "../", "../", "dependencies", file));
-    }
-});

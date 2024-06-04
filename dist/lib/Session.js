@@ -34,29 +34,19 @@ class Session {
     alpnProtocols;
     alpsProtocols;
     jar = new _1.Cookies();
-    /**
-     * Constructor for the Session class.
-     * It initializes the properties of the class with the values from the provided options object.
-     *
-     * @param options - The options object from which to initialize the class properties.
-     */
+    fetch;
     constructor(options) {
+        this.fetch = (0, koffi_1.load)();
         this.sessionId = (0, crypto_1.randomUUID)();
         this.proxy = "";
-        this.alpnProtocols = options?.alpnProtocols
-            ? options?.alpnProtocols
-            : ["h2", "http/1.1"];
-        this.alpsProtocols = options?.alpsProtocols
-            ? options?.alpsProtocols
-            : ["http/1.1"];
-        this.headers = options?.headers
-            ? options.headers
-            : {
-                "User-Agent": `tls-client/${__version__}`,
-                "Accept-Encoding": "gzip, deflate, br",
-                Accept: "*/*",
-                Connection: "keep-alive",
-            };
+        this.alpnProtocols = options?.alpnProtocols || ["h2", "http/1.1"];
+        this.alpsProtocols = options?.alpsProtocols || ["http/1.1"];
+        this.headers = options?.headers || {
+            "User-Agent": `tls-client/${__version__}`,
+            "Accept-Encoding": "gzip, deflate, br",
+            Accept: "*/*",
+            Connection: "keep-alive",
+        };
         this.clientIdentifier = options?.clientIdentifier;
         this.ja3string = options?.ja3string;
         this.h2Settings = options?.h2Settings;
@@ -80,12 +70,12 @@ class Session {
      *
      * @returns The response from the 'destroySession' function.
      */
-    close() {
+    async close() {
         const payload = JSON.stringify({
             sessionId: this.sessionId,
         });
-        const response = JSON.parse((0, koffi_1.destroySession)(payload));
-        this.free(response.id);
+        const response = JSON.parse((await this.fetch).destroySession(payload));
+        await this.free(response.id);
         return response;
     }
     /**
@@ -95,8 +85,8 @@ class Session {
      *
      * @returns The response from the 'destroySession' function.
      */
-    free(id) {
-        return (0, koffi_1.freeMemory)(id);
+    async free(id) {
+        return (await this.fetch).freeMemory(id);
     }
     /**
      * The 'get' method performs a GET request to the provided URL with the provided options.
@@ -321,7 +311,7 @@ class Session {
         else
             skeletonPayload["tlsClientIdentifier"] = "chrome_120";
         const requestPayloadString = JSON.stringify(skeletonPayload);
-        const res = (0, koffi_1.request)(requestPayloadString);
+        const res = (await this.fetch).request(requestPayloadString);
         if (!res)
             throw new Error("No response from the server.");
         const response = JSON.parse(res);

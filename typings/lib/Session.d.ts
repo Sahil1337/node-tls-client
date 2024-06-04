@@ -28,19 +28,14 @@ export declare class Session {
     private alpnProtocols?;
     private alpsProtocols;
     private jar;
-    /**
-     * Constructor for the Session class.
-     * It initializes the properties of the class with the values from the provided options object.
-     *
-     * @param options - The options object from which to initialize the class properties.
-     */
+    private fetch;
     constructor(options?: sessionOptions);
     /**
      * The 'close' method closes the current session.
      *
      * @returns The response from the 'destroySession' function.
      */
-    close(): any;
+    close(): Promise<any>;
     /**
      * The 'freeMemory' method frees the memory used by the session with the provided id.
      *
