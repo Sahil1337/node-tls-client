@@ -1,3 +1,11 @@
+# 1.1.2
+## Additions
+= Introduced client profile types.
+## Changes
+- Enhanced documentation for improved clarity and usability.
+- Updated the README with minor adjustments.
+- Refined interface definitions for better readability and understanding.
+
 # 1.1.1 (June 4 2024)
 ## Additions
 - Implemented dynamic methods for downloading shared files in "node-tls-client", eliminating the inclusion of prebuilt files.

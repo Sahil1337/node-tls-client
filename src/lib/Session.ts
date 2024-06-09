@@ -1,16 +1,15 @@
 import { randomUUID } from "crypto";
 import {
-  sessionOptions,
-  h2Settings,
-  supportedSignatureAlgorithms,
-  supportedVersions,
-  pseudoHeaderOrder,
-  priorityFrames,
-  keyShareCurves,
-  certCompressionAlgo,
-  priorityParam,
-  methods,
-  requestOptions,
+  H2Settings,
+  SupportedSignatureAlgorithms,
+  SupportedVersions,
+  PseudoHeaderOrder,
+  PriorityFrames,
+  KeyShareCurves,
+  CertCompressionAlgo,
+  PriorityParam,
+  Methods,
+  RequestOptions,
   GetRequestOptions,
   PostRequestOptions,
   PatchRequestOptions,
@@ -18,13 +17,12 @@ import {
   DeleteRequestOptions,
   OptionsRequestOptions,
   HeadRequestOptions,
+  SessionOptions,
+  ClientIdentifier,
 } from "../interface";
 import { koffiLoad } from "../interface/koffi";
-import { IncomingHttpHeaders } from "http";
+import { OutgoingHttpHeaders } from "http";
 import { Cookies, Response } from ".";
-import path from "path";
-import fs from "fs";
-import os from "os";
 import { load } from "../utils/koffi";
 
 // Version of the current session.
@@ -37,30 +35,30 @@ const __version__ = "1";
 export class Session {
   private sessionId?: string;
   private proxy?: string;
-  private clientIdentifier?: string;
+  private clientIdentifier?: ClientIdentifier;
   private ja3string?: string;
-  private h2Settings?: h2Settings;
-  private h2SettingsOrder?: (keyof h2Settings)[];
-  private supportedSignatureAlgorithms?: supportedSignatureAlgorithms[];
-  private supportedVersions?: supportedVersions[];
-  private keyShareCurves?: keyShareCurves[];
-  private certCompressionAlgo?: certCompressionAlgo;
-  private pseudoHeaderOrder?: pseudoHeaderOrder[];
+  private h2Settings?: H2Settings;
+  private h2SettingsOrder?: (keyof H2Settings)[];
+  private supportedSignatureAlgorithms?: SupportedSignatureAlgorithms[];
+  private supportedVersions?: SupportedVersions[];
+  private keyShareCurves?: KeyShareCurves[];
+  private certCompressionAlgo?: CertCompressionAlgo;
+  private pseudoHeaderOrder?: PseudoHeaderOrder[];
   private connectionFlow?: number;
-  private priorityFrames?: priorityFrames[];
+  private priorityFrames?: PriorityFrames[];
   private headerOrder?: string[];
-  private headerPriority?: priorityParam;
+  private headerPriority?: PriorityParam;
   private randomTlsExtensionOrder?: boolean;
   private forceHttp1?: boolean;
   private debug?: boolean;
   private insecureSkipVerify?: boolean;
-  private headers: IncomingHttpHeaders;
+  private headers: OutgoingHttpHeaders;
   private alpnProtocols?: string[];
   private alpsProtocols: string[];
   private jar: Cookies = new Cookies();
   private fetch: Promise<koffiLoad>;
 
-  constructor(options?: sessionOptions) {
+  constructor(options?: SessionOptions) {
     this.fetch = load();
 
     this.sessionId = randomUUID();
@@ -300,7 +298,7 @@ export class Session {
    *
    * @returns A new Response object.
    */
-  private async execute(method: methods, url: string, options: requestOptions) {
+  private async execute(method: Methods, url: string, options: RequestOptions) {
     let headers = options?.headers ? options?.headers : this.headers;
     let requestCookies: any = [];
 

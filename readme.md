@@ -35,6 +35,8 @@ const session = new tlsClient.Session({
 session
   .get("https://example.com")
   .then((res) => console.log(res.text(), res.status));
+
+session.close()
 ```
 
 ## Advanced example
@@ -103,6 +105,8 @@ const session = new tlsClient.Session({
 session
   .get("http://localhost:3000/")
   .then((res) => console.log(res.status, res.json()));
+
+session.close()
 ```
 
 ## More examples
@@ -124,6 +128,8 @@ session
   })
   .then((res) => console.log(res.json(), res.status));
 
+session.close()
+  //more details: https://sahil1337.github.io/node-tls-client/hierarchy.html#BaseRequestOptions
 ```
 
 ## Session
@@ -139,19 +145,19 @@ session
 | `proxy`                        | string                                                                                                                                  | A proxy server URL to use for the request. [format: 'http://user:pass@ip:port or http://ip:port']                             |
 | `clientIdentifier`             | string                                                                                                                                  | A string identifier for the client, e.g., `"chrome_120"`.              |
 | `ja3string`                    | string                                                                                                                                  | A string representing JA3 fingerprinting configuration.                |
-| `h2Settings`                   | [h2Settings](https://bogdanfinn.gitbook.io/open-source-oasis/shared-library/payload#h2settings)[]                                       | An object specifying HTTP/2 settings.                                  |
-| `h2SettingsOrder`              | [h2Settings](https://bogdanfinn.gitbook.io/open-source-oasis/shared-library/payload#h2settings)[]                                       | An array specifying the order of HTTP/2 settings.                      |
-| `supportedSignatureAlgorithms` | [supportedSignatureAlgorithms](https://bogdanfinn.gitbook.io/open-source-oasis/shared-library/payload#supported-signature-algorithms)[] | An array of supported signature algorithms.                            |
-| `supportedVersions`            | [supportedVersions](https://bogdanfinn.gitbook.io/open-source-oasis/shared-library/payload#supported-versions)[]                        | An array of supported TLS versions.                                    |
-| `keyShareCurves`               | [keyShareCurves](https://bogdanfinn.gitbook.io/open-source-oasis/shared-library/payload#keysharecurves)[]                               | An array of key share curves.                                          |
-| `certCompressionAlgo`          | [certCompressionAlgo](https://bogdanfinn.gitbook.io/open-source-oasis/shared-library/payload#certcompressionalgorithm)                  | A certificate compression algorithm, e.g., `"brotli"`.                 |
-| `pseudoHeaderOrder`            | pseudoHeaderOrder[]                                                                                                                     | An array specifying the order of pseudo-headers.                       |
+| `h2Settings`                   | [h2Settings](https://sahil1337.github.io/node-tls-client/types/h2SettingKeys.html)[]                                       | An object specifying HTTP/2 settings.                                  |
+| `h2SettingsOrder`              | [h2Settings](https://sahil1337.github.io/node-tls-client/types/h2SettingKeys.html)[]                                       | An array specifying the order of HTTP/2 settings.                      |
+| `supportedSignatureAlgorithms` | [supportedSignatureAlgorithms](https://sahil1337.github.io/node-tls-client/types/supportedSignatureAlgorithms.html)[] | An array of supported signature algorithms.                            |
+| `supportedVersions`            | [supportedVersions](https://sahil1337.github.io/node-tls-client/types/supportedVersions.html)[]                        | An array of supported TLS versions.                                    |
+| `keyShareCurves`               | [keyShareCurves](https://sahil1337.github.io/node-tls-client/types/keyShareCurves.html)[]                               | An array of key share curves.                                          |
+| `certCompressionAlgo`          | [certCompressionAlgo](https://sahil1337.github.io/node-tls-client/types/certCompressionAlgo.html)                  | A certificate compression algorithm, e.g., `"brotli"`.                 |
+| `pseudoHeaderOrder`            | [pseudoHeaderOrder](https://sahil1337.github.io/node-tls-client/types/pseudoHeaderOrder.html)[]                                                                                                                     | An array specifying the order of pseudo-headers.                       |
 | `connectionFlow`               | number                                                                                                                                  | A number specifying the connection flow control window size.           |
-| `priorityFrames`               | [priorityFrame](https://bogdanfinn.gitbook.io/open-source-oasis/shared-library/payload#priorityframes)[]                                | An array of priority frames to send with the request.                  |
+| `priorityFrames`               | [priorityFrame](https://sahil1337.github.io/node-tls-client/interfaces/PriorityFrames.html)[]                                | An array of priority frames to send with the request.                  |
 | `headerOrder`                  | string[]                                                                                                                                | An array specifying the order of headers.                              |
 | `alpnProtocols`                | string[]                                                                                                                                | An array of Application-Layer Protocol Negotiation (ALPN) protocols.   |
 | `alpsProtocols`                | string[]                                                                                                                                | An array of Application Layer Protocol Settings (ALPS) protocols.      |
-| `headerPriority`               | [priorityParam](https://bogdanfinn.gitbook.io/open-source-oasis/shared-library/payload#priorityparam)                                   | An object specifying header priority parameters.                       |
+| `headerPriority`               | [priorityParam](https://sahil1337.github.io/node-tls-client/interfaces/PriorityParam.html)                                   | An object specifying header priority parameters.                       |
 | `randomTlsExtensionOrder`      | boolean                                                                                                                                 | A boolean indicating whether to use a random order for TLS extensions. |
 | `forceHttp1`                   | boolean                                                                                                                                 | A boolean indicating whether to force the use of HTTP/1.1.             |
 | `debug`                        | boolean                                                                                                                                 | A boolean indicating whether to enable debug mode.                     |
@@ -172,6 +178,7 @@ session
 | `head(url: string, options: RequestOptions)`    | Sends a HEAD request to the specified URL with the provided options and returns the response.     |
 | `post(url: string, options: RequestOptions)`    | Sends a POST request to the specified URL with the provided options and returns the response.     |
 | `patch(url: string, options: RequestOptions)`   | Sends a PATCH request to the specified URL with the provided options and returns the response.    |
+| `close()`                                       | Closes the session.                          
 
 </div>
 
@@ -214,5 +221,4 @@ session
 
 
 ## Acknowledgements
-
 This library is based on [bogdanfinn's](https://github.com/bogdanfinn) tls client in golang. A big thanks to him.
