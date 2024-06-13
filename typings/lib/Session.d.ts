@@ -29,6 +29,11 @@ export declare class Session {
     private alpsProtocols;
     private jar;
     private fetch;
+    private timeout;
+    /**
+     *
+     * @param options
+     */
     constructor(options?: SessionOptions);
     /**
      * The 'close' method closes the current session.

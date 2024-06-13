@@ -17,3 +17,4 @@ Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./Session"), exports);
 __exportStar(require("./Response"), exports);
 __exportStar(require("./Cookie"), exports);
+__exportStar(require("./requests"), exports);

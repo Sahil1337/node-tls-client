@@ -91,86 +91,87 @@ export type Methods =
  *
  * The client identifiers are grouped by browser, mobile clients, and other clients.
  */
-export type ClientIdentifier =
+export enum ClientIdentifier {
   // Chrome versions
-  | "chrome_103"
-  | "chrome_104"
-  | "chrome_105"
-  | "chrome_106"
-  | "chrome_107"
-  | "chrome_108"
-  | "chrome_109"
-  | "chrome_110"
-  | "chrome_111"
-  | "chrome_112"
-  | "chrome_116_PSK"
-  | "chrome_116_PSK_PQ"
-  | "chrome_117"
-  | "chrome_120"
-  | "chrome_124"
+  chrome_103 = "chrome_103",
+  chrome_104 = "chrome_104",
+  chrome_105 = "chrome_105",
+  chrome_106 = "chrome_106",
+  chrome_107 = "chrome_107",
+  chrome_108 = "chrome_108",
+  chrome_109 = "chrome_109",
+  chrome_110 = "chrome_110",
+  chrome_111 = "chrome_111",
+  chrome_112 = "chrome_112",
+  chrome_116_PSK = "chrome_116_PSK",
+  chrome_116_PSK_PQ = "chrome_116_PSK_PQ",
+  chrome_117 = "chrome_117",
+  chrome_120 = "chrome_120",
+  chrome_124 = "chrome_124",
 
   // Safari versions
-  | "safari_15_6_1"
-  | "safari_16_0"
-  | "safari_ipad_15_6"
-  | "safari_ios_15_5"
-  | "safari_ios_15_6"
-  | "safari_ios_16_0"
-  | "safari_ios_17_0"
+  safari_15_6_1 = "safari_15_6_1",
+  safari_16_0 = "safari_16_0",
+  safari_ipad_15_6 = "safari_ipad_15_6",
+  safari_ios_15_5 = "safari_ios_15_5",
+  safari_ios_15_6 = "safari_ios_15_6",
+  safari_ios_16_0 = "safari_ios_16_0",
+  safari_ios_17_0 = "safari_ios_17_0",
 
   // Firefox versions
-  | "firefox_102"
-  | "firefox_104"
-  | "firefox_105"
-  | "firefox_106"
-  | "firefox_108"
-  | "firefox_110"
-  | "firefox_117"
-  | "firefox_120"
-  | "firefox_123"
+  firefox_102 = "firefox_102",
+  firefox_104 = "firefox_104",
+  firefox_105 = "firefox_105",
+  firefox_106 = "firefox_106",
+  firefox_108 = "firefox_108",
+  firefox_110 = "firefox_110",
+  firefox_117 = "firefox_117",
+  firefox_120 = "firefox_120",
+  firefox_123 = "firefox_123",
 
   // Opera versions
-  | "opera_89"
-  | "opera_90"
-  | "opera_91"
+  opera_89 = "opera_89",
+  opera_90 = "opera_90",
+  opera_91 = "opera_91",
 
   // Zalando mobile clients
-  | "zalando_android_mobile"
-  | "zalando_ios_mobile"
+  zalando_android_mobile = "zalando_android_mobile",
+  zalando_ios_mobile = "zalando_ios_mobile",
 
   // Nike mobile clients
-  | "nike_ios_mobile"
-  | "nike_android_mobile"
+  nike_ios_mobile = "nike_ios_mobile",
+  nike_android_mobile = "nike_android_mobile",
 
   // Other clients
-  | "cloudscraper"
+  cloudscraper = "cloudscraper",
 
   // MMS iOS versions
-  | "mms_ios"
-  | "mms_ios_1"
-  | "mms_ios_2"
-  | "mms_ios_3"
+  mms_ios = "mms_ios",
+  mms_ios_1 = "mms_ios_1",
+  mms_ios_2 = "mms_ios_2",
+  mms_ios_3 = "mms_ios_3",
 
   // Mesh clients
-  | "mesh_ios"
-  | "mesh_ios_1"
-  | "mesh_ios_2"
-  | "mesh_android"
-  | "mesh_android_1"
-  | "mesh_android_2"
+  mesh_ios = "mesh_ios",
+  mesh_ios_1 = "mesh_ios_1",
+  mesh_ios_2 = "mesh_ios_2",
+  mesh_android = "mesh_android",
+  mesh_android_1 = "mesh_android_1",
+  mesh_android_2 = "mesh_android_2",
 
   // Confirmed clients
-  | "confirmed_ios"
-  | "confirmed_android"
+  confirmed_ios = "confirmed_ios",
+  confirmed_android = "confirmed_android",
 
   // OkHttp Android versions
-  | "okhttp4_android_7"
-  | "okhttp4_android_8"
-  | "okhttp4_android_9"
-  | "okhttp4_android_10"
-  | "okhttp4_android_11"
-  | "okhttp4_android_12"
-  | "okhttp4_android_13";
+  okhttp4_android_7 = "okhttp4_android_7",
+  okhttp4_android_8 = "okhttp4_android_8",
+  okhttp4_android_9 = "okhttp4_android_9",
+  okhttp4_android_10 = "okhttp4_android_10",
+  okhttp4_android_11 = "okhttp4_android_11",
+  okhttp4_android_12 = "okhttp4_android_12",
+  okhttp4_android_13 = "okhttp4_android_13",
+}
 
 /**
  * Represents options for creating a session.
@@ -198,6 +199,7 @@ export interface SessionOptions {
   forceHttp1?: boolean; // Whether to force HTTP/1 protocol.
   debug?: boolean; // Whether to enable debugging.
   insecureSkipVerify?: boolean; // Whether to skip SSL certificate verification.
+  timeout?: number;
 }
 
 /**
@@ -206,9 +208,7 @@ export interface SessionOptions {
 export interface BaseRequestOptions {
   headers?: OutgoingHttpHeaders; // The headers for the request.
   redirect?: boolean; // Whether to follow redirects.
-  rejectUnauthorized?: boolean; // Whether to reject unauthorized SSL certificates.
   additionalDecode?: boolean; // Whether to perform additional decoding.
-  timeout?: number; // The request timeout.
   proxy?: string; // The proxy server to use for the request.
   cookies?: Record<string, any>; // Cookies for the request.
 }
@@ -256,9 +256,23 @@ export interface OptionsRequestOptions extends BaseRequestOptions {}
 export interface HeadRequestOptions extends BaseRequestOptions {}
 
 /**
+ *  Represents options for making HTTP requests.
+ */
+export interface fetchOptions {
+  method?: Methods; // Request method.
+  headers?: OutgoingHttpHeaders; // The headers for the request.
+  body?: any;
+  redirect?: boolean; // Whether to follow redirects.
+  additionalDecode?: boolean; // Whether to perform additional decoding.
+  proxy?: string; // The proxy server to use for the request.
+  cookies?: Record<string, any>; // Cookies for the request.
+  options?: SessionOptions;
+}
+
+/**
  * Represents a response from shared library.
  */
-export interface response {
+export interface TlsResponse {
   id: string; // The unique identifier for the response.
   body: string; // The body of the response.
   cookies: Object; // Cookies set in the response.

@@ -1,51 +1,42 @@
 /// <reference types="node" />
-import { response as ResponseType } from "../interface";
+import { TlsResponse } from "../interface";
 import { IncomingHttpHeaders } from "http";
 /**
  * Response class represents the HTTP response received from a server.
  * It provides methods to access various properties of the response.
  */
 export declare class Response {
-    private response;
-    ok: boolean;
-    headers: IncomingHttpHeaders;
-    status: number;
-    url: string;
+    private readonly response;
+    readonly ok: boolean;
+    readonly headers: IncomingHttpHeaders;
+    readonly status: number;
+    readonly url: string;
     /**
      * Constructor for the Response class.
-     * It initializes the properties of the class with the values from the provided response object.
+     * Initializes the properties of the class with the values from the provided response object.
      *
      * @param response - The response object from which to initialize the class properties.
      */
-    constructor(response: ResponseType);
+    constructor(response: TlsResponse);
     /**
-     * The 'text' method returns the body of the response as a string.
+     * Returns the body of the response as a string.
      *
-     * @returns The body of the response as a string.
-     *
-     * @example
-     * const response = new Response(someResponseType);
-     * const text = response.text();
+     * @returns A promise that resolves with the body of the response as a string.
      */
-    text(): string;
+    text(): Promise<string>;
     /**
-     * The 'json' method returns the body of the response as a JSON object.
+     * Returns the body of the response as a JSON object.
      *
-     * @returns The body of the response as a JSON object.
-     *
-     * @example
-     * const response = new Response(someResponseType);
-     * const json = response.json();
+     * @typeparam T - The type of the JSON object.
+     * @returns A promise that resolves with the body of the response as a JSON object.
      */
-    json<T>(): T;
+    json<T>(): Promise<T>;
     /**
-     * The 'cookies' method returns the cookies from the response.
+     * Returns the cookies from the response as an object with key-value pairs.
      *
-     * @returns The cookies from the response.
-     *
-     * @example
-     * const response = new Response(someResponseType);
-     * const cookies = response.cookies();
+     * @returns A promise that resolves with the cookies from the response as an object.
      */
-    cookies(): Promise<Object>;
+    cookies(): {
+        [key: string]: string;
+    };
 }

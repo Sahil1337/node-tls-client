@@ -34,7 +34,7 @@ const __version__ = "1";
  */
 export class Session {
   private sessionId?: string;
-  private proxy?: string;
+  private proxy?: string | null;
   private clientIdentifier?: ClientIdentifier;
   private ja3string?: string;
   private h2Settings?: H2Settings;
@@ -57,12 +57,17 @@ export class Session {
   private alpsProtocols: string[];
   private jar: Cookies = new Cookies();
   private fetch: Promise<koffiLoad>;
+  private timeout: number | null;
 
+  /**
+   *
+   * @param options
+   */
   constructor(options?: SessionOptions) {
     this.fetch = load();
 
     this.sessionId = randomUUID();
-    this.proxy = "";
+    this.proxy = options?.proxy ? options?.proxy : null;
     this.alpnProtocols = options?.alpnProtocols || ["h2", "http/1.1"];
     this.alpsProtocols = options?.alpsProtocols || ["http/1.1"];
     this.headers = options?.headers || {
@@ -82,12 +87,12 @@ export class Session {
     this.pseudoHeaderOrder = options?.pseudoHeaderOrder;
     this.connectionFlow = options?.connectionFlow;
     this.priorityFrames = options?.priorityFrames;
-    this.headerOrder = options?.headerOrder;
     this.headerPriority = options?.headerPriority;
     this.randomTlsExtensionOrder = options?.randomTlsExtensionOrder || false;
     this.forceHttp1 = options?.forceHttp1 || false;
     this.debug = options?.debug || false;
     this.insecureSkipVerify = options?.insecureSkipVerify || false;
+    this.timeout = options?.timeout || 30 * 1000;
   }
 
   /**
@@ -130,13 +135,9 @@ export class Session {
     return this.execute("GET", url, {
       headers: options?.headers,
       redirect: options?.redirect,
-      rejectUnauthorized: options?.rejectUnauthorized
-        ? options?.rejectUnauthorized
-        : false,
       additionalDecode: options?.additionalDecode
         ? options?.additionalDecode
         : false,
-      timeout: options?.timeout,
       proxy: options?.proxy,
       cookies: options?.cookies,
     });
@@ -154,13 +155,9 @@ export class Session {
     return this.execute("DELETE", url, {
       headers: options?.headers,
       redirect: options?.redirect,
-      rejectUnauthorized: options?.rejectUnauthorized
-        ? options?.rejectUnauthorized
-        : false,
       additionalDecode: options?.additionalDecode
         ? options?.additionalDecode
         : false,
-      timeout: options?.timeout,
       proxy: options?.proxy,
       cookies: options?.cookies,
     });
@@ -178,13 +175,9 @@ export class Session {
     return this.execute("OPTIONS", url, {
       headers: options?.headers,
       redirect: options?.redirect,
-      rejectUnauthorized: options?.rejectUnauthorized
-        ? options?.rejectUnauthorized
-        : false,
       additionalDecode: options?.additionalDecode
         ? options?.additionalDecode
         : false,
-      timeout: options?.timeout,
       proxy: options?.proxy,
       cookies: options?.cookies,
     });
@@ -202,13 +195,9 @@ export class Session {
     return this.execute("HEAD", url, {
       headers: options?.headers,
       redirect: options?.redirect,
-      rejectUnauthorized: options?.rejectUnauthorized
-        ? options?.rejectUnauthorized
-        : false,
       additionalDecode: options?.additionalDecode
         ? options?.additionalDecode
         : false,
-      timeout: options?.timeout,
       proxy: options?.proxy,
       cookies: options?.cookies,
     });
@@ -227,13 +216,9 @@ export class Session {
       body: options?.body,
       headers: options?.headers,
       redirect: options?.redirect,
-      rejectUnauthorized: options?.rejectUnauthorized
-        ? options?.rejectUnauthorized
-        : false,
       additionalDecode: options?.additionalDecode
         ? options?.additionalDecode
         : false,
-      timeout: options?.timeout,
       proxy: options?.proxy,
       cookies: options?.cookies,
     });
@@ -252,13 +237,9 @@ export class Session {
       body: options?.body,
       headers: options?.headers,
       redirect: options?.redirect,
-      rejectUnauthorized: options?.rejectUnauthorized
-        ? options?.rejectUnauthorized
-        : false,
       additionalDecode: options?.additionalDecode
         ? options?.additionalDecode
         : false,
-      timeout: options?.timeout,
       proxy: options?.proxy,
       cookies: options?.cookies,
     });
@@ -277,13 +258,9 @@ export class Session {
       body: options?.body,
       headers: options?.headers,
       redirect: options?.redirect,
-      rejectUnauthorized: options?.rejectUnauthorized
-        ? options?.rejectUnauthorized
-        : false,
       additionalDecode: options?.additionalDecode
         ? options?.additionalDecode
         : false,
-      timeout: options?.timeout,
       proxy: options?.proxy,
       cookies: options?.cookies,
     });
@@ -313,18 +290,16 @@ export class Session {
       withDebug: this.debug,
       headers,
       headerOrder: this.headerOrder,
-      insecureSkipVerify: options?.rejectUnauthorized
-        ? options?.rejectUnauthorized
-        : this.insecureSkipVerify,
+      insecureSkipVerify: this.insecureSkipVerify,
       additionalDecode: options?.additionalDecode
         ? options?.additionalDecode
         : false,
       proxyUrl: options?.proxy ? options?.proxy : this.proxy,
       requestUrl: url,
       requestMethod: method,
-      requestBody: options?.body,
+      requestBody: options?.body ? options.body : null,
       requestCookies: requestCookies,
-      timeoutMillisecond: options?.timeout ? options?.timeout : 30000,
+      timeoutMilliseconds: this?.timeout,
       withRandomTLSExtensionOrder: this.randomTlsExtensionOrder,
     };
 
@@ -356,9 +331,9 @@ export class Session {
 
     const response = JSON.parse(res);
 
-    let cookies = this.jar.check(response.cookies, url);
+    let cookies = await this.jar.check(response.cookies, url);
 
-    this.free(response.id);
+    await this.free(response.id);
 
     return new Response({ ...response, cookies });
   }
