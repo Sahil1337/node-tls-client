@@ -148,7 +148,7 @@ const { Session, ClientIdentifier } = require("node-tls-client");
   const session = new tlsClient.Session({
     clientIdentifier: ClientIdentifier.chrome_120,, //client identifier
     timeout: 30 * 1000, //timeout in *milliseconds*, applies for each requests, checkout examples/timeout.js for using different timeouts.
-    rejectUnauthorized: false, //SSL certificate verification
+    insecureSkipVerify: false, //SSL certificate verification
   });
 
   const response = await session.get("https://example.com", {
