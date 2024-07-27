@@ -26,7 +26,7 @@ pnpm add node-tls-client
 ## Example
 
 ```javascript
-const { Session } = require("node-tls-client");
+const { Session, ClientIdentifier  } = require("node-tls-client");
 
 /**
  * @description Demonstrates using the node-tls-client library to make HTTP requests with a specified timeout.
@@ -36,7 +36,7 @@ const { Session } = require("node-tls-client");
  */
 
 (async () => {
-  const session = new Session({ clientIdentifer: "chrome_103", timeout: 3000 });
+  const session = new Session({ clientIdentifer: ClientIdentifier.chrome_120, timeout: 3000 });
 
   try {
     const response = await session.get("https://website.com/");
@@ -142,11 +142,11 @@ const { Session } = require("node-tls-client");
 
 ## More examples
 ```javascript
-const { Session } = require("node-tls-client");
+const { Session, ClientIdentifier } = require("node-tls-client");
 
 (async () => {
   const session = new tlsClient.Session({
-    clientIdentifier: "chrome_120", //client identifier
+    clientIdentifier: ClientIdentifier.chrome_120,, //client identifier
     timeout: 30 * 1000, //timeout in *milliseconds*, applies for each requests, checkout examples/timeout.js for using different timeouts.
     rejectUnauthorized: false, //SSL certificate verification
   });
@@ -243,9 +243,9 @@ const { Session } = require("node-tls-client");
 
 | Methods     | Description                                                                          |
 | ----------- | ------------------------------------------------------------------------------------ |
-| `text()`    | Returns the response body as plain text.                                             |
-| `json()`    | Returns the response body parsed as json.                                            |
-| `cookies()` | Returns a promise that resolves with cookie information processed from the response. |
+| `text()`    | Returns a promise that resolves with the response body as plain text.                                            |
+| `json()`    | Returns a promise that resolves with the response body parsed as JSON.                                           |
+| `cookies()` | Returns an object containing the session cookies. |
 
 </div>
 

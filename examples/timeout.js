@@ -1,4 +1,4 @@
-const { fetch } = require("node-tls-client");
+const { fetch, ClientIdentifier } = require("node-tls-client");
 
 /**
  * @description Demonstrates using the node-tls-client library to make HTTP requests with different timeouts.
@@ -12,13 +12,13 @@ const { fetch } = require("node-tls-client");
  */
 (async () => {
   const response1 = await fetch("https://example.com", {
-    options: { timeout: 3000 },
+    options: { timeout: 3000, clientIdentifier: ClientIdentifier.chrome_110 },
   });
   console.log("Response 1:", await response1.text());
 
   // Making the second request with a 6000ms timeout and a specific client identifier
   const response2 = await fetch("https://example.com", {
-    options: { timeout: 6000, clientIdentifer: "chrome_103" }, //options: SessionOptions
+    options: { timeout: 6000, clientIdentifier: ClientIdentifier.chrome_110 }, //options: SessionOptions
   });
   console.log("Response 2:", await response2.text());
 })();
