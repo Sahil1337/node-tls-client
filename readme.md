@@ -211,9 +211,9 @@ const { Session, ClientIdentifier } = require("node-tls-client");
 | `head(url: string, options: RequestOptions)`    | Sends a HEAD request to the specified URL with the provided options and returns the response.     |
 | `post(url: string, options: RequestOptions)`    | Sends a POST request to the specified URL with the provided options and returns the response.     |
 | `patch(url: string, options: RequestOptions)`   | Sends a PATCH request to the specified URL with the provided options and returns the response.    |
-| `close()`                                       | Closes the session.                          
-
-</div>
+| `close()`                                       | Closes the session.                                                                               |
+| `close()`                                       | Closes the session.                                                                               |
+| `cookies`                                       | Returns an object containing the session cookies.                                                 |
 
 <div id="request">
 
@@ -240,12 +240,12 @@ const { Session, ClientIdentifier } = require("node-tls-client");
 | `headers`  | This object contains the response headers returned by the server.                                                                                                                                 |
 | `status`   | This integer represents the HTTP status code of the response.                                                                                                                                     |
 | `url`      | This is the URL to which the request was made.                                                                                                                                                    |
+| `cookies`   | Returns an object containing the cookies for that URL.    
 
 | Methods     | Description                                                                          |
 | ----------- | ------------------------------------------------------------------------------------ |
 | `text()`    | Returns a promise that resolves with the response body as plain text.                                            |
 | `json()`    | Returns a promise that resolves with the response body parsed as JSON.                                           |
-| `cookies()` | Returns an object containing the session cookies. |
 
 </div>
 

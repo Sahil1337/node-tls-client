@@ -53,9 +53,9 @@ export class Response {
   /**
    * Returns the cookies from the response as an object with key-value pairs.
    *
-   * @returns A promise that resolves with the cookies from the response as an object.
+   * @returns An object containing cookies as key-value pairs.
    */
-  public cookies(): { [key: string]: string } {
-    return this.response.cookies as { [key: string]: string };
+  public get cookies() {
+    return this.response.cookies;
   }
 }

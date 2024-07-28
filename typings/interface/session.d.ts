@@ -142,6 +142,8 @@ export interface SessionOptions {
     debug?: boolean;
     insecureSkipVerify?: boolean;
     timeout?: number;
+    disableIPV4?: boolean;
+    disableIPV6?: boolean;
 }
 /**
  * Represents base options for making HTTP requests, excluding the body.
@@ -152,6 +154,8 @@ export interface BaseRequestOptions {
     additionalDecode?: boolean;
     proxy?: string;
     cookies?: Record<string, any>;
+    byteResponse?: boolean;
+    hostOverride?: string | null;
 }
 /**
  * Represents options for making HTTP requests that may include a body.
@@ -213,7 +217,7 @@ export interface fetchOptions {
 export interface TlsResponse {
     id: string;
     body: string;
-    cookies: Object;
+    cookies: Record<string, string>;
     headers: IncomingHttpHeaders;
     sessionId: string;
     status: number;

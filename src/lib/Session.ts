@@ -19,11 +19,13 @@ import {
   HeadRequestOptions,
   SessionOptions,
   ClientIdentifier,
+  TlsResponse,
 } from "../interface";
 import { koffiLoad } from "../interface/koffi";
 import { OutgoingHttpHeaders } from "http";
 import { Cookies, Response } from ".";
 import { load } from "../utils/koffi";
+import { isByteRequest } from "../utils/request";
 
 // Version of the current session.
 const __version__ = "1";
@@ -55,9 +57,11 @@ export class Session {
   private headers: OutgoingHttpHeaders;
   private alpnProtocols?: string[];
   private alpsProtocols: string[];
+  private timeout: number | null;
+  private disableIPV6: boolean;
+  private disableIPV4: boolean;
   private jar: Cookies = new Cookies();
   private fetch: Promise<koffiLoad>;
-  private timeout: number | null;
 
   /**
    *
@@ -93,6 +97,31 @@ export class Session {
     this.debug = options?.debug || false;
     this.insecureSkipVerify = options?.insecureSkipVerify || false;
     this.timeout = options?.timeout || 30 * 1000;
+    this.disableIPV4 = options?.disableIPV4 || false;
+    this.disableIPV6 = options?.disableIPV6 || false;
+  }
+
+  /**
+   * Retrieves all cookies from the jar.
+   *
+   * This getter fetches all cookies stored in the jar instance of the class.
+   *
+   * @returns An object where keys are URLs and values are objects containing cookies as key-value pairs.
+   *
+   * @example
+    { 
+       "https://example.com/": {
+         "cookie1": "value1",
+         "cookie2": "value2"
+       },
+       "https://anotherdomain.com/": {
+         "cookieA": "valueA",
+         "cookieB": "valueB"
+       }
+    }
+   */
+  public get cookies() {
+    return this.jar.fetchAllCookies();
   }
 
   /**
@@ -135,11 +164,11 @@ export class Session {
     return this.execute("GET", url, {
       headers: options?.headers,
       redirect: options?.redirect,
-      additionalDecode: options?.additionalDecode
-        ? options?.additionalDecode
-        : false,
+      additionalDecode: options?.additionalDecode || false,
       proxy: options?.proxy,
       cookies: options?.cookies,
+      byteResponse: options?.byteResponse || false,
+      hostOverride: options?.hostOverride || null,
     });
   }
 
@@ -155,11 +184,11 @@ export class Session {
     return this.execute("DELETE", url, {
       headers: options?.headers,
       redirect: options?.redirect,
-      additionalDecode: options?.additionalDecode
-        ? options?.additionalDecode
-        : false,
+      additionalDecode: options?.additionalDecode || false,
       proxy: options?.proxy,
       cookies: options?.cookies,
+      byteResponse: options?.byteResponse || false,
+      hostOverride: options?.hostOverride || null,
     });
   }
 
@@ -175,11 +204,10 @@ export class Session {
     return this.execute("OPTIONS", url, {
       headers: options?.headers,
       redirect: options?.redirect,
-      additionalDecode: options?.additionalDecode
-        ? options?.additionalDecode
-        : false,
+      additionalDecode: options?.additionalDecode || false,
       proxy: options?.proxy,
       cookies: options?.cookies,
+      hostOverride: options?.hostOverride || null,
     });
   }
 
@@ -195,11 +223,10 @@ export class Session {
     return this.execute("HEAD", url, {
       headers: options?.headers,
       redirect: options?.redirect,
-      additionalDecode: options?.additionalDecode
-        ? options?.additionalDecode
-        : false,
+      additionalDecode: options?.additionalDecode || false,
       proxy: options?.proxy,
       cookies: options?.cookies,
+      hostOverride: options?.hostOverride || null,
     });
   }
 
@@ -216,11 +243,11 @@ export class Session {
       body: options?.body,
       headers: options?.headers,
       redirect: options?.redirect,
-      additionalDecode: options?.additionalDecode
-        ? options?.additionalDecode
-        : false,
+      additionalDecode: options?.additionalDecode || false,
       proxy: options?.proxy,
       cookies: options?.cookies,
+      byteResponse: options?.byteResponse || false,
+      hostOverride: options?.hostOverride || null,
     });
   }
 
@@ -237,11 +264,11 @@ export class Session {
       body: options?.body,
       headers: options?.headers,
       redirect: options?.redirect,
-      additionalDecode: options?.additionalDecode
-        ? options?.additionalDecode
-        : false,
+      additionalDecode: options?.additionalDecode || false,
       proxy: options?.proxy,
       cookies: options?.cookies,
+      byteResponse: options?.byteResponse || false,
+      hostOverride: options?.hostOverride || null,
     });
   }
 
@@ -258,11 +285,11 @@ export class Session {
       body: options?.body,
       headers: options?.headers,
       redirect: options?.redirect,
-      additionalDecode: options?.additionalDecode
-        ? options?.additionalDecode
-        : false,
+      additionalDecode: options?.additionalDecode || false,
       proxy: options?.proxy,
       cookies: options?.cookies,
+      byteResponse: options?.byteResponse || false,
+      hostOverride: options?.hostOverride || null,
     });
   }
 
@@ -280,27 +307,30 @@ export class Session {
     let requestCookies: any = [];
 
     if (options?.cookies) {
-      requestCookies = this.jar.merge(options.cookies, url);
+      requestCookies = this.jar.mergeCookies(options.cookies, url);
     }
 
     let skeletonPayload: any = {
       sessionId: this.sessionId,
-      followRedirects: options?.redirect ? options.redirect : false,
+      followRedirects: options?.redirect || false,
       forceHttp1: this.forceHttp1,
       withDebug: this.debug,
       headers,
       headerOrder: this.headerOrder,
       insecureSkipVerify: this.insecureSkipVerify,
-      additionalDecode: options?.additionalDecode
-        ? options?.additionalDecode
-        : false,
-      proxyUrl: options?.proxy ? options?.proxy : this.proxy,
+      additionalDecode: options?.additionalDecode,
+      proxyUrl: options?.proxy || this.proxy,
       requestUrl: url,
       requestMethod: method,
-      requestBody: options?.body ? options.body : null,
+      requestBody: options?.body || null,
       requestCookies: requestCookies,
-      timeoutMilliseconds: this?.timeout,
+      timeoutMilliseconds: this.timeout || null,
       withRandomTLSExtensionOrder: this.randomTlsExtensionOrder,
+      isByteResponse: options?.byteResponse,
+      isByteRequest: isByteRequest(headers),
+      requestHostOverride: options?.hostOverride,
+      disableIPV6: this.disableIPV6,
+      disableIPV4: this.disableIPV4,
     };
 
     if (this.clientIdentifier) {
@@ -321,7 +351,7 @@ export class Session {
         alpnProtocols: this.alpnProtocols,
         alpsProtocols: this.alpsProtocols,
       };
-    } else skeletonPayload["tlsClientIdentifier"] = "chrome_120";
+    } else skeletonPayload["tlsClientIdentifier"] = "chrome_124";
 
     const requestPayloadString = JSON.stringify(skeletonPayload);
 
@@ -329,9 +359,9 @@ export class Session {
 
     if (!res) throw new Error("No response from the server.");
 
-    const response = JSON.parse(res);
+    const response: TlsResponse = JSON.parse(res);
 
-    let cookies = await this.jar.check(response.cookies, url);
+    let cookies = this.jar.syncCookies(response.cookies, url);
 
     await this.free(response.id);
 

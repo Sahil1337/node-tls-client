@@ -27,14 +27,36 @@ export declare class Session {
     private headers;
     private alpnProtocols?;
     private alpsProtocols;
+    private timeout;
+    private disableIPV6;
+    private disableIPV4;
     private jar;
     private fetch;
-    private timeout;
     /**
      *
      * @param options
      */
     constructor(options?: SessionOptions);
+    /**
+     * Retrieves all cookies from the jar.
+     *
+     * This getter fetches all cookies stored in the jar instance of the class.
+     *
+     * @returns An object where keys are URLs and values are objects containing cookies as key-value pairs.
+     *
+     * @example
+     *  {
+     *    "https://example.com/": {
+     *      "cookie1": "value1",
+     *      "cookie2": "value2"
+     *    },
+     *    "https://anotherdomain.com/": {
+     *      "cookieA": "valueA",
+     *      "cookieB": "valueB"
+     *    }
+     *  }
+     */
+    get cookies(): import("tough-cookie").Cookie.Serialized;
     /**
      * The 'close' method closes the current session.
      *

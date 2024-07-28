@@ -4,6 +4,7 @@ exports.Session = void 0;
 const crypto_1 = require("crypto");
 const _1 = require(".");
 const koffi_1 = require("../utils/koffi");
+const request_1 = require("../utils/request");
 // Version of the current session.
 const __version__ = "1";
 /**
@@ -33,9 +34,11 @@ class Session {
     headers;
     alpnProtocols;
     alpsProtocols;
+    timeout;
+    disableIPV6;
+    disableIPV4;
     jar = new _1.Cookies();
     fetch;
-    timeout;
     /**
      *
      * @param options
@@ -69,6 +72,30 @@ class Session {
         this.debug = options?.debug || false;
         this.insecureSkipVerify = options?.insecureSkipVerify || false;
         this.timeout = options?.timeout || 30 * 1000;
+        this.disableIPV4 = options?.disableIPV4 || false;
+        this.disableIPV6 = options?.disableIPV6 || false;
+    }
+    /**
+     * Retrieves all cookies from the jar.
+     *
+     * This getter fetches all cookies stored in the jar instance of the class.
+     *
+     * @returns An object where keys are URLs and values are objects containing cookies as key-value pairs.
+     *
+     * @example
+     *  {
+     *    "https://example.com/": {
+     *      "cookie1": "value1",
+     *      "cookie2": "value2"
+     *    },
+     *    "https://anotherdomain.com/": {
+     *      "cookieA": "valueA",
+     *      "cookieB": "valueB"
+     *    }
+     *  }
+     */
+    get cookies() {
+        return this.jar.fetchAllCookies();
     }
     /**
      * The 'close' method closes the current session.
@@ -105,11 +132,11 @@ class Session {
         return this.execute("GET", url, {
             headers: options?.headers,
             redirect: options?.redirect,
-            additionalDecode: options?.additionalDecode
-                ? options?.additionalDecode
-                : false,
+            additionalDecode: options?.additionalDecode || false,
             proxy: options?.proxy,
             cookies: options?.cookies,
+            byteResponse: options?.byteResponse || false,
+            hostOverride: options?.hostOverride || null,
         });
     }
     /**
@@ -124,11 +151,11 @@ class Session {
         return this.execute("DELETE", url, {
             headers: options?.headers,
             redirect: options?.redirect,
-            additionalDecode: options?.additionalDecode
-                ? options?.additionalDecode
-                : false,
+            additionalDecode: options?.additionalDecode || false,
             proxy: options?.proxy,
             cookies: options?.cookies,
+            byteResponse: options?.byteResponse || false,
+            hostOverride: options?.hostOverride || null,
         });
     }
     /**
@@ -143,11 +170,10 @@ class Session {
         return this.execute("OPTIONS", url, {
             headers: options?.headers,
             redirect: options?.redirect,
-            additionalDecode: options?.additionalDecode
-                ? options?.additionalDecode
-                : false,
+            additionalDecode: options?.additionalDecode || false,
             proxy: options?.proxy,
             cookies: options?.cookies,
+            hostOverride: options?.hostOverride || null,
         });
     }
     /**
@@ -162,11 +188,10 @@ class Session {
         return this.execute("HEAD", url, {
             headers: options?.headers,
             redirect: options?.redirect,
-            additionalDecode: options?.additionalDecode
-                ? options?.additionalDecode
-                : false,
+            additionalDecode: options?.additionalDecode || false,
             proxy: options?.proxy,
             cookies: options?.cookies,
+            hostOverride: options?.hostOverride || null,
         });
     }
     /**
@@ -182,11 +207,11 @@ class Session {
             body: options?.body,
             headers: options?.headers,
             redirect: options?.redirect,
-            additionalDecode: options?.additionalDecode
-                ? options?.additionalDecode
-                : false,
+            additionalDecode: options?.additionalDecode || false,
             proxy: options?.proxy,
             cookies: options?.cookies,
+            byteResponse: options?.byteResponse || false,
+            hostOverride: options?.hostOverride || null,
         });
     }
     /**
@@ -202,11 +227,11 @@ class Session {
             body: options?.body,
             headers: options?.headers,
             redirect: options?.redirect,
-            additionalDecode: options?.additionalDecode
-                ? options?.additionalDecode
-                : false,
+            additionalDecode: options?.additionalDecode || false,
             proxy: options?.proxy,
             cookies: options?.cookies,
+            byteResponse: options?.byteResponse || false,
+            hostOverride: options?.hostOverride || null,
         });
     }
     /**
@@ -222,11 +247,11 @@ class Session {
             body: options?.body,
             headers: options?.headers,
             redirect: options?.redirect,
-            additionalDecode: options?.additionalDecode
-                ? options?.additionalDecode
-                : false,
+            additionalDecode: options?.additionalDecode || false,
             proxy: options?.proxy,
             cookies: options?.cookies,
+            byteResponse: options?.byteResponse || false,
+            hostOverride: options?.hostOverride || null,
         });
     }
     /**
@@ -242,26 +267,29 @@ class Session {
         let headers = options?.headers ? options?.headers : this.headers;
         let requestCookies = [];
         if (options?.cookies) {
-            requestCookies = this.jar.merge(options.cookies, url);
+            requestCookies = this.jar.mergeCookies(options.cookies, url);
         }
         let skeletonPayload = {
             sessionId: this.sessionId,
-            followRedirects: options?.redirect ? options.redirect : false,
+            followRedirects: options?.redirect || false,
             forceHttp1: this.forceHttp1,
             withDebug: this.debug,
             headers,
             headerOrder: this.headerOrder,
             insecureSkipVerify: this.insecureSkipVerify,
-            additionalDecode: options?.additionalDecode
-                ? options?.additionalDecode
-                : false,
-            proxyUrl: options?.proxy ? options?.proxy : this.proxy,
+            additionalDecode: options?.additionalDecode,
+            proxyUrl: options?.proxy || this.proxy,
             requestUrl: url,
             requestMethod: method,
-            requestBody: options?.body ? options.body : null,
+            requestBody: options?.body || null,
             requestCookies: requestCookies,
-            timeoutMilliseconds: this?.timeout,
+            timeoutMilliseconds: this.timeout || null,
             withRandomTLSExtensionOrder: this.randomTlsExtensionOrder,
+            isByteResponse: options?.byteResponse,
+            isByteRequest: (0, request_1.isByteRequest)(headers),
+            requestHostOverride: options?.hostOverride,
+            disableIPV6: this.disableIPV6,
+            disableIPV4: this.disableIPV4,
         };
         if (this.clientIdentifier) {
             skeletonPayload["tlsClientIdentifier"] = this.clientIdentifier;
@@ -284,13 +312,13 @@ class Session {
             };
         }
         else
-            skeletonPayload["tlsClientIdentifier"] = "chrome_120";
+            skeletonPayload["tlsClientIdentifier"] = "chrome_124";
         const requestPayloadString = JSON.stringify(skeletonPayload);
         const res = (await this.fetch).request(requestPayloadString);
         if (!res)
             throw new Error("No response from the server.");
         const response = JSON.parse(res);
-        let cookies = await this.jar.check(response.cookies, url);
+        let cookies = this.jar.syncCookies(response.cookies, url);
         await this.free(response.id);
         return new _1.Response({ ...response, cookies });
     }
