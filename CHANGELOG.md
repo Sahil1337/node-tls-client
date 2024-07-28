@@ -12,7 +12,7 @@
 - Added `disableIPV6` and `disableIPV4` options in `SessionOptions`. For detailed information, see [SessionOptions](https://sahil1337.github.io/node-tls-client/interfaces/SessionOptions.html#disableIPV4)
 - Added `hostOverride` property in requestOptions. Used to override the Host header, typically needed when making requests directly to an IP address.
 - `chrome_124` profile will be used when no `client_identifier` is specified in session options.
-- Refactored cookies.ts and session typinhd for improved readability (internal change, no impact on existing use cases)
+- Refactored cookies.ts and session typings for improved readability (internal change, no impact on existing use cases)
 - Updated TlsResponse according to new changes.
 
 # 1.1.3 (June 13, 2024)
