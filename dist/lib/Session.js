@@ -1,19 +1,29 @@
 "use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Session = void 0;
 const crypto_1 = require("crypto");
+const session_1 = require("../interface/session");
+const utils_1 = require("../utils");
+const decorators_1 = require("../decorators");
 const _1 = require(".");
-const koffi_1 = require("../utils/koffi");
-const request_1 = require("../utils/request");
-// Version of the current session.
-const __version__ = "1";
-/**
- * Session class represents a HTTP session.
- * It provides methods to perform various HTTP requests.
- */
+const workerpool_1 = __importDefault(require("workerpool"));
+const __version__ = "1.0.0";
 class Session {
     sessionId;
     proxy;
+    isRotatingProxy;
     clientIdentifier;
     ja3string;
     h2Settings;
@@ -38,15 +48,12 @@ class Session {
     disableIPV6;
     disableIPV4;
     jar = new _1.Cookies();
-    fetch;
-    /**
-     *
-     * @param options
-     */
+    pool;
+    isReady = false;
     constructor(options) {
-        this.fetch = (0, koffi_1.load)();
         this.sessionId = (0, crypto_1.randomUUID)();
-        this.proxy = options?.proxy ? options?.proxy : null;
+        this.proxy = options?.proxy || null;
+        this.isRotatingProxy = options?.isRotatingProxy ?? false;
         this.alpnProtocols = options?.alpnProtocols || ["h2", "http/1.1"];
         this.alpsProtocols = options?.alpsProtocols || ["http/1.1"];
         this.headers = options?.headers || {
@@ -72,27 +79,40 @@ class Session {
         this.debug = options?.debug || false;
         this.insecureSkipVerify = options?.insecureSkipVerify || false;
         this.timeout = options?.timeout || 30 * 1000;
-        this.disableIPV4 = options?.disableIPV4 || false;
-        this.disableIPV6 = options?.disableIPV6 || false;
+        this.disableIPV4 = options?.disableIPV4 ?? false;
+        this.disableIPV6 = options?.disableIPV6 ?? false;
+    }
+    async init() {
+        if (this.isReady)
+            return true;
+        try {
+            if (!this.pool) {
+                this.pool = workerpool_1.default.pool(require.resolve("../utils/worker"));
+            }
+            this.isReady = true;
+            return true;
+        }
+        catch (error) {
+            console.error("Initialization error:", error);
+            throw new utils_1.TlsClientError(error);
+        }
     }
     /**
      * Retrieves all cookies from the jar.
      *
-     * This getter fetches all cookies stored in the jar instance of the class.
-     *
      * @returns An object where keys are URLs and values are objects containing cookies as key-value pairs.
      *
      * @example
-     *  {
-     *    "https://example.com/": {
-     *      "cookie1": "value1",
-     *      "cookie2": "value2"
-     *    },
-     *    "https://anotherdomain.com/": {
-     *      "cookieA": "valueA",
-     *      "cookieB": "valueB"
-     *    }
-     *  }
+      {
+         "https://example.com/": {
+           "cookie1": "value1",
+           "cookie2": "value2"
+         },
+         "https://anotherdomain.com/": {
+           "cookieA": "valueA",
+           "cookieB": "valueB"
+         }
+      }
      */
     get cookies() {
         return this.jar.fetchAllCookies();
@@ -106,8 +126,8 @@ class Session {
         const payload = JSON.stringify({
             sessionId: this.sessionId,
         });
-        const response = JSON.parse((await this.fetch).destroySession(payload));
-        await this.free(response.id);
+        const response = await this.pool?.exec("destroySession", [payload]);
+        await this.pool?.terminate();
         return response;
     }
     /**
@@ -118,7 +138,8 @@ class Session {
      * @returns The response from the 'destroySession' function.
      */
     async free(id) {
-        return (await this.fetch).freeMemory(id);
+        await this.pool?.exec("freeMemory", [id]);
+        return;
     }
     /**
      * The 'get' method performs a GET request to the provided URL with the provided options.
@@ -128,7 +149,7 @@ class Session {
      *
      * @returns The response from the 'execute' method.
      */
-    async get(url, options) {
+    get(url, options) {
         return this.execute("GET", url, {
             headers: options?.headers,
             redirect: options?.redirect,
@@ -137,6 +158,7 @@ class Session {
             cookies: options?.cookies,
             byteResponse: options?.byteResponse || false,
             hostOverride: options?.hostOverride || null,
+            ...options,
         });
     }
     /**
@@ -147,7 +169,7 @@ class Session {
      *
      * @returns The response from the 'execute' method.
      */
-    async delete(url, options) {
+    delete(url, options) {
         return this.execute("DELETE", url, {
             headers: options?.headers,
             redirect: options?.redirect,
@@ -156,6 +178,7 @@ class Session {
             cookies: options?.cookies,
             byteResponse: options?.byteResponse || false,
             hostOverride: options?.hostOverride || null,
+            ...options,
         });
     }
     /**
@@ -166,7 +189,7 @@ class Session {
      *
      * @returns The response from the 'execute' method.
      */
-    async options(url, options) {
+    options(url, options) {
         return this.execute("OPTIONS", url, {
             headers: options?.headers,
             redirect: options?.redirect,
@@ -174,6 +197,7 @@ class Session {
             proxy: options?.proxy,
             cookies: options?.cookies,
             hostOverride: options?.hostOverride || null,
+            ...options,
         });
     }
     /**
@@ -184,7 +208,7 @@ class Session {
      *
      * @returns The response from the 'execute' method.
      */
-    async head(url, options) {
+    head(url, options) {
         return this.execute("HEAD", url, {
             headers: options?.headers,
             redirect: options?.redirect,
@@ -192,6 +216,7 @@ class Session {
             proxy: options?.proxy,
             cookies: options?.cookies,
             hostOverride: options?.hostOverride || null,
+            ...options,
         });
     }
     /**
@@ -202,7 +227,7 @@ class Session {
      *
      * @returns The response from the 'execute' method.
      */
-    async post(url, options) {
+    post(url, options) {
         return this.execute("POST", url, {
             body: options?.body,
             headers: options?.headers,
@@ -212,6 +237,7 @@ class Session {
             cookies: options?.cookies,
             byteResponse: options?.byteResponse || false,
             hostOverride: options?.hostOverride || null,
+            ...options,
         });
     }
     /**
@@ -222,7 +248,7 @@ class Session {
      *
      * @returns The response from the 'execute' method.
      */
-    async patch(url, options) {
+    patch(url, options) {
         return this.execute("PATCH", url, {
             body: options?.body,
             headers: options?.headers,
@@ -232,6 +258,7 @@ class Session {
             cookies: options?.cookies,
             byteResponse: options?.byteResponse || false,
             hostOverride: options?.hostOverride || null,
+            ...options,
         });
     }
     /**
@@ -242,7 +269,7 @@ class Session {
      *
      * @returns The response from the 'execute' method.
      */
-    async put(url, options) {
+    put(url, options) {
         return this.execute("PUT", url, {
             body: options?.body,
             headers: options?.headers,
@@ -252,6 +279,7 @@ class Session {
             cookies: options?.cookies,
             byteResponse: options?.byteResponse || false,
             hostOverride: options?.hostOverride || null,
+            ...options,
         });
     }
     /**
@@ -286,10 +314,11 @@ class Session {
             timeoutMilliseconds: this.timeout || null,
             withRandomTLSExtensionOrder: this.randomTlsExtensionOrder,
             isByteResponse: options?.byteResponse,
-            isByteRequest: (0, request_1.isByteRequest)(headers),
+            isByteRequest: (0, utils_1.isByteRequest)(headers),
             requestHostOverride: options?.hostOverride,
             disableIPV6: this.disableIPV6,
             disableIPV4: this.disableIPV4,
+            isRotatingProxy: options?.isRotatingProxy ?? this.isRotatingProxy,
         };
         if (this.clientIdentifier) {
             skeletonPayload["tlsClientIdentifier"] = this.clientIdentifier;
@@ -312,15 +341,68 @@ class Session {
             };
         }
         else
-            skeletonPayload["tlsClientIdentifier"] = "chrome_124";
+            skeletonPayload["tlsClientIdentifier"] = session_1.ClientIdentifier.chrome_131;
         const requestPayloadString = JSON.stringify(skeletonPayload);
-        const res = (await this.fetch).request(requestPayloadString);
-        if (!res)
-            throw new Error("No response from the server.");
-        const response = JSON.parse(res);
-        let cookies = this.jar.syncCookies(response.cookies, url);
-        await this.free(response.id);
-        return new _1.Response({ ...response, cookies });
+        let res = await this.pool?.exec("request", [
+            requestPayloadString,
+        ]);
+        let cookies = this.jar.syncCookies(res?.cookies, url);
+        await this.free(res.id);
+        return new _1.Response({ ...res, cookies });
     }
 }
 exports.Session = Session;
+__decorate([
+    (0, decorators_1.verifyClientState)(),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], Session.prototype, "close", null);
+__decorate([
+    (0, decorators_1.verifyClientState)(),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], Session.prototype, "free", null);
+__decorate([
+    (0, decorators_1.verifyClientState)(),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], Session.prototype, "get", null);
+__decorate([
+    (0, decorators_1.verifyClientState)(),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], Session.prototype, "delete", null);
+__decorate([
+    (0, decorators_1.verifyClientState)(),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], Session.prototype, "options", null);
+__decorate([
+    (0, decorators_1.verifyClientState)(),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], Session.prototype, "head", null);
+__decorate([
+    (0, decorators_1.verifyClientState)(),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], Session.prototype, "post", null);
+__decorate([
+    (0, decorators_1.verifyClientState)(),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], Session.prototype, "patch", null);
+__decorate([
+    (0, decorators_1.verifyClientState)(),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], Session.prototype, "put", null);

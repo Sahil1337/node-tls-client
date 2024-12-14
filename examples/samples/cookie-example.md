@@ -3,6 +3,7 @@
 ## Retrieving all session cookies
 ```javascript
 const session = new Session();
+await session.init();
 const request1 = await session.get("https://website.com")
 const request2 = await session.get("https://website.com")
 const request3 = await session.get("https://example.com")

@@ -1,7 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.fetch = void 0;
-const Session_1 = require("./Session");
+const _1 = require(".");
+const utils_1 = require("../utils");
 /**
  * Makes an HTTP request using the specified URL and options.
  *
@@ -11,9 +12,10 @@ const Session_1 = require("./Session");
  * @throws Will throw an error if the HTTP request fails or the method is not allowed.
  */
 async function fetch(url, options) {
-    const session = new Session_1.Session(options?.options);
+    const session = new _1.Session(options?.options);
     const method = options?.method?.toUpperCase() || "GET";
     try {
+        await session.init();
         let response;
         switch (method) {
             case "GET":
@@ -43,7 +45,7 @@ async function fetch(url, options) {
         return response;
     }
     catch (error) {
-        throw error;
+        throw new utils_1.TlsClientError(error);
     }
     finally {
         await session.close();

@@ -1,5 +1,5 @@
 import { fetchOptions } from "../interface";
-import { Response } from "./Response";
+import { Response } from ".";
 /**
  * Makes an HTTP request using the specified URL and options.
  *

@@ -1,3 +1,11 @@
+# 2.0.0 (December 15, 2024)
+> [!WARNING]  
+> This version contains breaking changes.
+- Call `<session>.init()` after setting up a session and before using any HTTP methods. (See the documentation for more details.)
+- Resolved memory leak issues by moving to workerpool.  
+- Added new profiles: `chrome_131`, `chrome_131_psk`, `firefox_132`, `firefox_133`, and `ios_safari_18`. The default profile is now `chrome_131` (previously `chrome_124`).  
+- Introduced the `isRotatingProxy` option for handling rotating proxies. PS: [SessionOptions](https://sahil1337.github.io/node-tls-client/interfaces/SessionOptions.html)
+
 # 1.1.4 (July 29, 2024)
 > [!IMPORTANT]
 > This version includes significant updates and improvements.

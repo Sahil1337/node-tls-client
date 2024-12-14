@@ -8,6 +8,14 @@ const colors = {
     green: "\x1b[32m",
     cyan: "\x1b[36m",
 };
+/**
+ * Logger utility.
+ *
+ * @property {Function} debug - Logs a debug message.
+ * @property {Function} error - Logs an error message.
+ * @property {Function} success - Logs a success message.
+ * @property {Function} hyperlink - Generates a clickable hyperlink.
+ */
 exports.logger = {
     debug: function (...args) {
         return process.stdout.write(`${colors.cyan}@node-tls-client ~ ${colors.blue}DEBUG:${colors.reset} ${args.join(" ")}\n`);

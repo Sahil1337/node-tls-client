@@ -1,14 +1,6 @@
 import { CookieJar } from "tough-cookie";
 
-/**
- * Cookies class extends the CookieJar class from the "tough-cookie" library.
- * It provides methods to manage cookies for a specific URL.
- */
 export class Cookies extends CookieJar {
-  /**
-   * Constructor for the Cookies class.
-   * It calls the constructor of the parent class CookieJar.
-   */
   constructor() {
     super();
   }
@@ -53,7 +45,7 @@ export class Cookies extends CookieJar {
    * @returns An object containing cookies as key-value pairs.
    *
    * @example
-   * fetchJSON('http://example.com')
+   * fetchCookiesObject('http://example.com')
    */
   public fetchCookiesObject(url: string): Record<string, string> {
     return this.getCookiesSync(url).reduce((acc, cookie) => {
@@ -70,7 +62,7 @@ export class Cookies extends CookieJar {
    * @returns An array of objects, each containing the name and value of a cookie.
    *
    * @example
-   * fetchSequence('http://example.com')
+   * fetchCookiesList('http://example.com')
    */
   public fetchCookiesList(url: string) {
     return this.getCookiesSync(url).map((cookie) => ({
@@ -87,7 +79,7 @@ export class Cookies extends CookieJar {
    * @returns An object containing cookies as key-value pairs.
    *
    * @example
-   * check({ 'cookie1': 'value1', 'cookie2': 'value2' }, 'http://example.com')
+   * syncCookies({ 'cookie1': 'value1', 'cookie2': 'value2' }, 'http://example.com')
    */
   public syncCookies(cookies: Record<string, string>, url: string) {
     if (!cookies) return this.fetchCookiesObject(url);
@@ -107,7 +99,7 @@ export class Cookies extends CookieJar {
    * @returns An array of objects, each containing the name and value of a cookie.
    *
    * @example
-   * merge({ 'cookie1': 'value1', 'cookie2': 'value2' }, 'http://example.com')
+   * mergeCookies({ 'cookie1': 'value1', 'cookie2': 'value2' }, 'http://example.com')
    */
   public mergeCookies(cookies: Record<string, string>, url: string) {
     for (const [key, value] of Object.entries(cookies)) {

@@ -39,8 +39,8 @@ const { Session, ClientIdentifier  } = require("node-tls-client");
   const session = new Session({ clientIdentifer: ClientIdentifier.chrome_120, timeout: 3000 });
 
   try {
+    await session.init();
     const response = await session.get("https://website.com/");
-
     console.log(response.status, await response.text());
   } catch (error) {
     console.error("An error occurred:", error);
@@ -134,6 +134,7 @@ const { Session } = require("node-tls-client");
     },
   });
 
+  await session.init();
   const response = await session.get("http://localhost:3000/");
   console.log(response.status, await response.text());
   await session.close();
@@ -151,6 +152,8 @@ const { Session, ClientIdentifier } = require("node-tls-client");
     insecureSkipVerify: false, //SSL certificate verification
   });
 
+  await session.init();
+  
   const response = await session.get("https://example.com", {
     proxy: `http://user:pass@ip:port`, //proxy format: http://user:pass@ip:port or http://ip:port
     cookies: { parameter: "value" }, //cookies
@@ -175,7 +178,8 @@ const { Session, ClientIdentifier } = require("node-tls-client");
 | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | `sessionId`                    | string                                                                                                                                  | A unique identifier for the session.                                   |
 | `headers`                      | IncomingHttpHeaders                                                                                                                     | An object containing custom headers to send with the request.          |
-| `proxy`                        | string                                                                                                                                  | A proxy server URL to use for the request. [format: 'http://user:pass@ip:port or http://ip:port']                             |
+| `proxy`                        | string                                                                                                                                  | A proxy server URL to use for the request. [format: 'http://user:pass@ip:port or http://ip:port']
+| `isRotatingProxy`                        | boolean                                                                                                                                  | Whether the proxy is of rotating type or not.                      |
 | `clientIdentifier`             | [ClientIdentifier](https://sahil1337.github.io/node-tls-client/enums/ClientIdentifier.html)                                                                                                                                  | A string identifier for the client, e.g., `"chrome_120"`.              |
 | `ja3string`                    | string                                                                                                                                  | A string representing JA3 fingerprinting configuration.                |
 | `h2Settings`                   | [h2Settings](https://sahil1337.github.io/node-tls-client/interfaces/H2Settings.html)[]                                       | An object specifying HTTP/2 settings.                                  |
@@ -226,6 +230,7 @@ const { Session, ClientIdentifier } = require("node-tls-client");
 | `redirect`           | A boolean value indicating whether to follow redirects.                                         |
 | `additionalDecode`   | A boolean value indicating whether to perform additional decoding of the response content.      |
 | `proxy`              | The URL of the proxy server to be used for the request. [format: 'http://user:pass@ip:port or http://ip:port']                                                                                                                |
+| `isRotatingProxy`                        |  Whether the proxy is of rotating type or not.                      |
 | `cookies`            | An object containing cookies to be sent with the request.                                       |
 
 </div>

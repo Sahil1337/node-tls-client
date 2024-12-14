@@ -27,12 +27,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Download = void 0;
-const os_1 = __importDefault(require("os"));
 const logger_1 = require("./logger");
 const https_1 = __importDefault(require("https"));
 const fs_1 = __importStar(require("fs"));
 class Download {
-    temp = os_1.default.tmpdir();
     file;
     path;
     issueURL = "https://github.com/Sahil1337/node-tls-client/issues";
@@ -100,7 +98,7 @@ class Download {
                                 reject(err);
                             }
                             else {
-                                process.stdout.write("\n"); // Ensure a new line after the progress bar
+                                process.stdout.write("\n");
                                 resolve();
                             }
                         });

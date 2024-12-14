@@ -20,23 +20,19 @@ import {
   SessionOptions,
   ClientIdentifier,
   TlsResponse,
-} from "../interface";
-import { koffiLoad } from "../interface/koffi";
+} from "../interface/session";
 import { OutgoingHttpHeaders } from "http";
+import { isByteRequest, TlsClientError } from "../utils";
+import { verifyClientState } from "../decorators";
 import { Cookies, Response } from ".";
-import { load } from "../utils/koffi";
-import { isByteRequest } from "../utils/request";
+import workerpool from "workerpool";
 
-// Version of the current session.
-const __version__ = "1";
+const __version__ = "1.0.0";
 
-/**
- * Session class represents a HTTP session.
- * It provides methods to perform various HTTP requests.
- */
 export class Session {
   private sessionId?: string;
   private proxy?: string | null;
+  private isRotatingProxy: boolean;
   private clientIdentifier?: ClientIdentifier;
   private ja3string?: string;
   private h2Settings?: H2Settings;
@@ -61,17 +57,14 @@ export class Session {
   private disableIPV6: boolean;
   private disableIPV4: boolean;
   private jar: Cookies = new Cookies();
-  private fetch: Promise<koffiLoad>;
+  private pool?: workerpool.Pool;
 
-  /**
-   *
-   * @param options
-   */
+  public isReady: boolean = false;
+
   constructor(options?: SessionOptions) {
-    this.fetch = load();
-
     this.sessionId = randomUUID();
-    this.proxy = options?.proxy ? options?.proxy : null;
+    this.proxy = options?.proxy || null;
+    this.isRotatingProxy = options?.isRotatingProxy ?? false;
     this.alpnProtocols = options?.alpnProtocols || ["h2", "http/1.1"];
     this.alpsProtocols = options?.alpsProtocols || ["http/1.1"];
     this.headers = options?.headers || {
@@ -97,14 +90,28 @@ export class Session {
     this.debug = options?.debug || false;
     this.insecureSkipVerify = options?.insecureSkipVerify || false;
     this.timeout = options?.timeout || 30 * 1000;
-    this.disableIPV4 = options?.disableIPV4 || false;
-    this.disableIPV6 = options?.disableIPV6 || false;
+    this.disableIPV4 = options?.disableIPV4 ?? false;
+    this.disableIPV6 = options?.disableIPV6 ?? false;
+  }
+
+  public async init(): Promise<boolean> {
+    if (this.isReady) return true;
+
+    try {
+      if (!this.pool) {
+        this.pool = workerpool.pool(require.resolve("../utils/worker"));
+      }
+
+      this.isReady = true;
+      return true;
+    } catch (error) {
+      console.error("Initialization error:", error);
+      throw new TlsClientError(error as Error);
+    }
   }
 
   /**
    * Retrieves all cookies from the jar.
-   *
-   * This getter fetches all cookies stored in the jar instance of the class.
    *
    * @returns An object where keys are URLs and values are objects containing cookies as key-value pairs.
    *
@@ -129,15 +136,13 @@ export class Session {
    *
    * @returns The response from the 'destroySession' function.
    */
+  @verifyClientState()
   public async close() {
     const payload = JSON.stringify({
       sessionId: this.sessionId,
     });
-
-    const response = JSON.parse((await this.fetch).destroySession(payload));
-
-    await this.free(response.id);
-
+    const response = await this.pool?.exec("destroySession", [payload]);
+    await this.pool?.terminate();
     return response;
   }
 
@@ -148,8 +153,10 @@ export class Session {
    *
    * @returns The response from the 'destroySession' function.
    */
-  private async free(id: string) {
-    return (await this.fetch).freeMemory(id);
+  @verifyClientState()
+  private async free(id: string): Promise<void> {
+    await this.pool?.exec("freeMemory", [id]);
+    return;
   }
 
   /**
@@ -160,7 +167,8 @@ export class Session {
    *
    * @returns The response from the 'execute' method.
    */
-  public async get(url: string, options?: GetRequestOptions) {
+  @verifyClientState()
+  public get(url: string, options?: GetRequestOptions) {
     return this.execute("GET", url, {
       headers: options?.headers,
       redirect: options?.redirect,
@@ -169,6 +177,7 @@ export class Session {
       cookies: options?.cookies,
       byteResponse: options?.byteResponse || false,
       hostOverride: options?.hostOverride || null,
+      ...options,
     });
   }
 
@@ -180,7 +189,8 @@ export class Session {
    *
    * @returns The response from the 'execute' method.
    */
-  public async delete(url: string, options?: DeleteRequestOptions) {
+  @verifyClientState()
+  public delete(url: string, options?: DeleteRequestOptions) {
     return this.execute("DELETE", url, {
       headers: options?.headers,
       redirect: options?.redirect,
@@ -189,6 +199,7 @@ export class Session {
       cookies: options?.cookies,
       byteResponse: options?.byteResponse || false,
       hostOverride: options?.hostOverride || null,
+      ...options,
     });
   }
 
@@ -200,7 +211,8 @@ export class Session {
    *
    * @returns The response from the 'execute' method.
    */
-  public async options(url: string, options?: OptionsRequestOptions) {
+  @verifyClientState()
+  public options(url: string, options?: OptionsRequestOptions) {
     return this.execute("OPTIONS", url, {
       headers: options?.headers,
       redirect: options?.redirect,
@@ -208,6 +220,7 @@ export class Session {
       proxy: options?.proxy,
       cookies: options?.cookies,
       hostOverride: options?.hostOverride || null,
+      ...options,
     });
   }
 
@@ -219,7 +232,8 @@ export class Session {
    *
    * @returns The response from the 'execute' method.
    */
-  public async head(url: string, options?: HeadRequestOptions) {
+  @verifyClientState()
+  public head(url: string, options?: HeadRequestOptions) {
     return this.execute("HEAD", url, {
       headers: options?.headers,
       redirect: options?.redirect,
@@ -227,6 +241,7 @@ export class Session {
       proxy: options?.proxy,
       cookies: options?.cookies,
       hostOverride: options?.hostOverride || null,
+      ...options,
     });
   }
 
@@ -238,7 +253,8 @@ export class Session {
    *
    * @returns The response from the 'execute' method.
    */
-  public async post(url: string, options?: PostRequestOptions) {
+  @verifyClientState()
+  public post(url: string, options?: PostRequestOptions) {
     return this.execute("POST", url, {
       body: options?.body,
       headers: options?.headers,
@@ -248,6 +264,7 @@ export class Session {
       cookies: options?.cookies,
       byteResponse: options?.byteResponse || false,
       hostOverride: options?.hostOverride || null,
+      ...options,
     });
   }
 
@@ -259,7 +276,8 @@ export class Session {
    *
    * @returns The response from the 'execute' method.
    */
-  public async patch(url: string, options?: PatchRequestOptions) {
+  @verifyClientState()
+  public patch(url: string, options?: PatchRequestOptions) {
     return this.execute("PATCH", url, {
       body: options?.body,
       headers: options?.headers,
@@ -269,6 +287,7 @@ export class Session {
       cookies: options?.cookies,
       byteResponse: options?.byteResponse || false,
       hostOverride: options?.hostOverride || null,
+      ...options,
     });
   }
 
@@ -280,7 +299,8 @@ export class Session {
    *
    * @returns The response from the 'execute' method.
    */
-  public async put(url: string, options?: PutRequestOptions) {
+  @verifyClientState()
+  public put(url: string, options?: PutRequestOptions) {
     return this.execute("PUT", url, {
       body: options?.body,
       headers: options?.headers,
@@ -290,6 +310,7 @@ export class Session {
       cookies: options?.cookies,
       byteResponse: options?.byteResponse || false,
       hostOverride: options?.hostOverride || null,
+      ...options,
     });
   }
 
@@ -302,7 +323,11 @@ export class Session {
    *
    * @returns A new Response object.
    */
-  private async execute(method: Methods, url: string, options: RequestOptions) {
+  protected async execute(
+    method: Methods,
+    url: string,
+    options: RequestOptions
+  ) {
     let headers = options?.headers ? options?.headers : this.headers;
     let requestCookies: any = [];
 
@@ -331,6 +356,7 @@ export class Session {
       requestHostOverride: options?.hostOverride,
       disableIPV6: this.disableIPV6,
       disableIPV4: this.disableIPV4,
+      isRotatingProxy: options?.isRotatingProxy ?? this.isRotatingProxy,
     };
 
     if (this.clientIdentifier) {
@@ -351,20 +377,18 @@ export class Session {
         alpnProtocols: this.alpnProtocols,
         alpsProtocols: this.alpsProtocols,
       };
-    } else skeletonPayload["tlsClientIdentifier"] = "chrome_124";
+    } else skeletonPayload["tlsClientIdentifier"] = ClientIdentifier.chrome_131;
 
     const requestPayloadString = JSON.stringify(skeletonPayload);
 
-    const res = (await this.fetch).request(requestPayloadString);
+    let res: TlsResponse = await this.pool?.exec("request", [
+      requestPayloadString,
+    ]);
 
-    if (!res) throw new Error("No response from the server.");
+    let cookies = this.jar.syncCookies(res?.cookies, url);
 
-    const response: TlsResponse = JSON.parse(res);
+    await this.free(res.id);
 
-    let cookies = this.jar.syncCookies(response.cookies, url);
-
-    await this.free(response.id);
-
-    return new Response({ ...response, cookies });
+    return new Response({ ...res, cookies });
   }
 }

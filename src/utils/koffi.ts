@@ -1,11 +1,15 @@
 import path from "path";
 import fs from "fs";
-import { koffiLoad } from "../interface/koffi";
 import os from "os";
 import { load as koffi } from "koffi";
 import { Download } from "./download";
+import { IClient } from "../interface/client";
 
-export async function load(): Promise<koffiLoad> {
+/**
+ * Downloads and loads the native library.
+ * @returns {Promise<IClient>}
+ */
+export async function load(): Promise<IClient> {
   const file = fileInfo();
   const temp = os.tmpdir();
   const libraryPath = path.join(temp, file.name);

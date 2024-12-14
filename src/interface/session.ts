@@ -146,6 +146,8 @@ export enum ClientIdentifier {
   chrome_117 = "chrome_117",
   chrome_120 = "chrome_120",
   chrome_124 = "chrome_124",
+  chrome_131 = "chrome_131",
+  chrome_131_psk = "chrome_131_PSK",
 
   // Safari versions
   safari_15_6_1 = "safari_15_6_1",
@@ -155,6 +157,7 @@ export enum ClientIdentifier {
   safari_ios_15_6 = "safari_ios_15_6",
   safari_ios_16_0 = "safari_ios_16_0",
   safari_ios_17_0 = "safari_ios_17_0",
+  safari_ios_18_0 = "safari_ios_18_0",
 
   // Firefox versions
   firefox_102 = "firefox_102",
@@ -166,6 +169,8 @@ export enum ClientIdentifier {
   firefox_117 = "firefox_117",
   firefox_120 = "firefox_120",
   firefox_123 = "firefox_123",
+  firefox_132 = "firefox_132",
+  firefox_133 = "firefox_133",
 
   // Opera versions
   opera_89 = "opera_89",
@@ -229,6 +234,11 @@ export interface SessionOptions {
    * The proxy server to use for the session.
    */
   proxy?: string;
+
+  /**
+   * Whether the proxy is rotating proxy.
+   */
+  isRotatingProxy?: boolean;
 
   /**
    * The client identifier for the session.
@@ -366,6 +376,11 @@ export interface BaseRequestOptions {
   proxy?: string;
 
   /**
+   * Whether proxy is rotating proxy or not.
+   */
+  isRotatingProxy?: boolean;
+
+  /**
    * Cookies for the request.
    */
   cookies?: Record<string, any>;
@@ -459,6 +474,11 @@ export interface fetchOptions {
    * The proxy server to use for the request.
    */
   proxy?: string;
+
+  /**
+   * Whether proxy is rotating proxy or not.
+   */
+  isRotatingProxy?: boolean;
 
   /**
    * Cookies for the request.

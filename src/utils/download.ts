@@ -1,11 +1,9 @@
-import os from "os";
 import { logger } from "./logger";
 import https from "https";
 import fs, { WriteStream, createWriteStream } from "fs";
 import { IncomingMessage } from "http";
 
 export class Download {
-  private temp: string = os.tmpdir();
   private file: { name: string; downloadName: string };
   private path: string;
   private issueURL: string =
@@ -94,7 +92,7 @@ export class Download {
                 if (err) {
                   reject(err);
                 } else {
-                  process.stdout.write("\n"); // Ensure a new line after the progress bar
+                  process.stdout.write("\n");
                   resolve();
                 }
               });

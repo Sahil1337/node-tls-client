@@ -1,12 +1,9 @@
-import { GetRequestOptions, PostRequestOptions, PatchRequestOptions, PutRequestOptions, DeleteRequestOptions, OptionsRequestOptions, HeadRequestOptions, SessionOptions } from "../interface";
+import { Methods, RequestOptions, GetRequestOptions, PostRequestOptions, PatchRequestOptions, PutRequestOptions, DeleteRequestOptions, OptionsRequestOptions, HeadRequestOptions, SessionOptions } from "../interface/session";
 import { Response } from ".";
-/**
- * Session class represents a HTTP session.
- * It provides methods to perform various HTTP requests.
- */
 export declare class Session {
     private sessionId?;
     private proxy?;
+    private isRotatingProxy;
     private clientIdentifier?;
     private ja3string?;
     private h2Settings?;
@@ -31,30 +28,26 @@ export declare class Session {
     private disableIPV6;
     private disableIPV4;
     private jar;
-    private fetch;
-    /**
-     *
-     * @param options
-     */
+    private pool?;
+    isReady: boolean;
     constructor(options?: SessionOptions);
+    init(): Promise<boolean>;
     /**
      * Retrieves all cookies from the jar.
-     *
-     * This getter fetches all cookies stored in the jar instance of the class.
      *
      * @returns An object where keys are URLs and values are objects containing cookies as key-value pairs.
      *
      * @example
-     *  {
-     *    "https://example.com/": {
-     *      "cookie1": "value1",
-     *      "cookie2": "value2"
-     *    },
-     *    "https://anotherdomain.com/": {
-     *      "cookieA": "valueA",
-     *      "cookieB": "valueB"
-     *    }
-     *  }
+      {
+         "https://example.com/": {
+           "cookie1": "value1",
+           "cookie2": "value2"
+         },
+         "https://anotherdomain.com/": {
+           "cookieA": "valueA",
+           "cookieB": "valueB"
+         }
+      }
      */
     get cookies(): import("tough-cookie").Cookie.Serialized;
     /**
@@ -143,5 +136,5 @@ export declare class Session {
      *
      * @returns A new Response object.
      */
-    private execute;
+    protected execute(method: Methods, url: string, options: RequestOptions): Promise<Response>;
 }

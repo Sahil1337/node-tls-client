@@ -1,5 +1,4 @@
 export declare class Download {
-    private temp;
     private file;
     private path;
     private issueURL;

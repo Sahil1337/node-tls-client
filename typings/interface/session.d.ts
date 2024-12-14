@@ -4,11 +4,29 @@ import { IncomingHttpHeaders, OutgoingHttpHeaders } from "http";
  * Represents various settings for HTTP/2 (h2) protocol.
  */
 export interface H2Settings {
+    /**
+     * The size of the header compression table used in HTTP/2.
+     */
     HEADER_TABLE_SIZE?: number;
+    /**
+     * Indicates whether server push is enabled in HTTP/2.
+     */
     ENABLE_PUSH?: boolean;
+    /**
+     * The maximum number of concurrent streams allowed in HTTP/2.
+     */
     MAX_CONCURRENT_STREAMS?: number;
+    /**
+     * The initial window size for HTTP/2 data frames.
+     */
     INITIAL_WINDOW_SIZE?: number;
+    /**
+     * The maximum size of HTTP/2 frames.
+     */
     MAX_FRAME_SIZE?: number;
+    /**
+     * The maximum size of header list in HTTP/2.
+     */
     MAX_HEADER_LIST_SIZE?: number;
 }
 /**
@@ -31,15 +49,30 @@ export type CertCompressionAlgo = "zlib" | "brotli" | "zstd";
  * Represents parameters for setting priority of HTTP/2 streams.
  */
 export interface PriorityParam {
+    /**
+     * The stream dependency for priority.
+     */
     streamDep: number;
+    /**
+     * Indicates whether the priority is exclusive.
+     */
     exclusive: boolean;
+    /**
+     * The weight of the priority.
+     */
     weight: number;
 }
 /**
  * Represents priority frames for HTTP/2 streams.
  */
 export interface PriorityFrames {
+    /**
+     * The stream ID for which priority is set.
+     */
     streamID: number;
+    /**
+     * The parameters for priority settings.
+     */
     priorityParam: PriorityParam;
 }
 /**
@@ -71,6 +104,8 @@ export declare enum ClientIdentifier {
     chrome_117 = "chrome_117",
     chrome_120 = "chrome_120",
     chrome_124 = "chrome_124",
+    chrome_131 = "chrome_131",
+    chrome_131_psk = "chrome_131_PSK",
     safari_15_6_1 = "safari_15_6_1",
     safari_16_0 = "safari_16_0",
     safari_ipad_15_6 = "safari_ipad_15_6",
@@ -78,6 +113,7 @@ export declare enum ClientIdentifier {
     safari_ios_15_6 = "safari_ios_15_6",
     safari_ios_16_0 = "safari_ios_16_0",
     safari_ios_17_0 = "safari_ios_17_0",
+    safari_ios_18_0 = "safari_ios_18_0",
     firefox_102 = "firefox_102",
     firefox_104 = "firefox_104",
     firefox_105 = "firefox_105",
@@ -87,6 +123,8 @@ export declare enum ClientIdentifier {
     firefox_117 = "firefox_117",
     firefox_120 = "firefox_120",
     firefox_123 = "firefox_123",
+    firefox_132 = "firefox_132",
+    firefox_133 = "firefox_133",
     opera_89 = "opera_89",
     opera_90 = "opera_90",
     opera_91 = "opera_91",
@@ -119,48 +157,155 @@ export declare enum ClientIdentifier {
  * Represents options for creating a session.
  */
 export interface SessionOptions {
+    /**
+     * The unique identifier for the session.
+     */
     sessionId?: string;
+    /**
+     * The headers for the session.
+     */
     headers?: OutgoingHttpHeaders;
+    /**
+     * The proxy server to use for the session.
+     */
     proxy?: string;
+    /**
+     * Whether the proxy is rotating proxy.
+     */
+    isRotatingProxy?: boolean;
+    /**
+     * The client identifier for the session.
+     */
     clientIdentifier?: ClientIdentifier;
+    /**
+     * The JA3 string for the session.
+     */
     ja3string?: string;
+    /**
+     * The settings for HTTP/2.
+     */
     h2Settings?: H2Settings;
+    /**
+     * The order of HTTP/2 settings.
+     */
     h2SettingsOrder?: (keyof H2Settings)[];
+    /**
+     * The supported signature algorithms.
+     */
     supportedSignatureAlgorithms?: SupportedSignatureAlgorithms[];
+    /**
+     * The supported versions of TLS.
+     */
     supportedVersions?: SupportedVersions[];
+    /**
+     * The supported elliptic curves for key exchange.
+     */
     keyShareCurves?: KeyShareCurves[];
+    /**
+     * The certificate compression algorithm.
+     */
     certCompressionAlgo?: CertCompressionAlgo;
+    /**
+     * The order of pseudo headers.
+     */
     pseudoHeaderOrder?: PseudoHeaderOrder[];
+    /**
+     * The connection flow for the session.
+     */
     connectionFlow?: number;
+    /**
+     * The priority frames for HTTP/2 streams.
+     */
     priorityFrames?: PriorityFrames[];
+    /**
+     * The order of headers.
+     */
     headerOrder?: string[];
+    /**
+     * The ALPN protocols.
+     */
     alpnProtocols?: string[];
+    /**
+     * The ALPS protocols.
+     */
     alpsProtocols?: string[];
+    /**
+     * The priority of headers.
+     */
     headerPriority?: PriorityParam;
+    /**
+     * Whether to randomize TLS extension order.
+     */
     randomTlsExtensionOrder?: boolean;
+    /**
+     * Whether to force HTTP/1 protocol.
+     */
     forceHttp1?: boolean;
+    /**
+     * Whether to enable debugging.
+     */
     debug?: boolean;
+    /**
+     * Whether to skip SSL certificate verification.
+     */
     insecureSkipVerify?: boolean;
+    /**
+     * The timeout duration for each request, in milliseconds.
+     */
     timeout?: number;
+    /**
+     * If true, IPv4 is disabled for the session requests.
+     */
     disableIPV4?: boolean;
+    /**
+     * If true, IPv6 is disabled for the session requests.
+     */
     disableIPV6?: boolean;
 }
 /**
  * Represents base options for making HTTP requests, excluding the body.
  */
 export interface BaseRequestOptions {
+    /**
+     * The headers for the request.
+     */
     headers?: OutgoingHttpHeaders;
+    /**
+     * Whether to follow redirects.
+     */
     redirect?: boolean;
+    /**
+     * Whether to perform additional decoding.
+     */
     additionalDecode?: boolean;
+    /**
+     * The proxy server to use for the request.
+     */
     proxy?: string;
+    /**
+     * Whether proxy is rotating proxy or not.
+     */
+    isRotatingProxy?: boolean;
+    /**
+     * Cookies for the request.
+     */
     cookies?: Record<string, any>;
+    /**
+     * If true, indicates the response is in binary format, like base64-encoded images.
+     */
     byteResponse?: boolean;
+    /**
+     * Used to override the Host header, typically needed when making requests directly to an IP address.
+     */
     hostOverride?: string | null;
 }
 /**
  * Represents options for making HTTP requests that may include a body.
  */
 export interface RequestOptions extends BaseRequestOptions {
+    /**
+     * Request body.
+     */
     body?: any;
 }
 /**
@@ -202,25 +347,77 @@ export interface HeadRequestOptions extends BaseRequestOptions {
  *  Represents options for making HTTP requests.
  */
 export interface fetchOptions {
+    /**
+     * Request method.
+     */
     method?: Methods;
+    /**
+     * The headers for the request.
+     */
     headers?: OutgoingHttpHeaders;
+    /**
+     * The body of the request.
+     */
     body?: any;
+    /**
+     * Whether to follow redirects.
+     */
     redirect?: boolean;
+    /**
+     * Whether to perform additional decoding.
+     */
     additionalDecode?: boolean;
+    /**
+     * The proxy server to use for the request.
+     */
     proxy?: string;
+    /**
+     * Whether proxy is rotating proxy or not.
+     */
+    isRotatingProxy?: boolean;
+    /**
+     * Cookies for the request.
+     */
     cookies?: Record<string, any>;
+    /**
+     * Additional session options.
+     */
     options?: SessionOptions;
 }
 /**
- * Represents a response from shared library.
+ * Represents a response from the shared library.
  */
 export interface TlsResponse {
+    /**
+     * The unique identifier for the response.
+     */
     id: string;
+    /**
+     * The body of the response.
+     */
     body: string;
+    /**
+     * Cookies set in the response.
+     */
     cookies: Record<string, string>;
+    /**
+     * Headers included in the response.
+     */
     headers: IncomingHttpHeaders;
+    /**
+     * The session ID associated with the response.
+     */
     sessionId: string;
+    /**
+     * The HTTP status code of the response.
+     */
     status: number;
+    /**
+     * The target URL of the response.
+     */
     target: string;
+    /**
+     * The protocol used for the response.
+     */
     usedProtocol: string;
 }

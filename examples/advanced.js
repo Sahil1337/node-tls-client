@@ -79,6 +79,9 @@ const { Session } = require("node-tls-client");
     },
   });
 
+  //Initialize the session
+  await session.init();
+
   const response = await session.get("http://localhost:3000/");
   console.log(response.status, await response.text());
   await session.close();

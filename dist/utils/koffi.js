@@ -9,6 +9,10 @@ const fs_1 = __importDefault(require("fs"));
 const os_1 = __importDefault(require("os"));
 const koffi_1 = require("koffi");
 const download_1 = require("./download");
+/**
+ * Downloads and loads the native library.
+ * @returns {Promise<IClient>}
+ */
 async function load() {
     const file = fileInfo();
     const temp = os_1.default.tmpdir();

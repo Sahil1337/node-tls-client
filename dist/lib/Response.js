@@ -1,10 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Response = void 0;
-/**
- * Response class represents the HTTP response received from a server.
- * It provides methods to access various properties of the response.
- */
 class Response {
     response;
     // Indicates whether the response was successful (status in the range 200-299) or not.
@@ -15,12 +11,6 @@ class Response {
     status;
     // Represents the URL of the response.
     url;
-    /**
-     * Constructor for the Response class.
-     * Initializes the properties of the class with the values from the provided response object.
-     *
-     * @param response - The response object from which to initialize the class properties.
-     */
     constructor(response) {
         this.response = response;
         this.ok = response.status >= 200 && response.status < 300;

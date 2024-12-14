@@ -18,3 +18,4 @@ __exportStar(require("./Session"), exports);
 __exportStar(require("./Response"), exports);
 __exportStar(require("./Cookie"), exports);
 __exportStar(require("./requests"), exports);
+__exportStar(require("./Client"), exports);

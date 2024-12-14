@@ -13,6 +13,8 @@ const { Session, ClientIdentifier } = require("node-tls-client");
   });
 
   try {
+    await session.init();
+
     const response = await session.get("https://website.com/");
 
     console.log(response.status, await response.text());

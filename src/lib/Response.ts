@@ -1,10 +1,6 @@
 import { TlsResponse } from "../interface";
 import { IncomingHttpHeaders } from "http";
 
-/**
- * Response class represents the HTTP response received from a server.
- * It provides methods to access various properties of the response.
- */
 export class Response {
   // Indicates whether the response was successful (status in the range 200-299) or not.
   public readonly ok: boolean;
@@ -18,12 +14,6 @@ export class Response {
   // Represents the URL of the response.
   public readonly url: string;
 
-  /**
-   * Constructor for the Response class.
-   * Initializes the properties of the class with the values from the provided response object.
-   *
-   * @param response - The response object from which to initialize the class properties.
-   */
   constructor(private readonly response: TlsResponse) {
     this.ok = response.status >= 200 && response.status < 300;
     this.headers = response.headers;

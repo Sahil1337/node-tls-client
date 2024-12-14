@@ -15,6 +15,8 @@ const fs = require("fs");
     clientIdentifier: ClientIdentifier.chrome_103,
   });
 
+  await session.init();
+
   const avatarURI = "https://avatars.githubusercontent.com/u/69236315?v=4";
 
   try {

@@ -7,6 +7,8 @@ const { Session, ClientIdentifier } = require("node-tls-client");
     insecureSkipVerify: false,
   });
 
+  await session.init();
+
   const response = await session.get("https://example.com", {
     proxy: `http://user:pass@ip:port`, //proxy format: http://user:pass@ip:port or http://ip:port
     cookies: { parameter: "value" }, //cookies

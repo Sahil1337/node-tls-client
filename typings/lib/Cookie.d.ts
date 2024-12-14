@@ -1,13 +1,5 @@
 import { CookieJar } from "tough-cookie";
-/**
- * Cookies class extends the CookieJar class from the "tough-cookie" library.
- * It provides methods to manage cookies for a specific URL.
- */
 export declare class Cookies extends CookieJar {
-    /**
-     * Constructor for the Cookies class.
-     * It calls the constructor of the parent class CookieJar.
-     */
     constructor();
     /**
      * Fetches all cookies and organizes them by URL.
@@ -37,7 +29,7 @@ export declare class Cookies extends CookieJar {
      * @returns An object containing cookies as key-value pairs.
      *
      * @example
-     * fetchJSON('http://example.com')
+     * fetchCookiesObject('http://example.com')
      */
     fetchCookiesObject(url: string): Record<string, string>;
     /**
@@ -48,7 +40,7 @@ export declare class Cookies extends CookieJar {
      * @returns An array of objects, each containing the name and value of a cookie.
      *
      * @example
-     * fetchSequence('http://example.com')
+     * fetchCookiesList('http://example.com')
      */
     fetchCookiesList(url: string): {
         name: string;
@@ -62,7 +54,7 @@ export declare class Cookies extends CookieJar {
      * @returns An object containing cookies as key-value pairs.
      *
      * @example
-     * check({ 'cookie1': 'value1', 'cookie2': 'value2' }, 'http://example.com')
+     * syncCookies({ 'cookie1': 'value1', 'cookie2': 'value2' }, 'http://example.com')
      */
     syncCookies(cookies: Record<string, string>, url: string): Record<string, string>;
     /**
@@ -73,7 +65,7 @@ export declare class Cookies extends CookieJar {
      * @returns An array of objects, each containing the name and value of a cookie.
      *
      * @example
-     * merge({ 'cookie1': 'value1', 'cookie2': 'value2' }, 'http://example.com')
+     * mergeCookies({ 'cookie1': 'value1', 'cookie2': 'value2' }, 'http://example.com')
      */
     mergeCookies(cookies: Record<string, string>, url: string): {
         name: string;

@@ -6,6 +6,14 @@ const colors = {
   cyan: "\x1b[36m",
 };
 
+/**
+ * Logger utility.
+ *
+ * @property {Function} debug - Logs a debug message.
+ * @property {Function} error - Logs an error message.
+ * @property {Function} success - Logs a success message.
+ * @property {Function} hyperlink - Generates a clickable hyperlink.
+ */
 export const logger = {
   debug: function (...args: any[]) {
     return process.stdout.write(

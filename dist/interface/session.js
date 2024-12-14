@@ -24,6 +24,8 @@ var ClientIdentifier;
     ClientIdentifier["chrome_117"] = "chrome_117";
     ClientIdentifier["chrome_120"] = "chrome_120";
     ClientIdentifier["chrome_124"] = "chrome_124";
+    ClientIdentifier["chrome_131"] = "chrome_131";
+    ClientIdentifier["chrome_131_psk"] = "chrome_131_PSK";
     // Safari versions
     ClientIdentifier["safari_15_6_1"] = "safari_15_6_1";
     ClientIdentifier["safari_16_0"] = "safari_16_0";
@@ -32,6 +34,7 @@ var ClientIdentifier;
     ClientIdentifier["safari_ios_15_6"] = "safari_ios_15_6";
     ClientIdentifier["safari_ios_16_0"] = "safari_ios_16_0";
     ClientIdentifier["safari_ios_17_0"] = "safari_ios_17_0";
+    ClientIdentifier["safari_ios_18_0"] = "safari_ios_18_0";
     // Firefox versions
     ClientIdentifier["firefox_102"] = "firefox_102";
     ClientIdentifier["firefox_104"] = "firefox_104";
@@ -42,6 +45,8 @@ var ClientIdentifier;
     ClientIdentifier["firefox_117"] = "firefox_117";
     ClientIdentifier["firefox_120"] = "firefox_120";
     ClientIdentifier["firefox_123"] = "firefox_123";
+    ClientIdentifier["firefox_132"] = "firefox_132";
+    ClientIdentifier["firefox_133"] = "firefox_133";
     // Opera versions
     ClientIdentifier["opera_89"] = "opera_89";
     ClientIdentifier["opera_90"] = "opera_90";
