@@ -1,6 +1,6 @@
 import { IClient } from "../interface/client";
 /**
- * Downloads and loads the native library.
+ * Loads the native library from the lib directory.
  * @returns {Promise<IClient>}
  */
 export declare function load(): Promise<IClient>;

@@ -6,20 +6,19 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.load = void 0;
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
-const os_1 = __importDefault(require("os"));
 const koffi_1 = require("koffi");
-const download_1 = require("./download");
 /**
- * Downloads and loads the native library.
+ * Loads the native library from the lib directory.
  * @returns {Promise<IClient>}
  */
 async function load() {
     const file = fileInfo();
-    const temp = os_1.default.tmpdir();
-    const libraryPath = path_1.default.join(temp, file.name);
+    // Since we're using TypeScript and paths are relative to the compiled output,
+    // this will reliably get the path to the lib directory from the dist/utils directory
+    const packageRoot = path_1.default.resolve(process.cwd());
+    const libraryPath = path_1.default.join(packageRoot, "lib", file.name);
     if (!fs_1.default.existsSync(libraryPath)) {
-        const downloader = new download_1.Download(file, libraryPath);
-        await downloader.init();
+        throw new Error(`Native library not found: ${file.name}. Please ensure it exists in the lib directory.`);
     }
     const lib = (0, koffi_1.load)(libraryPath);
     return {

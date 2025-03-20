@@ -2,21 +2,23 @@ import path from "path";
 import fs from "fs";
 import os from "os";
 import { load as koffi } from "koffi";
-import { Download } from "./download";
+// import { Download } from "./download"; // No longer needed as we're using local files
 import { IClient } from "../interface/client";
 
 /**
- * Downloads and loads the native library.
+ * Loads the native library from the lib directory.
  * @returns {Promise<IClient>}
  */
 export async function load(): Promise<IClient> {
   const file = fileInfo();
-  const temp = os.tmpdir();
-  const libraryPath = path.join(temp, file.name);
+  
+  // Since we're using TypeScript and paths are relative to the compiled output,
+  // this will reliably get the path to the lib directory from the dist/utils directory
+  const packageRoot = path.resolve(process.cwd());
+  const libraryPath = path.join(packageRoot, "lib", file.name);
 
   if (!fs.existsSync(libraryPath)) {
-    const downloader = new Download(file, libraryPath);
-    await downloader.init();
+    throw new Error(`Native library not found: ${file.name}. Please ensure it exists in the lib directory.`);
   }
 
   const lib = koffi(libraryPath);
