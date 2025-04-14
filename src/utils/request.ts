@@ -30,10 +30,12 @@ const prefixContentTypes = new Set([
  * @returns {boolean} - Returns true if the request is for binary data, otherwise false.
  */
 export function isByteRequest(headers: OutgoingHttpHeaders): boolean {
-  if (headers["content-encoding"]) return true;
+  if (headers["content-encoding"] || headers["Content-Encoding"]) return true;
 
-  const contentType = headers["content-type"];
-  const contentTransferEncoding = headers["content-transfer-encoding"];
+  const contentType = headers["content-type"] || headers["Content-Type"];
+  const contentTransferEncoding =
+    headers["content-transfer-encoding"] ||
+    headers["Content-Transfer-Encoding"];
 
   if (contentTransferEncoding) {
     const encodingString = String(contentTransferEncoding);

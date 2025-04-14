@@ -29,10 +29,11 @@ const prefixContentTypes = new Set([
  * @returns {boolean} - Returns true if the request is for binary data, otherwise false.
  */
 function isByteRequest(headers) {
-    if (headers["content-encoding"])
+    if (headers["content-encoding"] || headers["Content-Encoding"])
         return true;
-    const contentType = headers["content-type"];
-    const contentTransferEncoding = headers["content-transfer-encoding"];
+    const contentType = headers["content-type"] || headers["Content-Type"];
+    const contentTransferEncoding = headers["content-transfer-encoding"] ||
+        headers["Content-Transfer-Encoding"];
     if (contentTransferEncoding) {
         const encodingString = String(contentTransferEncoding);
         if (exactContentTypes.has(encodingString)) {
