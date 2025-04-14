@@ -22,7 +22,7 @@
     "cloudflare"
   ],
   "devDependencies": {
-    "@types/node": "^20.12.12",
+    "@types/node": "^20.17.30",
     "@types/tough-cookie": "^4.0.5",
     "typedoc": "^0.25.13",
     "typescript": "^5.4.5"
