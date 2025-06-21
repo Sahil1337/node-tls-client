@@ -1,6 +1,6 @@
 {
   "name": "node-tls-client",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Advanced library based on node-fetch and tls-client.",
   "main": "dist/index.js",
   "typings": "typings/index.d.ts",
@@ -24,14 +24,15 @@
   "devDependencies": {
     "@types/node": "^20.12.12",
     "@types/tough-cookie": "^4.0.5",
+    "@types/cookie-parser": "^1.4.9",
     "typedoc": "^0.25.13",
     "typescript": "^5.4.5"
   },
   "dependencies": {
+    "cookie-parser": "^1.4.7",
     "koffi": "^2.8.9",
-    "tough-cookie": "^4.1.4",
-    "tslib": "^2.6.2",
-    "workerpool": "^9.2.0"
+    "piscina": "^5.1.1",
+    "tough-cookie": "^4.1.4"
   },
   "files": [
     "dist",

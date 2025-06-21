@@ -1,4 +1,4 @@
-const { fetch, ClientIdentifier } = require("node-tls-client");
+const { fetch, ClientIdentifier, initTLS, destroyTLS } = require("node-tls-client");
 
 /**
  * @description Demonstrates using the node-tls-client library to make HTTP requests with different timeouts.
@@ -11,6 +11,11 @@ const { fetch, ClientIdentifier } = require("node-tls-client");
  * Checkout docs for fetchOptions information.
  */
 (async () => {
+  await initTLS();
+
+  /**
+   * @description Timeout cannot be changed during the session.
+   */
   const response1 = await fetch("https://example.com", {
     options: { timeout: 3000, clientIdentifier: ClientIdentifier.chrome_110 },
   });
@@ -21,4 +26,6 @@ const { fetch, ClientIdentifier } = require("node-tls-client");
     options: { timeout: 6000, clientIdentifier: ClientIdentifier.chrome_110 }, //options: SessionOptions
   });
   console.log("Response 2:", await response2.text());
+
+  await destroyTLS();
 })();

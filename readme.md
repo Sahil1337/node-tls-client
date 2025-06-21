@@ -26,7 +26,12 @@ pnpm add node-tls-client
 ## Example
 
 ```javascript
-const { Session, ClientIdentifier  } = require("node-tls-client");
+const {
+  Session,
+  ClientIdentifier,
+  initTLS,
+  destroyTLS,
+} = require("node-tls-client");
 
 /**
  * @description Demonstrates using the node-tls-client library to make HTTP requests with a specified timeout.
@@ -34,18 +39,23 @@ const { Session, ClientIdentifier  } = require("node-tls-client");
  *
  * @see {@link https://sahil1337.github.io/node-tls-client/interfaces/SessionOptions.html SessionOptions} for more details.
  */
-
 (async () => {
-  const session = new Session({ clientIdentifer: ClientIdentifier.chrome_120, timeout: 3000 });
+  await initTLS();
+
+  const session = new Session({
+    clientIdentifier: ClientIdentifier.chrome_103,
+    timeout: 3000,
+  });
 
   try {
-    await session.init();
     const response = await session.get("https://website.com/");
+
     console.log(response.status, await response.text());
   } catch (error) {
     console.error("An error occurred:", error);
   } finally {
     await session.close();
+    await destroyTLS();
   }
 })();
 ```
@@ -53,7 +63,7 @@ const { Session, ClientIdentifier  } = require("node-tls-client");
 ## Advanced example
 
 ```javascript
-const { Session } = require("node-tls-client");
+const { Session, initTLS, destroyTLS } = require("node-tls-client");
 
 /**
  * @description Demonstrates an advanced usage scenario with the node-tls-client library, showcasing custom TLS client configuration.
@@ -76,6 +86,8 @@ const { Session } = require("node-tls-client");
  */
 
 (async () => {
+  await initTLS();
+
   const session = new Session({
     ja3string:
       "771,2570-4865-4866-4867-49195-49199-49196-49200-52393-52392-49171-49172-156-157-47-53,2570-0-23-65281-10-11-35-16-5-13-18-51-45-43-27-17513-2570-21,2570-29-23-24,0",
@@ -134,36 +146,38 @@ const { Session } = require("node-tls-client");
     },
   });
 
-  await session.init();
   const response = await session.get("http://localhost:3000/");
   console.log(response.status, await response.text());
   await session.close();
+
+  await destroyTLS();
 })();
 ```
 
 ## More examples
 ```javascript
-const { Session, ClientIdentifier } = require("node-tls-client");
+const { Session, ClientIdentifier, initTLS, destroyTLS } = require("node-tls-client");
 
 (async () => {
-  const session = new tlsClient.Session({
-    clientIdentifier: ClientIdentifier.chrome_120,, //client identifier
-    timeout: 30 * 1000, //timeout in *milliseconds*, applies for each requests, checkout examples/timeout.js for using different timeouts.
-    insecureSkipVerify: false, //SSL certificate verification
-  });
+  await initTLS();
 
-  await session.init();
-  
+  const session = new Session({
+    clientIdentifier: ClientIdentifier.chrome_120, //client identifier
+    timeout: 30 * 1000, //timeout in *milliseconds*, applies for each requests, checkout examples/timeout.js for using different timeouts.
+    insecureSkipVerify: false,
+  });
+    
   const response = await session.get("https://example.com", {
     proxy: `http://user:pass@ip:port`, //proxy format: http://user:pass@ip:port or http://ip:port
     cookies: { parameter: "value" }, //cookies
-    redirect: true, //follow redirected urls
+    followRedirects: true, //follow redirected urls
     headers: { authorization: "test" }, //request headers
   });
 
   console.log(response.status);
 
   await session.close();
+  await destroyTLS();
 })();
   //more details: https://sahil1337.github.io/node-tls-client/hierarchy.html#BaseRequestOptions
 ```
@@ -216,8 +230,7 @@ const { Session, ClientIdentifier } = require("node-tls-client");
 | `post(url: string, options: RequestOptions)`    | Sends a POST request to the specified URL with the provided options and returns the response.     |
 | `patch(url: string, options: RequestOptions)`   | Sends a PATCH request to the specified URL with the provided options and returns the response.    |
 | `close()`                                       | Closes the session.                                                                               |
-| `close()`                                       | Closes the session.                                                                               |
-| `cookies`                                       | Returns an object containing the session cookies.                                                 |
+| `cookies()`                                       | Returns an promise that resolves with an object containing the session cookies.                                                 |
 
 <div id="request">
 
@@ -227,7 +240,7 @@ const { Session, ClientIdentifier } = require("node-tls-client");
 | -------------------- | ----------------------------------------------------------------------------------------------- |
 | `body`               | The body of the request, if applicable. This can be a string, a buffer, or an object.           |
 | `headers`            | An object containing the request headers.                                                       |
-| `redirect`           | A boolean value indicating whether to follow redirects.                                         |
+| `followRedirects`           | A boolean value indicating whether to follow redirects.                                         |
 | `additionalDecode`   | A boolean value indicating whether to perform additional decoding of the response content.      |
 | `proxy`              | The URL of the proxy server to be used for the request. [format: 'http://user:pass@ip:port or http://ip:port']                                                                                                                |
 | `isRotatingProxy`                        |  Whether the proxy is of rotating type or not.                      |

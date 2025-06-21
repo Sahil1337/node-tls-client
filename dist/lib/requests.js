@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.fetch = void 0;
+exports.fetch = fetch;
 const _1 = require(".");
 const utils_1 = require("../utils");
 /**
@@ -15,7 +15,6 @@ async function fetch(url, options) {
     const session = new _1.Session(options?.options);
     const method = options?.method?.toUpperCase() || "GET";
     try {
-        await session.init();
         let response;
         switch (method) {
             case "GET":
@@ -51,4 +50,3 @@ async function fetch(url, options) {
         await session.close();
     }
 }
-exports.fetch = fetch;

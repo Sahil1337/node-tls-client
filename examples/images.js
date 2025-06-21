@@ -1,4 +1,9 @@
-const { Session, ClientIdentifier } = require("node-tls-client");
+const {
+  Session,
+  ClientIdentifier,
+  initTLS,
+  destroyTLS,
+} = require("node-tls-client");
 const fs = require("fs");
 
 /**
@@ -11,11 +16,11 @@ const fs = require("fs");
  * @see {@link https://sahil1337.github.io/node-tls-client/interfaces/SessionOptions.html SessionOptions} for more details.
  */
 (async () => {
+  await initTLS();
+
   const session = new Session({
     clientIdentifier: ClientIdentifier.chrome_103,
   });
-
-  await session.init();
 
   const avatarURI = "https://avatars.githubusercontent.com/u/69236315?v=4";
 
@@ -30,5 +35,6 @@ const fs = require("fs");
     console.error("An error occurred:", error);
   } finally {
     await session.close();
+    await destroyTLS();
   }
 })();

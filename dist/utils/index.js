@@ -15,8 +15,6 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./download"), exports);
-__exportStar(require("./koffi"), exports);
 __exportStar(require("./logger"), exports);
 __exportStar(require("./request"), exports);
-__exportStar(require("./download"), exports);
 __exportStar(require("./tlsError"), exports);

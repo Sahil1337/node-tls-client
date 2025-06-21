@@ -231,6 +231,11 @@ export interface SessionOptions {
   headers?: OutgoingHttpHeaders;
 
   /**
+   * The headers for the connect request.
+   */
+  connectHeaders?: Record<string, string[]>;
+
+  /**
    * The proxy server to use for the session.
    */
   proxy?: string;
@@ -266,6 +271,31 @@ export interface SessionOptions {
   supportedSignatureAlgorithms?: SupportedSignatureAlgorithms[];
 
   /**
+   * The server name to overwrite.
+   */
+  serverNameOverwrite?: string;
+
+  /**
+   * The block size for the stream output.
+   */
+  streamOutputBlockSize?: number;
+
+  /**
+   * The symbol to use for the stream output.
+   */
+  streamOutputEOFSymbol?: string;
+
+  /**
+   * The path for the stream output.
+   */
+  streamOutputPath?: string;
+
+  /**
+   * The local address for the session.
+   */
+  localAddress?: string;
+
+  /**
    * The supported versions of TLS.
    */
   supportedVersions?: SupportedVersions[];
@@ -291,6 +321,11 @@ export interface SessionOptions {
   connectionFlow?: number;
 
   /**
+   * The transport options for the session.
+   */
+  transportOptions?: TransportOptions;
+
+  /**
    * The priority frames for HTTP/2 streams.
    */
   priorityFrames?: PriorityFrames[];
@@ -298,7 +333,7 @@ export interface SessionOptions {
   /**
    * The order of headers.
    */
-  headerOrder?: string[];
+  headerOrder?: OutgoingHttpHeaders[];
 
   /**
    * The ALPN protocols.
@@ -361,14 +396,19 @@ export interface BaseRequestOptions {
   headers?: OutgoingHttpHeaders;
 
   /**
-   * Whether to follow redirects.
+   * The headers for the connect request.
    */
-  redirect?: boolean;
+  connectHeaders?: Record<string, string[]>;
 
   /**
-   * Whether to perform additional decoding.
+   * The order of headers.
    */
-  additionalDecode?: boolean;
+  headerOrder?: OutgoingHttpHeaders[];
+
+  /**
+   * Whether to follow redirects.
+   */
+  followRedirects?: boolean;
 
   /**
    * The proxy server to use for the request.
@@ -394,6 +434,50 @@ export interface BaseRequestOptions {
    * Used to override the Host header, typically needed when making requests directly to an IP address.
    */
   hostOverride?: string | null;
+}
+
+/**
+ * Transport-level options for HTTP requests.
+ *
+ * These options control connection reuse, compression, buffer sizes, and other low-level transport behaviors.
+ */
+export interface TransportOptions {
+  /**
+   * If true, disables HTTP keep-alive connections.
+   */
+  disableKeepAlives: boolean;
+  /**
+   * If true, disables automatic response decompression (gzip, deflate, etc.).
+   */
+  disableCompression: boolean;
+  /**
+   * The maximum number of idle (keep-alive) connections across all hosts.
+   */
+  maxIdleConns: number;
+  /**
+   * The maximum number of idle (keep-alive) connections to keep per-host.
+   */
+  maxIdleConnsPerHost: number;
+  /**
+   * The maximum number of total connections per host (idle + active).
+   */
+  maxConnsPerHost: number;
+  /**
+   * The maximum number of bytes allowed in response headers. If zero, a default is used.
+   */
+  maxResponseHeaderBytes: number;
+  /**
+   * The size of the write buffer in bytes. If zero, a default (typically 4KB) is used.
+   */
+  writeBufferSize: number;
+  /**
+   * The size of the read buffer in bytes. If zero, a default (typically 4KB) is used.
+   */
+  readBufferSize: number;
+  /**
+   * The maximum idle connection timeout, in nanoseconds.
+   */
+  idleConnTimeout: number;
 }
 
 /**
@@ -463,12 +547,7 @@ export interface fetchOptions {
   /**
    * Whether to follow redirects.
    */
-  redirect?: boolean;
-
-  /**
-   * Whether to perform additional decoding.
-   */
-  additionalDecode?: boolean;
+  followRedirects?: boolean;
 
   /**
    * The proxy server to use for the request.

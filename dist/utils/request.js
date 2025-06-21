@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isByteRequest = void 0;
+exports.isByteRequest = isByteRequest;
 const exactContentTypes = new Set([
     "application/octet-stream",
     "application/pdf",
@@ -21,7 +21,7 @@ const prefixContentTypes = new Set([
 /**
  * Determines if a request should be treated as a byte request based on its headers.
  *
- * This function checks the "Content-Type" and "Content-Transfer-Encoding" headers
+ * This function checks the "Content-Type", "Content-Transfer-Encoding" and "Content-Encoding" headers
  * to determine if the request is for binary data (such as images, audio, video,
  * application binaries, etc.). If the headers indicate binary data, it returns true.
  *
@@ -29,6 +29,8 @@ const prefixContentTypes = new Set([
  * @returns {boolean} - Returns true if the request is for binary data, otherwise false.
  */
 function isByteRequest(headers) {
+    if (headers["content-encoding"] || headers["Content-Encoding"])
+        return true;
     const contentType = headers["content-type"] || headers["Content-Type"];
     const contentTransferEncoding = headers["content-transfer-encoding"] ||
         headers["Content-Transfer-Encoding"];
@@ -51,4 +53,3 @@ function isByteRequest(headers) {
     }
     return false;
 }
-exports.isByteRequest = isByteRequest;

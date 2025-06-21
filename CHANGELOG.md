@@ -1,3 +1,47 @@
+# 2.1.0 (June 21, 2025)
+> [!WARNING]  
+> This version contains breaking changes.
+
+### Breaking changes
+- **TLS Client Initialization Requirement**  
+  The new method `initTLS()` **must be called before** using any session methods.  
+  You must also call `destroyTLS()` when the session is no longer needed.
+- **Refactor Cookies API**  
+  `<session>.cookies` is no longer a synchronous getter.  
+  It now returns a `Promise` that resolves to a cookie object.  
+  Usage: [session-cookies.md](https://github.com/Sahil1337/node-tls-client/tree/main/examples/samples/cookie-example.md)
+- **Redirect Handling Change**  
+  The `redirect` option in `requestOptions` is no longer supported. Use `followRedirects` instead.
+
+### Additions/Fixes
+- **Node.js Compatibility Fix**  
+  The `process.clearLine()` bug has been resolved. Fixed issues [#2](https://github.com/Sahil1337/node-tls-client/issues/2) , [#3](https://github.com/Sahil1337/node-tls-client/issues/3) , [#6](https://github.com/Sahil1337/node-tls-client/issues/6)
+
+- **Shared Worker Pool (Performance Improvement)**  
+  A centralized shared worker pool has been introduced, leading to major performance gains across concurrent TLS sessions.
+
+  Proof of concept:
+
+  ![Performance Benchmark](https://media.discordapp.net/attachments/1358096526018220182/1358098103701340231/Node-Tls-Client-2025-04-05-151641.png?ex=68581e6c&is=6856ccec&hm=bbb07fe5910116c1f4f7f1f1f3b3d6a5e502e5788ea1bf0438cbf533ceb77b11&=&format=webp&quality=lossless&width=653&height=803)
+
+- **New: `transportOptions` in SessionOptions**  
+  Introduced `transportOptions` to customize low-level transport configuration.  
+  [Docs → transportOptions](https://sahil1337.github.io/node-tls-client/interfaces/SessionOptions.html#transportOptions)
+
+- **Additional Session Options Introduced**  
+  The following options provide extended control over stream output:
+  - `serverNameOverwrite`
+  - `streamOutputBlockSize`
+  - `streamOutputEOFSymbol`
+  - `streamOutputPath`  
+  [Docs → SessionOptions](https://sahil1337.github.io/node-tls-client/interfaces/SessionOptions)
+
+- **Enhanced Documentation**  
+  Executable compatibility instructions and examples have been added to the documentation. [Instructions](https://github.com/Sahil1337/node-tls-client/tree/main/examples/samples/executable.md)
+
+- **Refactor byteRequest handling**
+  Taking into account the `Content-Encoding` and `Content-Transfer-Encoding` headers to determine if the response is a byte response. [Accounting for pull request #8](https://github.com/Sahil1337/node-tls-client/pull/8)
+
 # 2.0.0 (December 15, 2024)
 > [!WARNING]  
 > This version contains breaking changes.

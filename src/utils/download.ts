@@ -2,37 +2,44 @@ import { logger } from "./logger";
 import https from "https";
 import fs, { WriteStream, createWriteStream } from "fs";
 import { IncomingMessage } from "http";
+import { FileInfo } from "../interface/native";
+import * as readline from "readline";
 
-export class Download {
-  private file: { name: string; downloadName: string };
-  private path: string;
-  private issueURL: string =
+export class LibraryDownloader {
+  private static file: FileInfo;
+  private static path: string;
+
+  private static readonly issueURL =
     "https://github.com/Sahil1337/node-tls-client/issues";
 
-  constructor(file: { name: string; downloadName: string }, libPath: string) {
+  static async retrieveLibrary(
+    file: FileInfo,
+    libPath: string
+  ): Promise<boolean> {
     this.file = file;
     this.path = libPath;
-  }
 
-  async init() {
     try {
       const latest = await this.getLatest();
       if (latest) {
         await this.extract(latest.browser_download_url);
         logger.success("Extracted shared library.");
+        return true;
       } else {
         logger.error(
           `Failed to find required asset: ${
             this.file.name
           }, report ${logger.hyperlink("here", this.issueURL)}.`
         );
+        return false;
       }
     } catch (error) {
       logger.error(`Initialization failed: ${error}`);
+      return false;
     }
   }
 
-  private formatBytes(bytes: number, decimals = 2): string {
+  private static formatBytes(bytes: number, decimals = 2): string {
     if (bytes === 0) return "0 Bytes";
     const k = 1024;
     const dm = decimals < 0 ? 0 : decimals;
@@ -41,12 +48,12 @@ export class Download {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
   }
 
-  private progress(downloaded: number, total: number) {
+  private static progress(downloaded: number, total: number) {
     const percentage = (downloaded / total) * 100;
     const progress = Math.floor(percentage / 2);
     const bar = "█".repeat(progress) + " ".repeat(50 - progress);
-    process.stdout.clearLine(0);
-    process.stdout.cursorTo(0);
+    readline.clearLine(process.stdout, 0);
+    readline.cursorTo(process.stdout, 0);
     process.stdout.write(
       `${logger.stamp} DOWNLOADING:[${bar}] ${percentage.toFixed(
         2
@@ -54,7 +61,7 @@ export class Download {
     );
   }
 
-  private async download(url: string, file: WriteStream): Promise<void> {
+  private static async download(url: string, file: WriteStream): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       https
         .get(url, (response: IncomingMessage) => {
@@ -114,15 +121,15 @@ export class Download {
     });
   }
 
-  private async extract(url: string): Promise<void> {
+  private static async extract(url: string): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       const file = createWriteStream(this.path);
       this.download(url, file).then(resolve).catch(reject);
     });
   }
 
-  private async getLatest(): Promise<any> {
-    return new Promise<any>((resolve, reject) => {
+  private static async getLatest(): Promise<any> {
+    return new Promise<any>((resolve) => {
       const options = {
         hostname: "api.github.com",
         path: "/repos/bogdanfinn/tls-client/releases/latest",

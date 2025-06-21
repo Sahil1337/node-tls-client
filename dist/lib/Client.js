@@ -1,47 +1,65 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Client = void 0;
+const piscina_1 = require("piscina");
+const native_1 = require("../utils/native");
 const utils_1 = require("../utils");
-const tlsError_1 = require("../utils/tlsError");
+const os_1 = __importDefault(require("os"));
 class Client {
-    client;
+    static instance = null;
+    static ready = false;
+    static readyPromise = null;
+    _pool;
     constructor() {
-        this.client = {};
+        this._pool = new piscina_1.Piscina({
+            filename: require.resolve("../workers/index.js"),
+            maxQueue: Infinity,
+            maxThreads: (typeof os_1.default.availableParallelism === "function"
+                ? os_1.default.availableParallelism()
+                : os_1.default.cpus().length) * 2,
+            atomics: "disabled",
+        });
     }
-    /**
-     * Intialize the client and load the native library.
-     */
-    async init() {
-        this.client = await (0, utils_1.load)();
-    }
-    /**
-     * Performs an HTTP request with native library.
-     * @param {string} payload - The request payload to be sent.
-     * @returns {Promise<TlsResponse>} - A promise resolving to the parsed TLS response object.
-     * @throws {TlsClientError} - If no response is received from the client.
-     */
-    async request(payload) {
-        const response = this.client.request(payload);
-        if (!response)
-            throw new tlsError_1.TlsClientError("No response received.");
-        return JSON.parse(response);
-    }
-    /**
-     * Destroys all sessions and removes session cache from memory.
-     * @param {string} payload
-     * @returns {Promise<string>} - A promise resolving to the session id.
-     */
-    async destroySession(payload) {
-        return this.client.destroySession(payload);
-    }
-    /**
-     * Removes cache from memory.
-     * @returns {Promise<void>}
-     */
-    async freeMemory(id) {
-        if (!id)
+    static async init() {
+        if (Client.ready)
             return;
-        this.client.freeMemory(id);
+        if (!Client.readyPromise) {
+            // Initialize ready promise
+            Client.readyPromise = (async () => {
+                await native_1.LibraryHandler.validateFile();
+                Client.instance = new Client();
+                Client.ready = true;
+                Client.readyPromise = null;
+            })();
+        }
+        return Client.readyPromise;
+    }
+    static async destroy() {
+        if (!Client.instance) {
+            throw new utils_1.TlsClientError("Client not initialized. Call initTLS() first.");
+        }
+        // Clear sessions cache
+        await Client.instance.pool.run({}, { name: "destroyAll" });
+        // Destroy worker pool
+        await Client.instance.pool.close();
+        // Reset instance
+        Client.instance = null;
+        Client.ready = false;
+    }
+    static getInstance() {
+        if (!Client.instance) {
+            throw new utils_1.TlsClientError("Client not initialized. Call initTLS() first.");
+        }
+        return Client.instance;
+    }
+    get pool() {
+        return this._pool;
+    }
+    static isReady() {
+        return Client.ready;
     }
 }
 exports.Client = Client;
