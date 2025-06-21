@@ -1,4 +1,4 @@
-const { Session } = require("node-tls-client");
+const { Session, initTLS, destroyTLS } = require("node-tls-client");
 
 /**
  * @description Demonstrates an advanced usage scenario with the node-tls-client library, showcasing custom TLS client configuration.
@@ -21,6 +21,8 @@ const { Session } = require("node-tls-client");
  */
 
 (async () => {
+  await initTLS();
+
   const session = new Session({
     ja3string:
       "771,2570-4865-4866-4867-49195-49199-49196-49200-52393-52392-49171-49172-156-157-47-53,2570-0-23-65281-10-11-35-16-5-13-18-51-45-43-27-17513-2570-21,2570-29-23-24,0",
@@ -79,10 +81,9 @@ const { Session } = require("node-tls-client");
     },
   });
 
-  //Initialize the session
-  await session.init();
-
   const response = await session.get("http://localhost:3000/");
   console.log(response.status, await response.text());
   await session.close();
+
+  await destroyTLS();
 })();

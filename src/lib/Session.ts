@@ -1,134 +1,120 @@
 import { randomUUID } from "crypto";
+import { Cookies } from "./Cookie";
 import {
-  H2Settings,
-  SupportedSignatureAlgorithms,
-  SupportedVersions,
-  PseudoHeaderOrder,
-  PriorityFrames,
-  KeyShareCurves,
-  CertCompressionAlgo,
-  PriorityParam,
-  Methods,
-  RequestOptions,
-  GetRequestOptions,
-  PostRequestOptions,
-  PatchRequestOptions,
-  PutRequestOptions,
-  DeleteRequestOptions,
-  OptionsRequestOptions,
-  HeadRequestOptions,
-  SessionOptions,
   ClientIdentifier,
+  DeleteRequestOptions,
+  GetRequestOptions,
+  HeadRequestOptions,
+  Methods,
+  OptionsRequestOptions,
+  PatchRequestOptions,
+  PostRequestOptions,
+  PutRequestOptions,
+  RequestOptions,
+  SessionOptions,
   TlsResponse,
-} from "../interface/session";
-import { OutgoingHttpHeaders } from "http";
-import { isByteRequest, TlsClientError } from "../utils";
-import { verifyClientState } from "../decorators";
-import { Cookies, Response } from ".";
-import workerpool from "workerpool";
+} from "../interface";
+import { OutgoingHttpHeaders } from "http2";
+import { URL } from "url";
+import { isByteRequest, logger } from "../utils";
+import { Payload } from "../interface/payload";
+import { Client } from "./Client";
+import { Response } from "./Response";
 
-const __version__ = "1.0.0";
+const __version__ = "2.1.0";
 
 export class Session {
-  private sessionId?: string;
-  private proxy?: string | null;
-  private isRotatingProxy: boolean;
-  private clientIdentifier?: ClientIdentifier;
-  private ja3string?: string;
-  private h2Settings?: H2Settings;
-  private h2SettingsOrder?: (keyof H2Settings)[];
-  private supportedSignatureAlgorithms?: SupportedSignatureAlgorithms[];
-  private supportedVersions?: SupportedVersions[];
-  private keyShareCurves?: KeyShareCurves[];
-  private certCompressionAlgo?: CertCompressionAlgo;
-  private pseudoHeaderOrder?: PseudoHeaderOrder[];
-  private connectionFlow?: number;
-  private priorityFrames?: PriorityFrames[];
-  private headerOrder?: string[];
-  private headerPriority?: PriorityParam;
-  private randomTlsExtensionOrder?: boolean;
-  private forceHttp1?: boolean;
-  private debug?: boolean;
-  private insecureSkipVerify?: boolean;
-  private headers: OutgoingHttpHeaders;
-  private alpnProtocols?: string[];
-  private alpsProtocols: string[];
-  private timeout: number | null;
-  private disableIPV6: boolean;
-  private disableIPV4: boolean;
-  private jar: Cookies = new Cookies();
-  private pool?: workerpool.Pool;
+  private jar = new Cookies();
+  private sessionId = randomUUID();
 
-  public isReady: boolean = false;
+  constructor(private readonly config: SessionOptions = {}) {}
 
-  constructor(options?: SessionOptions) {
-    this.sessionId = randomUUID();
-    this.proxy = options?.proxy || null;
-    this.isRotatingProxy = options?.isRotatingProxy ?? false;
-    this.alpnProtocols = options?.alpnProtocols || ["h2", "http/1.1"];
-    this.alpsProtocols = options?.alpsProtocols || ["http/1.1"];
-    this.headers = options?.headers || {
-      "User-Agent": `tls-client/${__version__}`,
-      "Accept-Encoding": "gzip, deflate, br",
-      Accept: "*/*",
-      Connection: "keep-alive",
-    };
-    this.clientIdentifier = options?.clientIdentifier;
-    this.ja3string = options?.ja3string;
-    this.h2Settings = options?.h2Settings;
-    this.h2SettingsOrder = options?.h2SettingsOrder;
-    this.supportedSignatureAlgorithms = options?.supportedSignatureAlgorithms;
-    this.supportedVersions = options?.supportedVersions;
-    this.keyShareCurves = options?.keyShareCurves;
-    this.certCompressionAlgo = options?.certCompressionAlgo;
-    this.pseudoHeaderOrder = options?.pseudoHeaderOrder;
-    this.connectionFlow = options?.connectionFlow;
-    this.priorityFrames = options?.priorityFrames;
-    this.headerPriority = options?.headerPriority;
-    this.randomTlsExtensionOrder = options?.randomTlsExtensionOrder || false;
-    this.forceHttp1 = options?.forceHttp1 || false;
-    this.debug = options?.debug || false;
-    this.insecureSkipVerify = options?.insecureSkipVerify || false;
-    this.timeout = options?.timeout || 30 * 1000;
-    this.disableIPV4 = options?.disableIPV4 ?? false;
-    this.disableIPV6 = options?.disableIPV6 ?? false;
-  }
-
-  public async init(): Promise<boolean> {
-    if (this.isReady) return true;
-
-    try {
-      if (!this.pool) {
-        this.pool = workerpool.pool(require.resolve("../utils/worker"));
-      }
-
-      this.isReady = true;
-      return true;
-    } catch (error) {
-      console.error("Initialization error:", error);
-      throw new TlsClientError(error as Error);
-    }
+  public async cookies() {
+    return this.jar.fetchAllCookies();
   }
 
   /**
-   * Retrieves all cookies from the jar.
+   * The 'GET' method performs a GET request to the provided URL with the provided options.
    *
-   * @returns An object where keys are URLs and values are objects containing cookies as key-value pairs.
+   * @param url - The URL to perform the GET request to.
+   * @param options - The options for the GET request.
    *
-   * @example
-    { 
-       "https://example.com/": {
-         "cookie1": "value1",
-         "cookie2": "value2"
-       },
-       "https://anotherdomain.com/": {
-         "cookieA": "valueA",
-         "cookieB": "valueB"
-       }
-    }
+   * @returns The response from the 'execute' method.
    */
-  public get cookies() {
-    return this.jar.fetchAllCookies();
+  public get(url: string, options: GetRequestOptions = {}) {
+    return this.execute("GET", url, options);
+  }
+
+  /**
+   * The 'DELETE' method performs a DELETE request to the provided URL with the provided options.
+   *
+   * @param url - The URL to perform the DELETE request to.
+   * @param options - The options for the DELETE request.
+   *
+   * @returns The response from the 'execute' method.
+   */
+  public delete(url: string, options: DeleteRequestOptions = {}) {
+    return this.execute("DELETE", url, options);
+  }
+
+  /**
+   * The 'OPTIONS' method performs an OPTIONS request to the provided URL with the provided options.
+   *
+   * @param url - The URL to perform the OPTIONS request to.
+   * @param options - The options for the OPTIONS request.
+   *
+   * @returns The response from the 'execute' method.
+   */
+  public options(url: string, options: OptionsRequestOptions = {}) {
+    return this.execute("OPTIONS", url, options);
+  }
+
+  /**
+   * The 'HEAD' method performs a HEAD request to the provided URL with the provided options.
+   *
+   * @param url - The URL to perform the HEAD request to.
+   * @param options - The options for the HEAD request.
+   *
+   * @returns The response from the 'execute' method.
+   */
+  public head(url: string, options: HeadRequestOptions = {}) {
+    return this.execute("HEAD", url, options);
+  }
+
+  /**
+   * The 'POST' method performs a POST request to the provided URL with the provided options.
+   *
+   * @param url - The URL to perform the POST request to.
+   * @param options - The options for the POST request.
+   *
+   * @returns The response from the 'execute' method.
+   */
+  public post(url: string, options: PostRequestOptions = {}) {
+    return this.execute("POST", url, options);
+  }
+
+  /**
+   * The 'PATCH' method performs a PATCH request to the provided URL with the provided options.
+   *
+   * @param url - The URL to perform the PATCH request to.
+   * @param options - The options for the PATCH request.
+   *
+   * @returns The response from the 'execute' method.
+   */
+  public patch(url: string, options: PatchRequestOptions = {}) {
+    return this.execute("PATCH", url, options);
+  }
+
+  /**
+   * The 'PUT' method performs a PUT request to the provided URL with the provided options.
+   *
+   * @param url - The URL to perform the PUT request to.
+   * @param options - The options for the PUT request.
+   *
+   * @returns The response from the 'execute' method.
+   */
+  public put(url: string, options: PutRequestOptions = {}) {
+    return this.execute("PUT", url, options);
   }
 
   /**
@@ -136,259 +122,125 @@ export class Session {
    *
    * @returns The response from the 'destroySession' function.
    */
-  @verifyClientState()
   public async close() {
-    const payload = JSON.stringify({
-      sessionId: this.sessionId,
-    });
-    const response = await this.pool?.exec("destroySession", [payload]);
-    await this.pool?.terminate();
-    return response;
+    return Client.getInstance().pool?.run(
+      JSON.stringify({
+        sessionId: this.sessionId,
+      }),
+      { name: "destroySession" }
+    );
   }
 
-  /**
-   * The 'freeMemory' method frees the memory used by the session with the provided id.
-   *
-   * @param id - The id of the session to free the memory of.
-   *
-   * @returns The response from the 'destroySession' function.
-   */
-  @verifyClientState()
-  private async free(id: string): Promise<void> {
-    await this.pool?.exec("freeMemory", [id]);
-    return;
-  }
-
-  /**
-   * The 'get' method performs a GET request to the provided URL with the provided options.
-   *
-   * @param url - The URL to perform the GET request to.
-   * @param options - The options for the GET request.
-   *
-   * @returns The response from the 'execute' method.
-   */
-  @verifyClientState()
-  public get(url: string, options?: GetRequestOptions) {
-    return this.execute("GET", url, {
-      headers: options?.headers,
-      redirect: options?.redirect,
-      additionalDecode: options?.additionalDecode || false,
-      proxy: options?.proxy,
-      cookies: options?.cookies,
-      byteResponse: options?.byteResponse || false,
-      hostOverride: options?.hostOverride || null,
-      ...options,
-    });
-  }
-
-  /**
-   * The 'delete' method performs a DELETE request to the provided URL with the provided options.
-   *
-   * @param url - The URL to perform the DELETE request to.
-   * @param options - The options for the DELETE request.
-   *
-   * @returns The response from the 'execute' method.
-   */
-  @verifyClientState()
-  public delete(url: string, options?: DeleteRequestOptions) {
-    return this.execute("DELETE", url, {
-      headers: options?.headers,
-      redirect: options?.redirect,
-      additionalDecode: options?.additionalDecode || false,
-      proxy: options?.proxy,
-      cookies: options?.cookies,
-      byteResponse: options?.byteResponse || false,
-      hostOverride: options?.hostOverride || null,
-      ...options,
-    });
-  }
-
-  /**
-   * The 'options' method performs an OPTIONS request to the provided URL with the provided options.
-   *
-   * @param url - The URL to perform the OPTIONS request to.
-   * @param options - The options for the OPTIONS request.
-   *
-   * @returns The response from the 'execute' method.
-   */
-  @verifyClientState()
-  public options(url: string, options?: OptionsRequestOptions) {
-    return this.execute("OPTIONS", url, {
-      headers: options?.headers,
-      redirect: options?.redirect,
-      additionalDecode: options?.additionalDecode || false,
-      proxy: options?.proxy,
-      cookies: options?.cookies,
-      hostOverride: options?.hostOverride || null,
-      ...options,
-    });
-  }
-
-  /**
-   * The 'head' method performs a HEAD request to the provided URL with the provided options.
-   *
-   * @param url - The URL to perform the HEAD request to.
-   * @param options - The options for the HEAD request.
-   *
-   * @returns The response from the 'execute' method.
-   */
-  @verifyClientState()
-  public head(url: string, options?: HeadRequestOptions) {
-    return this.execute("HEAD", url, {
-      headers: options?.headers,
-      redirect: options?.redirect,
-      additionalDecode: options?.additionalDecode || false,
-      proxy: options?.proxy,
-      cookies: options?.cookies,
-      hostOverride: options?.hostOverride || null,
-      ...options,
-    });
-  }
-
-  /**
-   * The 'post' method performs a POST request to the provided URL with the provided options.
-   *
-   * @param url - The URL to perform the POST request to.
-   * @param options - The options for the POST request.
-   *
-   * @returns The response from the 'execute' method.
-   */
-  @verifyClientState()
-  public post(url: string, options?: PostRequestOptions) {
-    return this.execute("POST", url, {
-      body: options?.body,
-      headers: options?.headers,
-      redirect: options?.redirect,
-      additionalDecode: options?.additionalDecode || false,
-      proxy: options?.proxy,
-      cookies: options?.cookies,
-      byteResponse: options?.byteResponse || false,
-      hostOverride: options?.hostOverride || null,
-      ...options,
-    });
-  }
-
-  /**
-   * The 'patch' method performs a PATCH request to the provided URL with the provided options.
-   *
-   * @param url - The URL to perform the PATCH request to.
-   * @param options - The options for the PATCH request.
-   *
-   * @returns The response from the 'execute' method.
-   */
-  @verifyClientState()
-  public patch(url: string, options?: PatchRequestOptions) {
-    return this.execute("PATCH", url, {
-      body: options?.body,
-      headers: options?.headers,
-      redirect: options?.redirect,
-      additionalDecode: options?.additionalDecode || false,
-      proxy: options?.proxy,
-      cookies: options?.cookies,
-      byteResponse: options?.byteResponse || false,
-      hostOverride: options?.hostOverride || null,
-      ...options,
-    });
-  }
-
-  /**
-   * The 'put' method performs a PUT request to the provided URL with the provided options.
-   *
-   * @param url - The URL to perform the PUT request to.
-   * @param options - The options for the PUT request.
-   *
-   * @returns The response from the 'execute' method.
-   */
-  @verifyClientState()
-  public put(url: string, options?: PutRequestOptions) {
-    return this.execute("PUT", url, {
-      body: options?.body,
-      headers: options?.headers,
-      redirect: options?.redirect,
-      additionalDecode: options?.additionalDecode || false,
-      proxy: options?.proxy,
-      cookies: options?.cookies,
-      byteResponse: options?.byteResponse || false,
-      hostOverride: options?.hostOverride || null,
-      ...options,
-    });
-  }
-
-  /**
-   * The 'execute' method performs a HTTP request of the provided method to the provided URL with the provided options.
-   *
-   * @param method - The HTTP method of the request.
-   * @param url - The URL to perform the request to.
-   * @param options - The options for the request.
-   *
-   * @returns A new Response object.
-   */
   protected async execute(
     method: Methods,
-    url: string,
-    options: RequestOptions
+    url: string | URL,
+    options: RequestOptions = {}
   ) {
-    let headers = options?.headers ? options?.headers : this.headers;
-    let requestCookies: any = [];
+    const headers =
+      options?.headers !== undefined
+        ? options.headers
+        : this.config.headers ?? this.getDefaultHeaders();
 
-    if (options?.cookies) {
-      requestCookies = this.jar.mergeCookies(options.cookies, url);
-    }
+    const requestCookies = await this.jar.mergeCookies(
+      options?.cookies || {},
+      url.toString()
+    );
 
-    let skeletonPayload: any = {
+    const payload: Payload = {
       sessionId: this.sessionId,
-      followRedirects: options?.redirect || false,
-      forceHttp1: this.forceHttp1,
-      withDebug: this.debug,
+      followRedirects: options.followRedirects ?? false,
+      forceHttp1: this.config.forceHttp1 ?? false,
+      withDebug: this.config.debug ?? false,
       headers,
-      headerOrder: this.headerOrder,
-      insecureSkipVerify: this.insecureSkipVerify,
-      additionalDecode: options?.additionalDecode,
-      proxyUrl: options?.proxy || this.proxy,
+      headerOrder: options.headerOrder || this.config.headerOrder || [],
+      insecureSkipVerify: this.config.insecureSkipVerify ?? false,
+      proxyUrl: options.proxy || this.config.proxy || "",
+      isRotatingProxy:
+        options?.isRotatingProxy ?? this.config.isRotatingProxy ?? false,
       requestUrl: url,
       requestMethod: method,
       requestBody: options?.body || null,
-      requestCookies: requestCookies,
-      timeoutMilliseconds: this.timeout || null,
-      withRandomTLSExtensionOrder: this.randomTlsExtensionOrder,
-      isByteResponse: options?.byteResponse,
+      timeoutMilliseconds: this.config.timeout || 0,
+      withRandomTLSExtensionOrder: this.config.randomTlsExtensionOrder ?? false,
+      isByteResponse: options?.byteResponse ?? false,
       isByteRequest: isByteRequest(headers),
-      requestHostOverride: options?.hostOverride,
-      disableIPV6: this.disableIPV6,
-      disableIPV4: this.disableIPV4,
-      isRotatingProxy: options?.isRotatingProxy ?? this.isRotatingProxy,
+      requestHostOverride: options?.hostOverride || null,
+      disableIPV6: this.config.disableIPV6 ?? false,
+      disableIPV4: this.config.disableIPV4 ?? false,
+      transportOptions: this.config.transportOptions ?? undefined,
+      catchPanics: false,
+      streamOutputEOFSymbol: this.config.streamOutputEOFSymbol ?? null,
+      streamOutputPath: this.config.streamOutputPath ?? null,
+      streamOutputBlockSize: this.config.streamOutputBlockSize ?? null,
+      serverNameOverwrite: this.config.serverNameOverwrite ?? "",
+      connectHeaders:
+        this.config.connectHeaders ?? options.connectHeaders ?? {},
+      localAddress: this.config.localAddress ?? null,
+      withDefaultCookieJar: true,
+      withoutCookieJar: false,
+      requestCookies,
     };
 
-    if (this.clientIdentifier) {
-      skeletonPayload["tlsClientIdentifier"] = this.clientIdentifier;
-    } else if (this.ja3string) {
-      skeletonPayload["customTlsClient"] = {
-        ja3String: this.ja3string,
-        h2Settings: this.h2Settings,
-        h2SettingsOrder: this.h2SettingsOrder,
-        pseudoHeaderOrder: this.pseudoHeaderOrder,
-        connectionFlow: this.connectionFlow,
-        priorityFrames: this.priorityFrames,
-        headerPriority: this.headerPriority,
-        certCompressionAlgo: this.certCompressionAlgo,
-        supportedVersions: this.supportedVersions,
-        supportedSignatureAlgorithms: this.supportedSignatureAlgorithms,
-        keyShareCurves: this.keyShareCurves,
-        alpnProtocols: this.alpnProtocols,
-        alpsProtocols: this.alpsProtocols,
+    if (this.config.clientIdentifier) {
+      payload["tlsClientIdentifier"] = this.config.clientIdentifier;
+    } else if (this.config.ja3string) {
+      payload["customTlsClient"] = {
+        ja3String: this.config.ja3string,
+        h2Settings: this.config.h2Settings ?? {},
+        h2SettingsOrder: this.config.h2SettingsOrder ?? [],
+        pseudoHeaderOrder: this.config.pseudoHeaderOrder ?? [],
+        connectionFlow: this.config.connectionFlow ?? 0,
+        priorityFrames: this.config.priorityFrames ?? [],
+        headerPriority: this.config.headerPriority ?? {
+          streamDep: 0,
+          exclusive: false,
+          weight: 0,
+        },
+        certCompressionAlgo: this.config.certCompressionAlgo ?? "zlib",
+        supportedVersions: this.config.supportedVersions ?? [],
+        supportedSignatureAlgorithms:
+          this.config.supportedSignatureAlgorithms ?? [],
+        keyShareCurves: this.config.keyShareCurves ?? [],
+        alpnProtocols: this.config.alpnProtocols ?? [],
+        alpsProtocols: this.config.alpsProtocols ?? [],
       };
-    } else skeletonPayload["tlsClientIdentifier"] = ClientIdentifier.chrome_131;
+    } else payload["tlsClientIdentifier"] = ClientIdentifier.chrome_131;
 
-    const requestPayloadString = JSON.stringify(skeletonPayload);
+    const requestPayloadString = JSON.stringify(payload);
 
-    let res: TlsResponse = await this.pool?.exec("request", [
+    const rawResponse = await Client.getInstance().pool.run(
       requestPayloadString,
-    ]);
+      {
+        name: "request",
+      }
+    );
 
-    let cookies = this.jar.syncCookies(res?.cookies, url);
+    const response: TlsResponse = JSON.parse(rawResponse);
 
-    await this.free(res.id);
+    const cookies = await this.jar.syncCookies(
+      response.cookies || {},
+      url.toString()
+    );
 
-    return new Response({ ...res, cookies });
+    setImmediate(() => {
+      this.freeMemory(response.id).catch(() => {});
+    });
+
+    return new Response({ ...response, cookies });
+  }
+
+  private async freeMemory(id: string): Promise<void> {
+    return Client.getInstance().pool?.run(id.toString(), {
+      name: "freeMemory",
+    });
+  }
+
+  private getDefaultHeaders(): OutgoingHttpHeaders {
+    return {
+      "User-Agent": `tls-client/${__version__}`,
+      "Accept-Encoding": "gzip, deflate, br",
+      Accept: "*/*",
+      Connection: "keep-alive",
+    };
   }
 }

@@ -28,8 +28,6 @@ export async function fetch(
   const method = options?.method?.toUpperCase() || "GET";
 
   try {
-    await session.init();
-
     let response;
 
     switch (method) {

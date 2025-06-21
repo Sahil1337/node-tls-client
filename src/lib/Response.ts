@@ -1,24 +1,33 @@
 import { TlsResponse } from "../interface";
 import { IncomingHttpHeaders } from "http";
+import { logger } from "../utils";
 
 export class Response {
   // Indicates whether the response was successful (status in the range 200-299) or not.
-  public readonly ok: boolean;
+  public ok: boolean;
 
   // Represents the response headers.
-  public readonly headers: IncomingHttpHeaders;
+  public headers: IncomingHttpHeaders;
 
   // Represents the HTTP status code of the response.
-  public readonly status: number;
+  public status: number;
 
   // Represents the URL of the response.
-  public readonly url: string;
+  public url: string;
 
-  constructor(private readonly response: TlsResponse) {
+  // The response body
+  public body: string;
+
+  // The cookies from the response
+  public cookies: Record<string, string>;
+
+  constructor(response: TlsResponse) {
     this.ok = response.status >= 200 && response.status < 300;
     this.headers = response.headers;
     this.status = response.status;
     this.url = response.target;
+    this.body = response.body;
+    this.cookies = response.cookies;
   }
 
   /**
@@ -27,7 +36,7 @@ export class Response {
    * @returns A promise that resolves with the body of the response as a string.
    */
   public async text(): Promise<string> {
-    return this.response.body.toString();
+    return this.body;
   }
 
   /**
@@ -36,16 +45,7 @@ export class Response {
    * @typeparam T - The type of the JSON object.
    * @returns A promise that resolves with the body of the response as a JSON object.
    */
-  public async json<T>(): Promise<T> {
-    return JSON.parse(this.response.body) as T;
-  }
-
-  /**
-   * Returns the cookies from the response as an object with key-value pairs.
-   *
-   * @returns An object containing cookies as key-value pairs.
-   */
-  public get cookies() {
-    return this.response.cookies;
+  public async json<T extends unknown>(): Promise<T> {
+    return JSON.parse(this.body) as T;
   }
 }

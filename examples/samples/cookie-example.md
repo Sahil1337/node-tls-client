@@ -2,27 +2,55 @@
 
 ## Retrieving all session cookies
 ```javascript
+await initTLS();
 const session = new Session();
-await session.init();
-const request1 = await session.get("https://website.com")
-const request2 = await session.get("https://website.com")
-const request3 = await session.get("https://example.com")
-const request4 = await session.get("https://example.com")
-console.log(session.cookies);
+await session.get("http://localhost:3000/");
+console.log(await session.cookies());
+await destroyTLS();
 ```
 
 ## Cookies Response Example
 ```json
-{
-  "https://website.com/": {
-    cookie1: "value1",
-    cookie2: "value2",
-    cookie3: "value3",
-    cookie4: "value4",
+[
+  {
+    "key": "cookie1",
+    "value": "value1",
+    "domain": "localhost",
+    "path": "/",
+    "hostOnly": true,
+    "pathIsDefault": true,
+    "creation": "2025-06-20T19:30:28.478Z",
+    "lastAccessed": "2025-06-20T19:30:28.478Z"
   },
-  "https://example.com/": {
-    cookie1: "value1",
-    cookie2: "value2",
+  {
+    "key": "cookie2",
+    "value": "value2",
+    "domain": "localhost",
+    "path": "/",
+    "hostOnly": true,
+    "pathIsDefault": true,
+    "creation": "2025-06-20T19:30:28.480Z",
+    "lastAccessed": "2025-06-20T19:30:28.480Z"
   },
-}
+  {
+    "key": "cookie3",
+    "value": "value3",
+    "domain": "localhost",
+    "path": "/",
+    "hostOnly": true,
+    "pathIsDefault": true,
+    "creation": "2025-06-20T19:30:28.480Z",
+    "lastAccessed": "2025-06-20T19:30:28.480Z"
+  },
+  {
+    "key": "cookie4",
+    "value": "value4",
+    "domain": "localhost",
+    "path": "/",
+    "hostOnly": true,
+    "pathIsDefault": true,
+    "creation": "2025-06-20T19:30:28.480Z",
+    "lastAccessed": "2025-06-20T19:30:28.480Z"
+  }
+]
 ```
