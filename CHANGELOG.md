@@ -1,8 +1,40 @@
+# 2.2.0 (July 7, 2026)
+
+Syncs the wrapper to the native shared library **v1.15.1** (`RequestInput` parity).
+
+### Changes
+
+- **Default client profile is now `chrome_146`** (previously `chrome_131`), matching native's default. Applies only to sessions with no explicit `clientIdentifier` or `ja3string`. Pin `clientIdentifier: ClientIdentifier.chrome_131` to keep the old fingerprint.
+
+### Deprecations
+
+- **`certCompressionAlgo` (string) → `certCompressionAlgos` (array).** Prefer the new array key, e.g. `certCompressionAlgos: ["brotli"]`. The old singular key still works — a single value is wrapped into an array automatically — but is deprecated and will be removed in a future major. Default remains `["zlib"]`.
+
+### Additions
+
+- **New client profiles:** `chrome_130_psk`, `chrome_133(_psk)`, `chrome_144(_psk)`, `chrome_146(_psk)`, `brave_146(_psk)`, `safari_ios_18_5`, `safari_ios_26_0`, `firefox_135`, `firefox_146_psk`, `firefox_147(_psk)`, `firefox_148`.
+- **New top-level SessionOptions:** `disableHttp3`, `withProtocolRacing`, `withoutCookieJar`, `withCustomCookieJar`, `certificatePinningHosts`, `defaultHeaders`, `timeoutSeconds`.
+- **New custom-client (ja3string) options:** `h3Settings`, `h3SettingsOrder`, `h3PseudoHeaderOrder`, `h3PriorityParam`, `h3SendGreaseFrames`, `echCandidatePayloads`, `echCandidateCipherSuites`, `recordSizeLimit`, `streamId`, `allowHttp`, `supportedDelegatedCredentialsAlgorithms`.
+- **New enum values:** `KeyShareCurves` gains `X25519Kyber768Old`, `X25519MLKEM768`; `SupportedSignatureAlgorithms` gains `SHA224_RSA`, `SHA224_ECDSA`.
+- **HTTP/3 example:** [examples/http3.js](https://github.com/Sahil1337/node-tls-client/tree/main/examples/http3.js)
+
+### Fixes
+
+- Removed the dead `withDefaultCookieJar` payload field. Native's default (no jar flags) already provides a working cookie jar — cookie behavior is unchanged.
+- **Cached native binary now refreshes on upgrade.** The shared library was cached under a version-agnostic filename and only re-downloaded when absent, so upgrading users kept a stale binary that lacked the new default profile (`chrome_146`) and rejected renamed fields. The cache is now keyed to the wrapper version via a marker file, forcing a one-time re-download after each upgrade.
+
+### Notes
+
+- The wrapper's own JS cookie jar is always active, so `withoutCookieJar` / `withCustomCookieJar` only affect native's per-request/redirect jar; cross-request cookie persistence still happens at the JS layer.
+- Prefer `timeout` (ms) over `timeoutSeconds`; `timeoutMilliseconds` takes precedence natively when both are set. Do not set both.
+
 # 2.1.0 (June 21, 2025)
+
 > [!WARNING]  
 > This version contains breaking changes.
 
 ### Breaking changes
+
 - **TLS Client Initialization Requirement**  
   The new method `initTLS()` **must be called before** using any session methods.  
   You must also call `destroyTLS()` when the session is no longer needed.
@@ -14,6 +46,7 @@
   The `redirect` option in `requestOptions` is no longer supported. Use `followRedirects` instead.
 
 ### Additions/Fixes
+
 - **Node.js Compatibility Fix**  
   The `process.clearLine()` bug has been resolved. Fixed issues [#2](https://github.com/Sahil1337/node-tls-client/issues/2) , [#3](https://github.com/Sahil1337/node-tls-client/issues/3) , [#6](https://github.com/Sahil1337/node-tls-client/issues/6)
 
@@ -34,7 +67,7 @@
   - `streamOutputBlockSize`
   - `streamOutputEOFSymbol`
   - `streamOutputPath`  
-  [Docs → SessionOptions](https://sahil1337.github.io/node-tls-client/interfaces/SessionOptions)
+    [Docs → SessionOptions](https://sahil1337.github.io/node-tls-client/interfaces/SessionOptions)
 
 - **Enhanced Documentation**  
   Executable compatibility instructions and examples have been added to the documentation. [Instructions](https://github.com/Sahil1337/node-tls-client/tree/main/examples/samples/executable.md)
@@ -43,21 +76,26 @@
   Taking into account the `Content-Encoding` and `Content-Transfer-Encoding` headers to determine if the response is a byte response. [Accounting for pull request #8](https://github.com/Sahil1337/node-tls-client/pull/8)
 
 # 2.0.0 (December 15, 2024)
+
 > [!WARNING]  
 > This version contains breaking changes.
+
 - Call `<session>.init()` after setting up a session and before using any HTTP methods. (See the documentation for more details.)
-- Resolved memory leak issues by moving to workerpool.  
-- Added new profiles: `chrome_131`, `chrome_131_psk`, `firefox_132`, `firefox_133`, and `ios_safari_18`. The default profile is now `chrome_131` (previously `chrome_124`).  
+- Resolved memory leak issues by moving to workerpool.
+- Added new profiles: `chrome_131`, `chrome_131_psk`, `firefox_132`, `firefox_133`, and `ios_safari_18`. The default profile is now `chrome_131` (previously `chrome_124`).
 - Introduced the `isRotatingProxy` option for handling rotating proxies. PS: [SessionOptions](https://sahil1337.github.io/node-tls-client/interfaces/SessionOptions.html)
 
 # 1.1.4 (July 29, 2024)
+
 > [!IMPORTANT]
 > This version includes significant updates and improvements.
 
 ### Breaking changes
+
 - `response.cookies` is now a property instead of a method. [Note: `response.cookies()` has been removed and replaced with `response.cookies`.]
 
 ### Additional updates
+
 - Added `session.cookies` property to retrieve all session cookies. For detailed information, see [examples/session-cookies.md](https://github.com/Sahil1337/node-tls-client/tree/main/examples/samples/cookie-example.md).
 - Added `byteResponse` option in requestOptions. Setting this to true ensures that the response is treated as a byte response. For detailed information, see [examples/images.js](https://github.com/Sahil1337/node-tls-client/tree/main/examples/images.js)
 - Added functionality to send binary data. Note: Ensure that the appropriate headers are set before sending binary data in the body.
@@ -68,39 +106,55 @@
 - Updated TlsResponse according to new changes.
 
 # 1.1.3 (June 13, 2024)
+
 > [!WARNING]  
 > This version contains breaking changes.
 
 ### Breaking changes
+
 - `response.json()` and `response.text()` methods now return a `Promise`.
 - `response.cookies()` now returns an object of cookies instead of a`Promise`.
 - `session.methods` no longer include the `timeout` and `rejectUnauthorized` options. Since timeout cannot be changed during a session, ensure to specify `timeout` & `rejectUnauthorized` in SessionOptions when creating a session.
 
 ### Additions
+
 - `fetch(fetchOptions)` method have been added to use different timeouts & rejectUnauthorized values in each request. [examples/timeout.js] for more information.
 
 ### Fixes
+
 - Fixed a typo that prevented timeout from working correctly.
 
 # 1.1.2 (June 9, 2024)
+
 ### Additions
+
 - Introduced client profile types.
+
 ### Changes
+
 - Enhanced documentation for improved clarity and usability.
 - Updated the README with minor adjustments.
 - Refined interface definitions for better readability and understanding.
 
 # 1.1.1 (June 4 2024)
+
 ### Additions
+
 - Implemented dynamic methods for downloading shared files in "node-tls-client", eliminating the inclusion of prebuilt files.
+
 ### Changes
+
 - Path used for storing the shared library files is strictly set to tmpdir path.
+
 ### Benefits
+
 - Reduces package size.
 - Ensures better support for executables.
 
 # 1.1.0 (June 3, 2024)
+
 ### Changes
+
 - Improved handling of shared library files:
   - Only the shared library file matching the current operating system is preserved. All other shared library files are deleted.
 - Added support for executables.
