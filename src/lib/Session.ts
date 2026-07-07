@@ -21,7 +21,7 @@ import { Payload } from "../interface/payload";
 import { Client } from "./Client";
 import { Response } from "./Response";
 
-const __version__ = "2.1.0";
+const __version__ = "2.2.0";
 
 export class Session {
   private jar = new Cookies();
@@ -176,10 +176,21 @@ export class Session {
       connectHeaders:
         this.config.connectHeaders ?? options.connectHeaders ?? {},
       localAddress: this.config.localAddress ?? null,
-      withDefaultCookieJar: true,
-      withoutCookieJar: false,
+      withoutCookieJar: this.config.withoutCookieJar ?? false,
+      withCustomCookieJar: this.config.withCustomCookieJar ?? false,
+      disableHttp3: this.config.disableHttp3 ?? false,
+      withProtocolRacing: this.config.withProtocolRacing ?? false,
       requestCookies,
     };
+
+    // Optional top-level fields: omit when unset so JSON.stringify drops them
+    // and native falls back to its zero-value behavior.
+    if (this.config.certificatePinningHosts !== undefined)
+      payload.certificatePinningHosts = this.config.certificatePinningHosts;
+    if (this.config.defaultHeaders !== undefined)
+      payload.defaultHeaders = this.config.defaultHeaders;
+    if (this.config.timeoutSeconds !== undefined)
+      payload.timeoutSeconds = this.config.timeoutSeconds;
 
     if (this.config.clientIdentifier) {
       payload["tlsClientIdentifier"] = this.config.clientIdentifier;
@@ -196,15 +207,31 @@ export class Session {
           exclusive: false,
           weight: 0,
         },
-        certCompressionAlgo: this.config.certCompressionAlgo ?? "zlib",
+        certCompressionAlgos:
+          this.config.certCompressionAlgos ??
+          (this.config.certCompressionAlgo
+            ? [this.config.certCompressionAlgo]
+            : ["zlib"]),
         supportedVersions: this.config.supportedVersions ?? [],
         supportedSignatureAlgorithms:
           this.config.supportedSignatureAlgorithms ?? [],
+        supportedDelegatedCredentialsAlgorithms:
+          this.config.supportedDelegatedCredentialsAlgorithms ?? [],
         keyShareCurves: this.config.keyShareCurves ?? [],
         alpnProtocols: this.config.alpnProtocols ?? [],
         alpsProtocols: this.config.alpsProtocols ?? [],
+        h3Settings: this.config.h3Settings ?? {},
+        h3SettingsOrder: this.config.h3SettingsOrder ?? [],
+        h3PseudoHeaderOrder: this.config.h3PseudoHeaderOrder ?? [],
+        h3PriorityParam: this.config.h3PriorityParam ?? 0,
+        h3SendGreaseFrames: this.config.h3SendGreaseFrames ?? false,
+        ECHCandidatePayloads: this.config.echCandidatePayloads ?? [],
+        ECHCandidateCipherSuites: this.config.echCandidateCipherSuites ?? [],
+        recordSizeLimit: this.config.recordSizeLimit ?? 0,
+        streamId: this.config.streamId ?? 0,
+        allowHttp: this.config.allowHttp ?? false,
       };
-    } else payload["tlsClientIdentifier"] = ClientIdentifier.chrome_131;
+    } else payload["tlsClientIdentifier"] = ClientIdentifier.chrome_146;
 
     const requestPayloadString = JSON.stringify(payload);
 

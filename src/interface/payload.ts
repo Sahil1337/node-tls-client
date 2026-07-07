@@ -1,12 +1,15 @@
 import { OutgoingHttpHeaders } from "http2";
 import {
+  CandidateCipherSuite,
   CertCompressionAlgo,
   H2Settings,
+  H3Settings,
   KeyShareCurves,
   Methods,
   PriorityFrames,
   PriorityParam,
   PseudoHeaderOrder,
+  SupportedDelegatedCredentialsAlgorithms,
   SupportedSignatureAlgorithms,
   SupportedVersions,
   TransportOptions,
@@ -41,10 +44,15 @@ export interface Payload {
   streamOutputEOFSymbol?: string | null;
   streamOutputPath?: string | null;
   timeoutMilliseconds: number;
+  timeoutSeconds?: number;
   withDebug: boolean;
-  withDefaultCookieJar: boolean;
   withoutCookieJar: boolean;
+  withCustomCookieJar: boolean;
   withRandomTLSExtensionOrder: boolean;
+  disableHttp3: boolean;
+  withProtocolRacing: boolean;
+  certificatePinningHosts?: Record<string, string[]>;
+  defaultHeaders?: Record<string, string[]>;
 }
 
 interface CustomTlsClient {
@@ -55,10 +63,21 @@ interface CustomTlsClient {
   connectionFlow: number;
   priorityFrames: PriorityFrames[];
   headerPriority: PriorityParam;
-  certCompressionAlgo: CertCompressionAlgo;
+  certCompressionAlgos: CertCompressionAlgo[];
   supportedVersions: SupportedVersions[];
   supportedSignatureAlgorithms: SupportedSignatureAlgorithms[];
+  supportedDelegatedCredentialsAlgorithms: SupportedDelegatedCredentialsAlgorithms[];
   keyShareCurves: KeyShareCurves[];
   alpnProtocols: string[];
   alpsProtocols: string[];
+  h3Settings: H3Settings;
+  h3SettingsOrder: (keyof H3Settings)[];
+  h3PseudoHeaderOrder: PseudoHeaderOrder[];
+  h3PriorityParam: number;
+  h3SendGreaseFrames: boolean;
+  ECHCandidatePayloads: number[];
+  ECHCandidateCipherSuites: CandidateCipherSuite[];
+  recordSizeLimit: number;
+  streamId: number;
+  allowHttp: boolean;
 }

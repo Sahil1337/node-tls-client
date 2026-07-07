@@ -117,7 +117,7 @@ const { Session, initTLS, destroyTLS } = require("node-tls-client");
     alpsProtocols: ["h2"],
     supportedVersions: ["GREASE", "1.3", "1.2"],
     keyShareCurves: ["GREASE", "X25519"],
-    certCompressionAlgo: "brotli",
+    certCompressionAlgos: ["brotli"],
     pseudoHeaderOrder: [":method", ":authority", ":scheme", ":path"],
     connectionFlow: 15663105,
     headerOrder: ["accept", "user-agent", "accept-encoding", "accept-language"],
@@ -201,7 +201,7 @@ const { Session, ClientIdentifier, initTLS, destroyTLS } = require("node-tls-cli
 | `supportedSignatureAlgorithms` | [supportedSignatureAlgorithms](https://sahil1337.github.io/node-tls-client/types/SupportedSignatureAlgorithms.html)[] | An array of supported signature algorithms.                            |
 | `supportedVersions`            | [supportedVersions](https://sahil1337.github.io/node-tls-client/types/SupportedVersions.html)[]                        | An array of supported TLS versions.                                    |
 | `keyShareCurves`               | [keyShareCurves](https://sahil1337.github.io/node-tls-client/types/KeyShareCurves.html)[]                               | An array of key share curves.                                          |
-| `certCompressionAlgo`          | [certCompressionAlgo](https://sahil1337.github.io/node-tls-client/types/CertCompressionAlgo.html)                  | A certificate compression algorithm, e.g., `"brotli"`.                 |
+| `certCompressionAlgos`         | [certCompressionAlgo](https://sahil1337.github.io/node-tls-client/types/CertCompressionAlgo.html)[]                | An array of certificate compression algorithms, e.g., `["brotli"]`.    |
 | `pseudoHeaderOrder`            | [pseudoHeaderOrder](https://sahil1337.github.io/node-tls-client/types/PseudoHeaderOrder.html)[]                                                                                                                     | An array specifying the order of pseudo-headers.                       |
 | `connectionFlow`               | number                                                                                                                                  | A number specifying the connection flow control window size.           |
 | `priorityFrames`               | [priorityFrame](https://sahil1337.github.io/node-tls-client/interfaces/PriorityFrames.html)[]                                | An array of priority frames to send with the request.                  |
@@ -213,6 +213,24 @@ const { Session, ClientIdentifier, initTLS, destroyTLS } = require("node-tls-cli
 | `forceHttp1`                   | boolean                                                                                                                                 | A boolean indicating whether to force the use of HTTP/1.1.             |
 | `debug`                        | boolean                                                                                                                                 | A boolean indicating whether to enable debug mode.                     |
 | `insecureSkipVerify`           | boolean                                                                                                                                 | A boolean indicating whether to skip SSL certificate verification.     |
+| `disableHttp3`                 | boolean                                                                                                                                 | Disables HTTP/3 (QUIC) for the session.                                |
+| `withProtocolRacing`           | boolean                                                                                                                                 | Enables protocol racing between HTTP/2 and HTTP/3.                     |
+| `withoutCookieJar`             | boolean                                                                                                                                 | Disables native's per-request cookie jar. (The wrapper's own JS cookie jar stays active regardless.) |
+| `withCustomCookieJar`          | boolean                                                                                                                                 | Uses a custom native cookie jar. (The wrapper's own JS cookie jar stays active regardless.)          |
+| `certificatePinningHosts`      | Record<string, string[]>                                                                                                                | Maps a host to an array of pinned certificate fingerprints.            |
+| `defaultHeaders`               | Record<string, string[]>                                                                                                                | Fallback headers, applied natively only for headers not already set (largely inert since the wrapper always sends a full header map). |
+| `timeoutSeconds`               | number                                                                                                                                  | Request timeout in seconds. Prefer `timeout` (ms), which takes precedence natively — do not set both. |
+| `h3Settings`                   | [H3Settings](https://sahil1337.github.io/node-tls-client/interfaces/H3Settings.html)                                                    | HTTP/3 settings (ja3string path only).                                 |
+| `h3SettingsOrder`              | (keyof H3Settings)[]                                                                                                                     | Order of HTTP/3 settings (ja3string path only).                        |
+| `h3PseudoHeaderOrder`          | [pseudoHeaderOrder](https://sahil1337.github.io/node-tls-client/types/PseudoHeaderOrder.html)[]                                          | Order of HTTP/3 pseudo-headers (ja3string path only).                  |
+| `h3PriorityParam`              | number                                                                                                                                  | HTTP/3 priority param (ja3string path only).                           |
+| `h3SendGreaseFrames`           | boolean                                                                                                                                 | Send HTTP/3 grease frames (ja3string path only).                       |
+| `echCandidatePayloads`         | number[]                                                                                                                                | ECH candidate payloads (ja3string path only).                          |
+| `echCandidateCipherSuites`     | [CandidateCipherSuite](https://sahil1337.github.io/node-tls-client/interfaces/CandidateCipherSuite.html)[]                              | ECH candidate cipher suites (ja3string path only).                     |
+| `recordSizeLimit`              | number                                                                                                                                  | TLS record size limit (ja3string path only).                          |
+| `streamId`                     | number                                                                                                                                  | Stream ID (ja3string path only).                                       |
+| `allowHttp`                    | boolean                                                                                                                                 | Allow plain HTTP (ja3string path only).                                |
+| `supportedDelegatedCredentialsAlgorithms` | [supportedSignatureAlgorithms](https://sahil1337.github.io/node-tls-client/types/SupportedSignatureAlgorithms.html)[]         | Supported delegated credentials algorithms (ja3string path only).      |
 
 </div>
 

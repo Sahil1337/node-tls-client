@@ -1,6 +1,6 @@
 {
   "name": "node-tls-client",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Advanced library based on node-fetch and tls-client.",
   "main": "dist/index.js",
   "typings": "typings/index.d.ts",
@@ -10,6 +10,8 @@
   "private": false,
   "scripts": {
     "build": "tsc",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run build && npm run docs",
     "docs": "typedoc --out docs src/index.ts"
   },
   "keywords": [
@@ -22,11 +24,11 @@
     "cloudflare"
   ],
   "devDependencies": {
-    "@types/node": "^20.12.12",
-    "@types/tough-cookie": "^4.0.5",
     "@types/cookie-parser": "^1.4.9",
+    "@types/node": "^24.13.2",
+    "@types/tough-cookie": "^4.0.5",
     "typedoc": "^0.25.13",
-    "typescript": "^5.4.5"
+    "typescript": "^6.0.3"
   },
   "dependencies": {
     "cookie-parser": "^1.4.7",

@@ -48,9 +48,18 @@ export type SupportedSignatureAlgorithms =
   | "ECDSAWithP256AndSHA256"
   | "ECDSAWithP384AndSHA384"
   | "ECDSAWithP521AndSHA512"
+  | "SHA224_RSA"
+  | "SHA224_ECDSA"
   | "PKCS1WithSHA1"
   | "ECDSAWithSHA1"
   | "Ed25519";
+
+/**
+ * Represents supported delegated credentials algorithms for TLS.
+ * Same value space as {@link SupportedSignatureAlgorithms}.
+ */
+export type SupportedDelegatedCredentialsAlgorithms =
+  SupportedSignatureAlgorithms;
 
 /**
  * Represents various supported versions of TLS.
@@ -68,12 +77,46 @@ export type KeyShareCurves =
   | "X25519"
   | "P256Kyber768"
   | "X25519Kyber512D"
-  | "X25519Kyber768";
+  | "X25519Kyber768"
+  | "X25519Kyber768Old"
+  | "X25519MLKEM768";
 
 /**
  * Represents various certificate compression algorithms.
  */
 export type CertCompressionAlgo = "zlib" | "brotli" | "zstd";
+
+/**
+ * Represents HTTP/3 (h3) protocol settings. Keys mirror the native string-keyed
+ * `H3SettingsMap` — do NOT use the uint-keyed `http3Settings` form.
+ */
+export interface H3Settings {
+  QPACK_MAX_TABLE_CAPACITY?: number;
+  MAX_FIELD_SECTION_SIZE?: number;
+  QPACK_BLOCKED_STREAMS?: number;
+  H3_DATAGRAM?: number;
+}
+
+/**
+ * ECH HPKE key derivation function identifiers.
+ */
+export type KdfId = "HKDF_SHA256" | "HKDF_SHA384" | "HKDF_SHA512";
+
+/**
+ * ECH HPKE AEAD identifiers.
+ */
+export type AeadId =
+  | "AEAD_AES_128_GCM"
+  | "AEAD_AES_256_GCM"
+  | "AEAD_CHACHA20_POLY1305";
+
+/**
+ * A candidate cipher suite for Encrypted Client Hello (ECH).
+ */
+export interface CandidateCipherSuite {
+  kdfId: KdfId;
+  aeadId: AeadId;
+}
 
 /**
  * Represents parameters for setting priority of HTTP/2 streams.
@@ -148,6 +191,17 @@ export enum ClientIdentifier {
   chrome_124 = "chrome_124",
   chrome_131 = "chrome_131",
   chrome_131_psk = "chrome_131_PSK",
+  chrome_130_psk = "chrome_130_PSK",
+  chrome_133 = "chrome_133",
+  chrome_133_psk = "chrome_133_PSK",
+  chrome_144 = "chrome_144",
+  chrome_144_psk = "chrome_144_PSK",
+  chrome_146 = "chrome_146",
+  chrome_146_psk = "chrome_146_PSK",
+
+  // Brave versions
+  brave_146 = "brave_146",
+  brave_146_psk = "brave_146_PSK",
 
   // Safari versions
   safari_15_6_1 = "safari_15_6_1",
@@ -158,6 +212,8 @@ export enum ClientIdentifier {
   safari_ios_16_0 = "safari_ios_16_0",
   safari_ios_17_0 = "safari_ios_17_0",
   safari_ios_18_0 = "safari_ios_18_0",
+  safari_ios_18_5 = "safari_ios_18_5",
+  safari_ios_26_0 = "safari_ios_26_0",
 
   // Firefox versions
   firefox_102 = "firefox_102",
@@ -171,6 +227,11 @@ export enum ClientIdentifier {
   firefox_123 = "firefox_123",
   firefox_132 = "firefox_132",
   firefox_133 = "firefox_133",
+  firefox_135 = "firefox_135",
+  firefox_146_psk = "firefox_146_PSK",
+  firefox_147 = "firefox_147",
+  firefox_147_psk = "firefox_147_PSK",
+  firefox_148 = "firefox_148",
 
   // Opera versions
   opera_89 = "opera_89",
@@ -306,7 +367,13 @@ export interface SessionOptions {
   keyShareCurves?: KeyShareCurves[];
 
   /**
-   * The certificate compression algorithm.
+   * The certificate compression algorithms.
+   */
+  certCompressionAlgos?: CertCompressionAlgo[];
+
+  /**
+   * @deprecated Use `certCompressionAlgos` (array) instead. Kept for backward
+   * compatibility — a single value is wrapped into an array automatically.
    */
   certCompressionAlgo?: CertCompressionAlgo;
 
@@ -384,6 +451,104 @@ export interface SessionOptions {
    * If true, IPv6 is disabled for the session requests.
    */
   disableIPV6?: boolean;
+
+  /**
+   * If true, disables HTTP/3 (QUIC) for the session requests.
+   */
+  disableHttp3?: boolean;
+
+  /**
+   * If true, enables protocol racing (HTTP/2 vs HTTP/3).
+   */
+  withProtocolRacing?: boolean;
+
+  /**
+   * If true, uses a custom cookie jar natively. Note: the wrapper's own JS
+   * cookie jar stays active regardless of this flag.
+   */
+  withCustomCookieJar?: boolean;
+
+  /**
+   * If true, disables the native per-request/redirect cookie jar. Note: the
+   * wrapper's own JS cookie jar stays active regardless of this flag, so
+   * cross-request cookie persistence still occurs at the JS layer.
+   */
+  withoutCookieJar?: boolean;
+
+  /**
+   * Certificate pinning hosts, mapping a host to an array of pinned
+   * certificate fingerprints.
+   */
+  certificatePinningHosts?: Record<string, string[]>;
+
+  /**
+   * Default headers applied natively only as a fallback for headers not
+   * already set. Largely inert in this wrapper since a fully-populated header
+   * map is always sent.
+   */
+  defaultHeaders?: Record<string, string[]>;
+
+  /**
+   * The timeout duration for each request, in seconds. Exposed for parity;
+   * prefer `timeout` (ms), which takes precedence natively. Do not set both.
+   */
+  timeoutSeconds?: number;
+
+  /**
+   * HTTP/3 settings. Only applied on the custom-client (ja3string) path.
+   */
+  h3Settings?: H3Settings;
+
+  /**
+   * The order of HTTP/3 settings. Only applied on the ja3string path.
+   */
+  h3SettingsOrder?: (keyof H3Settings)[];
+
+  /**
+   * The order of HTTP/3 pseudo headers. Only applied on the ja3string path.
+   */
+  h3PseudoHeaderOrder?: PseudoHeaderOrder[];
+
+  /**
+   * The HTTP/3 priority param. Only applied on the ja3string path.
+   */
+  h3PriorityParam?: number;
+
+  /**
+   * Whether to send HTTP/3 grease frames. Only applied on the ja3string path.
+   */
+  h3SendGreaseFrames?: boolean;
+
+  /**
+   * ECH candidate payloads. Only applied on the ja3string path.
+   */
+  echCandidatePayloads?: number[];
+
+  /**
+   * ECH candidate cipher suites. Only applied on the ja3string path.
+   */
+  echCandidateCipherSuites?: CandidateCipherSuite[];
+
+  /**
+   * The TLS record size limit. Only applied on the ja3string path.
+   */
+  recordSizeLimit?: number;
+
+  /**
+   * The stream ID. Only applied on the ja3string path.
+   */
+  streamId?: number;
+
+  /**
+   * Whether to allow plain HTTP. Only applied on the ja3string path.
+   */
+  allowHttp?: boolean;
+
+  /**
+   * The supported delegated credentials algorithms. Only applied on the
+   * ja3string path.
+   */
+  supportedDelegatedCredentialsAlgorithms?: SupportedDelegatedCredentialsAlgorithms[];
 }
 
 /**
