@@ -60,6 +60,129 @@ const {
 })();
 ```
 
+## Backends
+
+`initTLS({ mode })` selects how requests are transported. Everything above the transport — `Session`, request methods, options, responses — is identical no matter which backend you pick, so you can switch modes without touching request code.
+
+| | **`ffi`** (default) | **`server`** |
+| --- | --- | --- |
+| How | Native binary loaded in-process via [koffi](https://github.com/Koromix/koffi) | Thin HTTP client to an external [`tls-client-api`](https://github.com/bogdanfinn/tls-client-api) URL |
+| Infra | None — binary auto-downloaded on first `initTLS()` | You run one or more `tls-client-api` processes |
+| Parallelism | Thread-bound (`UV_THREADPOOL_SIZE`) — see [Concurrency](#concurrency--scaling) | Goroutines + netpoller — thousands per process |
+| Best for | Most apps, scripts, moderate concurrency | High concurrency, multi-machine behind a load balancer |
+
+<details open>
+<summary><b>FFI mode</b> — default, zero infra</summary>
+
+```javascript
+const { Session, initTLS, destroyTLS } = require("node-tls-client");
+
+(async () => {
+  await initTLS(); // mode defaults to "ffi"; binary downloaded once
+  // await initTLS({ concurrency: 64 }); // optional — see Concurrency below
+
+  const session = new Session({ timeout: 30000 });
+  const res = await session.get("https://example.com");
+  console.log(res.status);
+
+  await session.close();
+  await destroyTLS();
+})();
+```
+</details>
+
+<details>
+<summary><b>Server mode</b> — external <code>tls-client-api</code> URL or load balancer</summary>
+
+Point `server.url` at a running [`tls-client-api`](https://github.com/bogdanfinn/tls-client-api) instance (or an LB in front of many). No binary is downloaded in this mode.
+
+```javascript
+const { Session, initTLS, destroyTLS } = require("node-tls-client");
+
+(async () => {
+  await initTLS({
+    mode: "server",
+    server: {
+      url: "http://127.0.0.1:8080", // or your load balancer
+      apiKey: "your-api-key",       // sent as the X-API-KEY header
+    },
+    concurrency: 256,               // http keep-alive Agent maxSockets
+  });
+
+  const session = new Session({ timeout: 30000 });
+  const res = await session.get("https://example.com");
+  console.log(res.status);
+
+  await session.close();
+  await destroyTLS();
+})();
+```
+</details>
+
+### `initTLS(options?)`
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `mode` | `"ffi"` \| `"server"` | `"ffi"` | Transport backend. |
+| `concurrency` | `number` | ffi: `UV_THREADPOOL_SIZE` (or cores×2) · server: `256` | ffi → semaphore admission depth (see below). server → http Agent `maxSockets`. |
+| `server.url` | `string` | — | **Required** when `mode: "server"`. Points at one instance or a load balancer. |
+| `server.apiKey` | `string` | — | Sent as the `X-API-KEY` header. |
+
+`initTLS()` with no arguments behaves exactly as before — nothing to change for existing code.
+
+## Concurrency & scaling
+
+The native FFI request is a **blocking call**: each in-flight request holds one libuv threadpool thread for its full round-trip. So in FFI mode:
+
+- **`concurrency` caps admission / burst-queue depth, not parallelism.** Real parallelism = `UV_THREADPOOL_SIZE`, fixed at process start. `initTLS({ concurrency: 200 })` admits 200, but only `UV_THREADPOOL_SIZE` run at once; the rest queue. It's clamped to koffi's hard max of `4096`.
+- **To raise real parallelism, set `UV_THREADPOOL_SIZE` in the environment** *before* Node starts (the library defaults it to `cores×2` if unset):
+
+  ```sh
+  UV_THREADPOOL_SIZE=64 node app.js
+  ```
+- For true high concurrency, prefer **server mode** — the Go server uses goroutines + a netpoller (non-blocking), so a single process saturates all cores and handles thousands of concurrent requests.
+
+| Need | Answer | Library work |
+| --- | --- | --- |
+| High concurrency, one machine | Server mode → one `tls-client-api` process (or FFI + raised `UV_THREADPOOL_SIZE`) | run one process |
+| Multi-machine / true cluster | Run N `tls-client-api` containers behind a load balancer; point `server.url` at the LB | zero — external url already covers it |
+
+> A single `tls-client-api` process handles thousands of concurrent requests across all CPU cores; you rarely need more than one per machine.
+
+<details>
+<summary>Multi-machine: docker-compose + nginx snippet</summary>
+
+```yaml
+# docker-compose.yml — N tls-client-api replicas behind nginx
+services:
+  tls-api:
+    image: ghcr.io/bogdanfinn/tls-client-api:latest
+    environment:
+      - API_AUTH_KEYS=your-api-key
+    deploy:
+      replicas: 4
+  nginx:
+    image: nginx:alpine
+    ports: ["8080:8080"]
+    volumes: ["./nginx.conf:/etc/nginx/nginx.conf:ro"]
+    depends_on: [tls-api]
+```
+
+```nginx
+# nginx.conf
+events {}
+http {
+  upstream tls_api { server tls-api:8080; }
+  server {
+    listen 8080;
+    location / { proxy_pass http://tls_api; }
+  }
+}
+```
+
+Then: `initTLS({ mode: "server", server: { url: "http://your-lb:8080", apiKey: "your-api-key" } })`.
+</details>
+
 ## Advanced example
 
 ```javascript

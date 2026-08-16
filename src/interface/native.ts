@@ -1,10 +1,8 @@
-import { KoffiFunction } from "koffi";
-
 export interface TlsNativeLibrary {
-  request: KoffiFunction;
-  freeMemory: KoffiFunction;
-  destroyAll: KoffiFunction;
-  destroySession: KoffiFunction;
+  request: (payload: string) => Promise<string>;
+  freeMemory: (payload: string) => Promise<void>;
+  destroyAll: () => Promise<string>;
+  destroySession: (payload: string) => Promise<string>;
 }
 
 type ArchMap = {

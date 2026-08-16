@@ -4,15 +4,21 @@
 
 import path from "path";
 import fs from "fs/promises";
-import { PlatformMap, TlsNativeLibrary } from "../interface/native";
+import { KoffiFunction } from "koffi";
+import { PlatformMap, TlsNativeLibrary } from "../../interface/native";
 import os from "os";
 import { load as koffi } from "koffi";
-import { LibraryDownloader } from "./download";
+import { LibraryDownloader } from "../../utils/download";
+import { packageVersion } from "../../utils/version";
 
-// Wrapper package version — the cached native binary is keyed to it so that
-// upgrading node-tls-client forces a one-time re-download (a new wrapper release
-// may require a newer native binary with new profiles/payload fields).
-const packageVersion: string = require("../../package.json").version;
+// Promisify a koffi `.async` fn: runs the (blocking cgo) call on a libuv
+// threadpool thread, resolves/rejects the Node-style callback.
+const wrap =
+  (f: KoffiFunction) =>
+  (...a: any[]): Promise<any> =>
+    new Promise((res, rej) =>
+      f.async(...a, (e: any, r: any) => (e ? rej(e) : res(r)))
+    );
 
 export class LibraryHandler {
   private static path = path.join(os.tmpdir(), this.retrieveFileInfo().name);
@@ -48,10 +54,10 @@ export class LibraryHandler {
     const library = koffi(LibraryHandler.path);
 
     return {
-      request: library.func("request", "string", ["string"]),
-      freeMemory: library.func("freeMemory", "void", ["string"]),
-      destroyAll: library.func("destroyAll", "string", []),
-      destroySession: library.func("destroySession", "string", ["string"]),
+      request: wrap(library.func("request", "string", ["string"])),
+      freeMemory: wrap(library.func("freeMemory", "void", ["string"])),
+      destroyAll: wrap(library.func("destroyAll", "string", [])),
+      destroySession: wrap(library.func("destroySession", "string", ["string"])),
     };
   }
 

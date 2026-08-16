@@ -4,6 +4,7 @@ const colors = {
   red: "\x1b[31m",
   green: "\x1b[32m",
   cyan: "\x1b[36m",
+  yellow: "\x1b[33m",
 };
 
 /**
@@ -25,6 +26,13 @@ export const logger = {
   error: function (...args: any[]) {
     return process.stdout.write(
       `${colors.cyan}@node-tls-client ~ ${colors.red}ERROR:${
+        colors.reset
+      } ${args.join(" ")}\n`
+    );
+  },
+  warn: function (...args: any[]) {
+    return process.stdout.write(
+      `${colors.cyan}@node-tls-client ~ ${colors.yellow}WARN:${
         colors.reset
       } ${args.join(" ")}\n`
     );

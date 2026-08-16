@@ -33,7 +33,6 @@
   "dependencies": {
     "cookie-parser": "^1.4.7",
     "koffi": "^2.8.9",
-    "piscina": "^5.1.1",
     "tough-cookie": "^4.1.4"
   },
   "files": [

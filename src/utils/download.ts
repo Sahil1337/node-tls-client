@@ -8,16 +8,19 @@ import * as readline from "readline";
 export class LibraryDownloader {
   private static file: FileInfo;
   private static path: string;
+  private static repo: string;
 
   private static readonly issueURL =
     "https://github.com/Sahil1337/node-tls-client/issues";
 
   static async retrieveLibrary(
     file: FileInfo,
-    libPath: string
+    libPath: string,
+    repo = "bogdanfinn/tls-client"
   ): Promise<boolean> {
     this.file = file;
     this.path = libPath;
+    this.repo = repo;
 
     try {
       const latest = await this.getLatest();
@@ -132,7 +135,7 @@ export class LibraryDownloader {
     return new Promise<any>((resolve) => {
       const options = {
         hostname: "api.github.com",
-        path: "/repos/bogdanfinn/tls-client/releases/latest",
+        path: `/repos/${this.repo}/releases/latest`,
         method: "GET",
         headers: {
           "user-agent": "node-tls-client",

@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { Cookies } from "./Cookie";
+import { Cookies } from "./cookie";
 import {
   ClientIdentifier,
   DeleteRequestOptions,
@@ -16,12 +16,10 @@ import {
 } from "../interface";
 import { OutgoingHttpHeaders } from "http2";
 import { URL } from "url";
-import { isByteRequest, logger } from "../utils";
+import { isByteRequest, logger, packageVersion } from "../utils";
 import { Payload } from "../interface/payload";
-import { Client } from "./Client";
-import { Response } from "./Response";
-
-const __version__ = "2.2.0";
+import { Client } from "./client";
+import { Response } from "./response";
 
 export class Session {
   private jar = new Cookies();
@@ -123,27 +121,24 @@ export class Session {
    * @returns The response from the 'destroySession' function.
    */
   public async close() {
-    return Client.getInstance().pool?.run(
-      JSON.stringify({
-        sessionId: this.sessionId,
-      }),
-      { name: "destroySession" }
+    return Client.getInstance().destroySession(
+      JSON.stringify({ sessionId: this.sessionId }),
     );
   }
 
   protected async execute(
     method: Methods,
     url: string | URL,
-    options: RequestOptions = {}
+    options: RequestOptions = {},
   ) {
     const headers =
       options?.headers !== undefined
         ? options.headers
-        : this.config.headers ?? this.getDefaultHeaders();
+        : (this.config.headers ?? this.getDefaultHeaders());
 
     const requestCookies = await this.jar.mergeCookies(
       options?.cookies || {},
-      url.toString()
+      url.toString(),
     );
 
     const payload: Payload = {
@@ -235,18 +230,14 @@ export class Session {
 
     const requestPayloadString = JSON.stringify(payload);
 
-    const rawResponse = await Client.getInstance().pool.run(
-      requestPayloadString,
-      {
-        name: "request",
-      }
-    );
+    const rawResponse =
+      await Client.getInstance().request(requestPayloadString);
 
     const response: TlsResponse = JSON.parse(rawResponse);
 
     const cookies = await this.jar.syncCookies(
       response.cookies || {},
-      url.toString()
+      url.toString(),
     );
 
     setImmediate(() => {
@@ -257,14 +248,12 @@ export class Session {
   }
 
   private async freeMemory(id: string): Promise<void> {
-    return Client.getInstance().pool?.run(id.toString(), {
-      name: "freeMemory",
-    });
+    return Client.getInstance().freeMemory(id.toString());
   }
 
   private getDefaultHeaders(): OutgoingHttpHeaders {
     return {
-      "User-Agent": `tls-client/${__version__}`,
+      "User-Agent": `tls-client/${packageVersion}`,
       "Accept-Encoding": "gzip, deflate, br",
       Accept: "*/*",
       Connection: "keep-alive",
