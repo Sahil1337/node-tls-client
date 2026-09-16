@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { DeleteRequestOptions, GetRequestOptions, HeadRequestOptions, Methods, OptionsRequestOptions, PatchRequestOptions, PostRequestOptions, PutRequestOptions, RequestOptions, SessionOptions } from "../interface";
 import { URL } from "url";
 import { Response } from "./Response";

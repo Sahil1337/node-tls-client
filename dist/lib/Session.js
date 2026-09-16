@@ -7,7 +7,7 @@ const interface_1 = require("../interface");
 const utils_1 = require("../utils");
 const Client_1 = require("./Client");
 const Response_1 = require("./Response");
-const __version__ = "2.1.0";
+const __version__ = "2.2.0";
 class Session {
     config;
     jar = new Cookie_1.Cookies();
@@ -167,7 +167,7 @@ class Session {
             };
         }
         else
-            payload["tlsClientIdentifier"] = interface_1.ClientIdentifier.chrome_131;
+            payload["tlsClientIdentifier"] = interface_1.ClientIdentifier.chrome_152;
         const requestPayloadString = JSON.stringify(payload);
         const rawResponse = await Client_1.Client.getInstance().pool.run(requestPayloadString, {
             name: "request",
