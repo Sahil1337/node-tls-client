@@ -21,13 +21,13 @@ import { Payload } from "../interface/payload";
 import { Client } from "./Client";
 import { Response } from "./Response";
 
-const __version__ = "2.1.0";
+const __version__ = "2.2.0";
 
 export class Session {
   private jar = new Cookies();
   private sessionId = randomUUID();
 
-  constructor(private readonly config: SessionOptions = {}) {}
+  constructor(private readonly config: SessionOptions = {}) { }
 
   public async cookies() {
     return this.jar.fetchAllCookies();
@@ -204,7 +204,7 @@ export class Session {
         alpnProtocols: this.config.alpnProtocols ?? [],
         alpsProtocols: this.config.alpsProtocols ?? [],
       };
-    } else payload["tlsClientIdentifier"] = ClientIdentifier.chrome_131;
+    } else payload["tlsClientIdentifier"] = ClientIdentifier.chrome_152;
 
     const requestPayloadString = JSON.stringify(payload);
 
@@ -223,7 +223,7 @@ export class Session {
     );
 
     setImmediate(() => {
-      this.freeMemory(response.id).catch(() => {});
+      this.freeMemory(response.id).catch(() => { });
     });
 
     return new Response({ ...response, cookies });

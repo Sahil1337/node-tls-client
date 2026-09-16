@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { TlsResponse } from "../interface";
 import { IncomingHttpHeaders } from "http";
 export declare class Response {

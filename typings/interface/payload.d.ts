@@ -1,3 +1,5 @@
+/// <reference types="node" />
+/// <reference types="node" />
 import { OutgoingHttpHeaders } from "http2";
 import { CertCompressionAlgo, H2Settings, KeyShareCurves, Methods, PriorityFrames, PriorityParam, PseudoHeaderOrder, SupportedSignatureAlgorithms, SupportedVersions, TransportOptions } from "./session";
 export interface Payload {

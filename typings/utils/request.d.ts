@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { OutgoingHttpHeaders } from "http";
 /**
  * Determines if a request should be treated as a byte request based on its headers.

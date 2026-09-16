@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isByteRequest = isByteRequest;
+exports.isByteRequest = void 0;
 const exactContentTypes = new Set([
     "application/octet-stream",
     "application/pdf",
@@ -53,3 +53,4 @@ function isByteRequest(headers) {
     }
     return false;
 }
+exports.isByteRequest = isByteRequest;
