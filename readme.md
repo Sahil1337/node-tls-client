@@ -88,12 +88,12 @@ Requests run through the native library with koffi's asynchronous calls. Each in
 
 `initTLS()` downloads the newest [tls-client](https://github.com/bogdanfinn/tls-client) release for your platform into `os.tmpdir()` (named after this package's version, so an upgrade downloads once) on first use. No GitHub API calls are made (no anonymous rate limit). If the download fails but an older cached binary exists, that binary is used with a warning; otherwise a `TlsClientError` is thrown, the process stays alive and `initTLS()` can be retried.
 
-| Platform                          | Supported                                                                     |
-| --------------------------------- | ----------------------------------------------------------------------------- |
-| macOS x64 / arm64                 | yes                                                                           |
-| Linux x64 / arm64 / armv7 (glibc) | yes                                                                           |
-| Linux musl (Alpine)               | **no** — upstream ships glibc-linked binaries only; use `node:<version>-slim` |
-| Windows x64 / ia32                | yes                                                                           |
+| Platform                          | Supported                                                                                                               |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| macOS x64 / arm64                 | yes                                                                                                                     |
+| Linux x64 / arm64 / armv7 (glibc) | yes                                                                                                                     |
+| Linux musl (Alpine)               | **no** — upstream publishes an amd64 Alpine build, but this version does not download it yet; use `node:<version>-slim` |
+| Windows x64 / ia32                | yes                                                                                                                     |
 
 Requires Node.js ≥ 20.
 
@@ -291,6 +291,11 @@ const {
 | `allowHttp`                               | boolean                                                                                                               | Allow plain HTTP (ja3string path only).                                                                          |
 | `supportedDelegatedCredentialsAlgorithms` | [supportedSignatureAlgorithms](https://sahil1337.github.io/node-tls-client/types/SupportedSignatureAlgorithms.html)[] | Supported delegated credentials algorithms (ja3string path only).                                                |
 | `trustAnchorsPayload`                     | string                                                                                                                | Trust-anchors extension payload; required when the ja3 string lists extension 51764 (ja3string path only).       |
+
+**HTTP/3 known issues (native v1.16.0).** These only affect sessions that actually use HTTP/3, i.e. with `withProtocolRacing` enabled; a session without protocol racing is unaffected.
+
+- Only `ClientIdentifier.chrome_144`, `chrome_144_psk`, `firefox_147`, `firefox_147_psk` and `firefox_148` carry HTTP/3 settings. Every other profile sends a minimal HTTP/3 SETTINGS frame that does not match the browser it imitates (TLS and HTTP/2 fingerprints are unaffected). If the HTTP/3 fingerprint matters, use one of those five profiles or set `disableHttp3: true`.
+- Both racing legs share one request object, a data race on the header map that can crash the process when many requests race at the same time. Prefer `disableHttp3: true` for high concurrent volume.
 
 </div>
 

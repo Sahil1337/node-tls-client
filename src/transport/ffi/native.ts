@@ -161,7 +161,7 @@ export class LibraryHandler {
       let message = `Failed to load the tls-client shared library at ${libPath}: ${reason}`;
       if (process.platform === "linux" && !LibraryHandler.hasGlibc()) {
         message +=
-          ". This looks like a musl-based system (e.g. Alpine): upstream ships glibc-linked binaries only, so alpine/musl is not supported — use a glibc-based image such as node:<version>-slim.";
+          ". This looks like a musl-based system (e.g. Alpine): this version only downloads glibc-linked binaries, so alpine/musl is not supported yet — use a glibc-based image such as node:<version>-slim.";
       }
       throw new TlsClientError(message);
     }

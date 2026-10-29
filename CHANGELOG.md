@@ -44,6 +44,7 @@ Tested against the native shared library **v1.16.0**.
 - `SessionOptions.sessionId` is honored (it was documented but always replaced by a random UUID); two `Session` objects with the same id share one native session.
 - Per-request `cookies` values are sent verbatim; a value containing `;` was previously cut at the semicolon.
 - A response cookie that cannot be parsed no longer fails an otherwise successful request.
+- `H2Settings` accepts `UNKNOWN_SETTING_7`, `UNKNOWN_SETTING_8` and `UNKNOWN_SETTING_9`, and every `TransportOptions` field is optional (native treats a missing field as its default).
 
 ### Notes
 
@@ -51,6 +52,7 @@ Tested against the native shared library **v1.16.0**.
 - `withProtocolRacing` with a non-SOCKS5 proxy is rejected by native 1.16.0 (`status: 0`).
 - `disableSessionTickets` and `trustAnchorsPayload` need a tls-client build newer than the 1.16.0 release binaries, which predate those fields and silently ignore them.
 - Alpine (musl) is not supported yet: upstream only publishes an amd64 Alpine build, and this version does not download it. Use a glibc-based image such as `node:<version>-slim`.
+- HTTP/3 known issues (native 1.16.0, protocol racing only): only `chrome_144(_psk)`, `firefox_147(_psk)` and `firefox_148` carry real HTTP/3 settings, and heavy concurrent racing can crash the process. Use `disableHttp3: true` for volume.
 - Native calls share the libuv threadpool with Node's `fs`/DNS/zlib/crypto work; size `UV_THREADPOOL_SIZE` for both.
 - Requires Node.js ≥ 20.
 - `initTLS()` downloads the newest upstream release on first use and after a wrapper upgrade. Response `headers` values are `string[]` at runtime.
