@@ -3,3 +3,4 @@ node_modules/
 dist/
 typings/
 plans/*
+.DS_Store
