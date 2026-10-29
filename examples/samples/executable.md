@@ -6,6 +6,7 @@
 ---
 
 ### 🔧 Build Script (Linux, Node.js v20.0.0):
+
 ```bash
 nexe app.js -t linux-x64-20.0.0 --build
 ```
@@ -14,11 +15,11 @@ nexe app.js -t linux-x64-20.0.0 --build
 
 ### 🔍 Breakdown of Command
 
-| Flag                  | Description                                                 |
-|-----------------------|-------------------------------------------------------------|
-| `app.js`              | Your Node.js entry script                                   |
-| `-t linux-x64-20.0.0` | Target platform: Linux, 64-bit, Node.js v20.0.0             |
-| `--build`             | Builds Node.js from source (required for v20+, no prebuilts)|
+| Flag                  | Description                                                  |
+| --------------------- | ------------------------------------------------------------ |
+| `app.js`              | Your Node.js entry script                                    |
+| `-t linux-x64-20.0.0` | Target platform: Linux, 64-bit, Node.js v20.0.0              |
+| `--build`             | Builds Node.js from source (required for v20+, no prebuilts) |
 
 ---
 

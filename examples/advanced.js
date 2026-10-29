@@ -52,7 +52,7 @@ const { Session, initTLS, destroyTLS } = require("node-tls-client");
     alpsProtocols: ["h2"],
     supportedVersions: ["GREASE", "1.3", "1.2"],
     keyShareCurves: ["GREASE", "X25519"],
-    certCompressionAlgo: "brotli",
+    certCompressionAlgos: ["brotli"],
     pseudoHeaderOrder: [":method", ":authority", ":scheme", ":path"],
     connectionFlow: 15663105,
     headerOrder: ["accept", "user-agent", "accept-encoding", "accept-language"],

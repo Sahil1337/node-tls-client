@@ -1,4 +1,9 @@
-const { Session, ClientIdentifier, initTLS, destroyTLS } = require("node-tls-client");
+const {
+  Session,
+  ClientIdentifier,
+  initTLS,
+  destroyTLS,
+} = require("node-tls-client");
 
 (async () => {
   await initTLS();
@@ -8,7 +13,7 @@ const { Session, ClientIdentifier, initTLS, destroyTLS } = require("node-tls-cli
     timeout: 30 * 1000, //timeout in *milliseconds*, applies for each requests, checkout examples/timeout.js for using different timeouts.
     insecureSkipVerify: false,
   });
-    
+
   const response = await session.get("https://example.com", {
     proxy: `http://user:pass@ip:port`, //proxy format: http://user:pass@ip:port or http://ip:port
     cookies: { parameter: "value" }, //cookies

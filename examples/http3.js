@@ -1,4 +1,9 @@
-const { Session, ClientIdentifier, initTLS, destroyTLS } = require("node-tls-client");
+const {
+  Session,
+  ClientIdentifier,
+  initTLS,
+  destroyTLS,
+} = require("node-tls-client");
 
 /**
  * @description Demonstrates HTTP/3 controls and new v1.15.1 parity options.
@@ -12,7 +17,7 @@ const { Session, ClientIdentifier, initTLS, destroyTLS } = require("node-tls-cli
 
   // Top-level HTTP/3 controls (work with any clientIdentifier).
   const session = new Session({
-    clientIdentifier: ClientIdentifier.chrome_146, // new default profile
+    clientIdentifier: ClientIdentifier.chrome_150, // the default profile since 2.2.0
     withProtocolRacing: true, // race HTTP/2 vs HTTP/3
     disableHttp3: false,
     timeout: 30 * 1000,
