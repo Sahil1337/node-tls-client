@@ -6,7 +6,7 @@ Tested against the native shared library **v1.16.0**.
 > **Behavior changes** (no API removals):
 >
 > - **Default client profile is now `chrome_150`** (previously `chrome_131`), matching native's default. Applies only to sessions with no explicit `clientIdentifier` or `ja3string`. Pin `clientIdentifier: ClientIdentifier.chrome_131` to keep the old fingerprint.
-> - **Per-request `headers` now merge over session `headers`** (case-insensitive, the request's value and casing win, `null`/`undefined` removes a session header). Previously any per-request header replaced the whole session set — silently dropping the session `User-Agent`, so native sent `Go-http-client/1.1`. Set `headerMode: "replace"` on the session to keep the old behavior.
+> - **Per-request `headers` now merge over session `headers`** ([#14](https://github.com/Sahil1337/node-tls-client/issues/14)): case-insensitive, the request's value and casing win, `null`/`undefined` removes a session header. Previously any per-request `headers` object replaced the whole session set — silently dropping the session `User-Agent`, so native sent `Go-http-client/1.1`. This matches axios, got and Python requests; to send a request without a session header, set that key to `null`.
 > - **`connectHeaders`**: the request-level value now wins over the session-level one (previously inverted).
 > - **`body`** must be a string or `Buffer`/`Uint8Array` (sent base64-encoded as a byte request). Objects now throw `TlsClientError` instead of failing natively with `status: 0`.
 
@@ -20,7 +20,7 @@ Tested against the native shared library **v1.16.0**.
 ### Additions
 
 - **New client profiles:** `chrome_130_psk`, `chrome_133(_psk)`, `chrome_144(_psk)`, `chrome_146(_psk)`, `chrome_150(_psk)`, `chrome_152(_psk)`, `brave_146(_psk)`, `safari_ios_18_5`, `safari_ios_26_0`, `firefox_135`, `firefox_146_psk`, `firefox_147(_psk)`, `firefox_148`.
-- **New SessionOptions:** `headerMode`, `disableHttp3`, `withProtocolRacing`, `withoutCookieJar`, `withCustomCookieJar`, `certificatePinningHosts`, `timeoutSeconds`, `disableSessionTickets`.
+- **New SessionOptions:** `disableHttp3`, `withProtocolRacing`, `withoutCookieJar`, `withCustomCookieJar`, `certificatePinningHosts`, `timeoutSeconds`, `disableSessionTickets`.
 - **New custom-client (ja3string) options:** `h3Settings`, `h3SettingsOrder`, `h3PseudoHeaderOrder`, `h3PriorityParam`, `h3SendGreaseFrames`, `echCandidatePayloads`, `echCandidateCipherSuites`, `recordSizeLimit`, `streamId`, `allowHttp`, `supportedDelegatedCredentialsAlgorithms`, `trustAnchorsPayload` (required when the ja3 string lists extension 51764).
 - **New enum values:** `KeyShareCurves` gains `X25519Kyber768Old`, `X25519MLKEM768`; `SupportedSignatureAlgorithms` gains `SHA224_RSA`, `SHA224_ECDSA`, `MLDSA44`, `MLDSA65`, `MLDSA87`, `GREASE`.
 - `HeaderInput` type for all `headers` options (numbers, arrays and `null` accepted).

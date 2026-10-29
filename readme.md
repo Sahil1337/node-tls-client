@@ -111,7 +111,7 @@ await session.get(url, { headers: { authorization: "Bearer …" } });
 await session.get(url, { headers: { "accept-language": null } });
 ```
 
-Set `headerMode: "replace"` on the session for the pre-2.2.0 behavior, where per-request headers replace the session headers entirely.
+Before 2.2.0 a per-request `headers` object replaced the session headers entirely ([#14](https://github.com/Sahil1337/node-tls-client/issues/14)). To send a request without a session header, set it to `null` as above; to send a bare header set, create the session without `headers`.
 
 ## Advanced example
 
@@ -274,7 +274,6 @@ const {
 | `insecureSkipVerify`                      | boolean                                                                                                               | A boolean indicating whether to skip SSL certificate verification.                                               |
 | `disableHttp3`                            | boolean                                                                                                               | Disables HTTP/3 (QUIC) for the session.                                                                          |
 | `withProtocolRacing`                      | boolean                                                                                                               | Enables protocol racing between HTTP/2 and HTTP/3. Requires a SOCKS5 proxy (or none) since native 1.16.0.        |
-| `headerMode`                              | `"merge"` \| `"replace"`                                                                                              | How per-request headers combine with session headers. Default `"merge"`; see [Headers](#headers).                |
 | `disableSessionTickets`                   | boolean                                                                                                               | Disables TLS session ticket caching and resumption.                                                              |
 | `withoutCookieJar`                        | boolean                                                                                                               | Disables the native session cookie jar, so response cookies are no longer sent on later requests.                |
 | `withCustomCookieJar`                     | boolean                                                                                                               | Uses tls-client's custom cookie jar natively instead of Go's default one.                                        |

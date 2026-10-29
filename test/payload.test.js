@@ -80,7 +80,7 @@ test("timeouts: seconds only when ms unset/0; both → ms only", async () => {
   assert.equal("timeoutSeconds" in p, false);
 });
 
-test("headers: merge default, replace mode, library defaults, connectHeaders precedence", async () => {
+test("headers: merge (#14), library defaults, connectHeaders precedence", async () => {
   let p = await payloadFor(
     { headers: { "User-Agent": "A", "x-s": "1" } },
     "get",
@@ -90,12 +90,6 @@ test("headers: merge default, replace mode, library defaults, connectHeaders pre
     ["user-agent", "B"],
     ["x-s", "1"],
   ]);
-  p = await payloadFor(
-    { headers: { "x-s": "1" }, headerMode: "replace" },
-    "get",
-    { headers: { r: "2" } },
-  );
-  assert.deepEqual(p.headers, { r: "2" });
   p = await payloadFor({});
   assert.match(p.headers["User-Agent"], /^tls-client\//);
   p = await payloadFor({ headers: {} }, "get", { headers: {} });

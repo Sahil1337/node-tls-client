@@ -154,11 +154,8 @@ export class Session {
     options: RequestOptions = {},
   ) {
     const headers =
-      mergeHeaders(
-        this.config.headers,
-        options.headers,
-        this.config.headerMode ?? "merge",
-      ) ?? this.getDefaultHeaders();
+      mergeHeaders(this.config.headers, options.headers) ??
+      this.getDefaultHeaders();
 
     const { requestBody, isByte } = Session.encodeBody(options.body);
 

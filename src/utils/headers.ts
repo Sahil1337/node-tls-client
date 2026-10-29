@@ -1,4 +1,4 @@
-import { HeaderInput, HeaderMode } from "../interface/session";
+import { HeaderInput } from "../interface/session";
 
 type Entry = { key: string; value: string };
 
@@ -42,26 +42,17 @@ export function normalizeHeaders(input?: HeaderInput): Record<string, string> {
 }
 
 /**
- * Combine session-level and request-level headers.
- *
- * - `"merge"` (default): request headers layer over session headers per key
- *   (case-insensitive; the request's value and casing win; `null`/`undefined`
- *   removes a session header). Returns `undefined` only when NEITHER side
- *   supplied a headers object, so the caller can apply library defaults —
- *   exactly 2.1.0's rule (an explicit `{}` is honored and sent as `{}`).
- * - `"replace"`: 2.1.0 behavior — request headers, else session headers, else
- *   `undefined`.
+ * Combine session-level and request-level headers (#14): request headers
+ * layer over session headers per key (case-insensitive; the request's value
+ * and casing win; `null`/`undefined` removes a session header). Returns
+ * `undefined` only when NEITHER side supplied a headers object, so the caller
+ * can apply library defaults — exactly 2.1.0's rule (an explicit `{}` is
+ * honored and sent as `{}`).
  */
 export function mergeHeaders(
   session: HeaderInput | undefined,
   request: HeaderInput | undefined,
-  mode: HeaderMode = "merge",
 ): Record<string, string> | undefined {
-  if (mode === "replace") {
-    if (request !== undefined) return normalizeHeaders(request);
-    if (session !== undefined) return normalizeHeaders(session);
-    return undefined;
-  }
   if (session === undefined && request === undefined) return undefined;
   const entries = toEntries(session);
   for (const [key, raw] of Object.entries(request ?? {}))

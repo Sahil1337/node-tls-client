@@ -12,15 +12,6 @@ export type HeaderInput = Record<
 >;
 
 /**
- * How per-request `headers` combine with session `headers`.
- * - `"merge"` (default): request headers layer over session headers per key,
- *   case-insensitively; the request's value and casing win.
- * - `"replace"`: 2.1.0 behavior — request headers, when given, replace the
- *   session headers entirely.
- */
-export type HeaderMode = "merge" | "replace";
-
-/**
  * Represents various settings for HTTP/2 (h2) protocol.
  */
 export interface H2Settings {
@@ -323,16 +314,11 @@ export interface SessionOptions {
 
   /**
    * Default headers for every request of this session. Per-request `headers`
-   * layer over them (see {@link HeaderMode}). When neither the session nor the
-   * request provides headers, a small built-in set is sent.
+   * layer over them per key, case-insensitively; the request's value and
+   * casing win and `null`/`undefined` removes a session header. When neither
+   * the session nor the request provides headers, a small built-in set is sent.
    */
   headers?: HeaderInput;
-
-  /**
-   * How per-request `headers` combine with these session headers.
-   * Default `"merge"`; use `"replace"` for the pre-2.2.0 behavior.
-   */
-  headerMode?: HeaderMode;
 
   /**
    * The headers for the connect request.
@@ -616,8 +602,8 @@ export interface SessionOptions {
  */
 export interface BaseRequestOptions {
   /**
-   * The headers for the request. Layered over the session headers (see
-   * {@link HeaderMode}); a `null`/`undefined` value removes a session header.
+   * The headers for the request. Layered over the session headers per key,
+   * case-insensitively; a `null`/`undefined` value removes a session header.
    */
   headers?: HeaderInput;
 
