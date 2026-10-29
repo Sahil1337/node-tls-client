@@ -45,6 +45,21 @@ export interface H2Settings {
    * The maximum size of header list in HTTP/2.
    */
   MAX_HEADER_LIST_SIZE?: number;
+
+  /**
+   * Raw HTTP/2 setting id `0x7` (no standard name; sent as-is).
+   */
+  UNKNOWN_SETTING_7?: number;
+
+  /**
+   * Raw HTTP/2 setting id `0x8` (no standard name; sent as-is).
+   */
+  UNKNOWN_SETTING_8?: number;
+
+  /**
+   * Raw HTTP/2 setting id `0x9` (no standard name; sent as-is).
+   */
+  UNKNOWN_SETTING_9?: number;
 }
 
 /**
@@ -657,39 +672,39 @@ export interface TransportOptions {
   /**
    * If true, disables HTTP keep-alive connections.
    */
-  disableKeepAlives: boolean;
+  disableKeepAlives?: boolean;
   /**
    * If true, disables automatic response decompression (gzip, deflate, etc.).
    */
-  disableCompression: boolean;
+  disableCompression?: boolean;
   /**
    * The maximum number of idle (keep-alive) connections across all hosts.
    */
-  maxIdleConns: number;
+  maxIdleConns?: number;
   /**
    * The maximum number of idle (keep-alive) connections to keep per-host.
    */
-  maxIdleConnsPerHost: number;
+  maxIdleConnsPerHost?: number;
   /**
    * The maximum number of total connections per host (idle + active).
    */
-  maxConnsPerHost: number;
+  maxConnsPerHost?: number;
   /**
    * The maximum number of bytes allowed in response headers. If zero, a default is used.
    */
-  maxResponseHeaderBytes: number;
+  maxResponseHeaderBytes?: number;
   /**
    * The size of the write buffer in bytes. If zero, a default (typically 4KB) is used.
    */
-  writeBufferSize: number;
+  writeBufferSize?: number;
   /**
    * The size of the read buffer in bytes. If zero, a default (typically 4KB) is used.
    */
-  readBufferSize: number;
+  readBufferSize?: number;
   /**
    * The maximum idle connection timeout, in nanoseconds.
    */
-  idleConnTimeout: number;
+  idleConnTimeout?: number;
 }
 
 /**

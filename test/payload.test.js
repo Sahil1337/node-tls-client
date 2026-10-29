@@ -190,3 +190,24 @@ test("disableSessionTickets is sent; defaultHeaders is gone", async () => {
   assert.equal(p.disableSessionTickets, true);
   assert.equal("defaultHeaders" in p, false);
 });
+
+test("h2Settings: UNKNOWN_SETTING_9 and its order entry pass through unchanged", async () => {
+  const order = ["HEADER_TABLE_SIZE", "UNKNOWN_SETTING_9"];
+  const p = await payloadFor({
+    ja3string: "771,4865,0,29,0",
+    h2Settings: { HEADER_TABLE_SIZE: 65536, UNKNOWN_SETTING_9: 1 },
+    h2SettingsOrder: order,
+  });
+  assert.deepEqual(p.customTlsClient.h2Settings, {
+    HEADER_TABLE_SIZE: 65536,
+    UNKNOWN_SETTING_9: 1,
+  });
+  assert.deepEqual(p.customTlsClient.h2SettingsOrder, order);
+});
+
+test("transportOptions: a partial object is sent unchanged", async () => {
+  const p = await payloadFor({
+    transportOptions: { idleConnTimeout: 30_000_000_000 },
+  });
+  assert.deepEqual(p.transportOptions, { idleConnTimeout: 30_000_000_000 });
+});
