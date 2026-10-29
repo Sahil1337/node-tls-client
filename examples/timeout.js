@@ -1,4 +1,9 @@
-const { fetch, ClientIdentifier, initTLS, destroyTLS } = require("node-tls-client");
+const {
+  fetch,
+  ClientIdentifier,
+  initTLS,
+  destroyTLS,
+} = require("node-tls-client");
 
 /**
  * @description Demonstrates using the node-tls-client library to make HTTP requests with different timeouts.

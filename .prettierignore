@@ -1,0 +1,6 @@
+dist/
+typings/
+docs/
+plans/
+node_modules/
+package-lock.json

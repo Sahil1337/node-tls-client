@@ -1,21 +1,19 @@
-import { KoffiFunction } from "koffi";
-
 export interface TlsNativeLibrary {
-  request: KoffiFunction;
-  freeMemory: KoffiFunction;
-  destroyAll: KoffiFunction;
-  destroySession: KoffiFunction;
+  request: (payload: string) => Promise<string>;
+  freeMemory: (id: string) => void;
+  destroyAll: () => Promise<string>;
+  destroySession: (payload: string) => Promise<string>;
 }
 
-type ArchMap = {
-  [arch: string]: FileInfo;
-};
-
 export type FileInfo = {
+  /** Platform suffix of the cached filename, e.g. `darwin-arm64.dylib`. */
   name: string;
-  downloadName: string;
+  /** Filename used by node-tls-client ≤ 2.1.0 (offline fallback only). */
+  legacyName: string;
+  /** Release asset names to try in order; `{version}` is substituted. */
+  downloadNames: string[];
 };
 
 export type PlatformMap = {
-  [platform: string]: ArchMap;
+  [platform: string]: { [arch: string]: FileInfo };
 };

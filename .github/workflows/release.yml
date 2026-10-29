@@ -1,0 +1,27 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # tag + GitHub release
+      id-token: write # npm trusted publishing (OIDC)
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
+        with:
+          node-version: 24 # trusted publishing needs npm >= 11.5.1
+          registry-url: https://registry.npmjs.org
+
+      # --ignore-scripts blocks dependency install hooks and skips our own
+      # prepare/prepublishOnly, so build runs explicitly.
+      - run: npm ci --ignore-scripts
+      - run: npm run build
+      - run: npm publish --ignore-scripts
+
+      - run: gh release create "v$(node -p "require('./package.json').version")" --target "$GITHUB_SHA" --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}

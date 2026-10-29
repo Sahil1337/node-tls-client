@@ -1,6 +1,7 @@
 # Example: session.cookies
 
 ## Retrieving all session cookies
+
 ```javascript
 await initTLS();
 const session = new Session();
@@ -10,6 +11,7 @@ await destroyTLS();
 ```
 
 ## Cookies Response Example
+
 ```json
 [
   {

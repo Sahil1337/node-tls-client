@@ -1,2 +1,6 @@
 node_modules/
 *.lock
+dist/
+typings/
+plans/*
+.DS_Store
