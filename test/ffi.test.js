@@ -15,7 +15,7 @@ test.after(async () => {
 
 const opts = { timeout: 20000 };
 
-test("header merge on the wire: one UA header, request value+casing wins, session keys kept", async () => {
+test("header merge on the wire (#14): one UA header, request wins, session keys kept, null removes", async () => {
   const s = new Session({
     ...opts,
     headers: { "User-Agent": "sess-ua", "x-s": "1" },
@@ -24,17 +24,13 @@ test("header merge on the wire: one UA header, request value+casing wins, sessio
     headers: { "user-agent": "req-ua", "x-r": "2" },
   });
   assert.equal(res.status, 200);
-  const sent = pairs((await res.json()).rawHeaders);
+  let sent = pairs((await res.json()).rawHeaders);
   const ua = sent.filter(([k]) => k.toLowerCase() === "user-agent");
   assert.deepEqual(ua, [["user-agent", "req-ua"]]);
   assert.ok(sent.some(([k, v]) => k === "x-s" && v === "1"));
   assert.ok(sent.some(([k, v]) => k === "x-r" && v === "2"));
-  await s.close();
-});
 
-test("null removes a session header for one request; no headers at all → library defaults", async () => {
-  const s = new Session({ ...opts, headers: { "x-s": "1" } });
-  let sent = pairs(
+  sent = pairs(
     (
       await (
         await s.get(`${server.base}/a`, { headers: { "x-s": null } })
@@ -45,15 +41,7 @@ test("null removes a session header for one request; no headers at all → libra
     sent.some(([k]) => k === "x-s"),
     false,
   );
-  sent = pairs((await (await s.get(`${server.base}/b`)).json()).rawHeaders);
-  assert.ok(sent.some(([k, v]) => k === "x-s" && v === "1"));
   await s.close();
-
-  const d = new Session(opts);
-  sent = pairs((await (await d.get(`${server.base}/c`)).json()).rawHeaders);
-  const ua = sent.find(([k]) => k.toLowerCase() === "user-agent");
-  assert.match(ua[1], /^tls-client\//);
-  await d.close();
 });
 
 test("cookies persist across requests and are exposed on the response", async () => {

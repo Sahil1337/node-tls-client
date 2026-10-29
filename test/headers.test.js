@@ -1,38 +1,17 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { mergeHeaders, normalizeHeaders } = require("../dist/utils/headers");
+const { mergeHeaders } = require("../dist/utils/headers");
 
-test("normalizeHeaders coerces values and drops null/undefined", () => {
-  assert.deepEqual(
-    normalizeHeaders({ a: 42, b: ["x", "y"], c: null, d: undefined, e: "v" }),
-    {
-      a: "42",
-      b: "x, y",
-      e: "v",
-    },
-  );
-});
-
-test("normalizeHeaders collapses duplicate keys case-insensitively (last wins, first position)", () => {
-  const out = normalizeHeaders({
-    "User-Agent": "A",
-    "x-s": "1",
-    "user-agent": "B",
-  });
-  assert.deepEqual(Object.entries(out), [
-    ["user-agent", "B"],
-    ["x-s", "1"],
-  ]);
-});
-
-test("merge: request wins per key incl. casing, session-only keys kept", () => {
+test("merge: request wins per key incl. casing, session-only keys kept; values coerced", () => {
   const out = mergeHeaders(
     { "User-Agent": "A", "x-s": "1" },
-    { "user-agent": "B" },
+    { "user-agent": "B", n: 42, list: ["x", "y"] },
   );
   assert.deepEqual(Object.entries(out), [
     ["user-agent", "B"],
     ["x-s", "1"],
+    ["n", "42"],
+    ["list", "x, y"],
   ]);
 });
 

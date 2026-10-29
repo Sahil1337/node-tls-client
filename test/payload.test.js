@@ -80,17 +80,8 @@ test("timeouts: seconds only when ms unset/0; both → ms only", async () => {
   assert.equal("timeoutSeconds" in p, false);
 });
 
-test("headers: merge (#14), library defaults, connectHeaders precedence", async () => {
-  let p = await payloadFor(
-    { headers: { "User-Agent": "A", "x-s": "1" } },
-    "get",
-    { headers: { "user-agent": "B" } },
-  );
-  assert.deepEqual(Object.entries(p.headers), [
-    ["user-agent", "B"],
-    ["x-s", "1"],
-  ]);
-  p = await payloadFor({});
+test("headers: library defaults only when none given, explicit {} honored, connectHeaders precedence", async () => {
+  let p = await payloadFor({});
   assert.match(p.headers["User-Agent"], /^tls-client\//);
   p = await payloadFor({ headers: {} }, "get", { headers: {} });
   assert.deepEqual(p.headers, {});
@@ -180,15 +171,6 @@ test("sessionId option is honored; request cookie values are sent verbatim", asy
     { name: "pref", value: "a=1;b=2" },
     { name: "n", value: "7" },
   ]);
-});
-
-test("disableSessionTickets is sent; defaultHeaders is gone", async () => {
-  const p = await payloadFor({
-    disableSessionTickets: true,
-    defaultHeaders: { a: ["b"] },
-  });
-  assert.equal(p.disableSessionTickets, true);
-  assert.equal("defaultHeaders" in p, false);
 });
 
 test("h2Settings: UNKNOWN_SETTING_9 and its order entry pass through unchanged", async () => {

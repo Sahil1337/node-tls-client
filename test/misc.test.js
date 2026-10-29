@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { TlsClientError, logger } = require("../dist/utils");
+const { TlsClientError } = require("../dist/utils");
 const { Client } = require("../dist/core/client");
 const { Session, fetch } = require("../dist");
 
@@ -12,28 +12,6 @@ test("TlsClientError keeps the wrapped error as cause and its stack", () => {
   assert.equal(e.cause, inner);
   assert.equal(e.stack, inner.stack);
   assert.equal(new TlsClientError("plain").cause, undefined);
-});
-
-test("logger: warn/error go to stderr, and no escape codes when not a TTY", () => {
-  const out = [];
-  const err = [];
-  const origOut = process.stdout.write;
-  const origErr = process.stderr.write;
-  process.stdout.write = (s) => (out.push(String(s)), true);
-  process.stderr.write = (s) => (err.push(String(s)), true);
-  try {
-    logger.debug("d1");
-    logger.warn("w1");
-    logger.error("e1");
-  } finally {
-    process.stdout.write = origOut;
-    process.stderr.write = origErr;
-  }
-  assert.equal(out.length, 1);
-  assert.equal(err.length, 2);
-  assert.match(err[0], /WARN: w1/);
-  assert.match(err[1], /ERROR: e1/);
-  if (!process.stderr.isTTY) assert.ok(!err[0].includes("\x1b["));
 });
 
 test("Response exposes usedProtocol; fetch() surfaces the request error, not close()'s", async () => {

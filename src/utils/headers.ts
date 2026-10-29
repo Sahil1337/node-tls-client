@@ -33,15 +33,6 @@ function fromEntries(entries: Entry[]): Record<string, string> {
 }
 
 /**
- * Coerce user headers into the `map[string]string` native expects:
- * numbers → strings, arrays → `"a, b"`, `null`/`undefined` → dropped,
- * duplicate keys in different casing collapsed (last wins).
- */
-export function normalizeHeaders(input?: HeaderInput): Record<string, string> {
-  return fromEntries(toEntries(input));
-}
-
-/**
  * Combine session-level and request-level headers (#14): request headers
  * layer over session headers per key (case-insensitive; the request's value
  * and casing win; `null`/`undefined` removes a session header). Returns
