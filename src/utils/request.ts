@@ -1,5 +1,3 @@
-import { OutgoingHttpHeaders } from "http";
-
 const exactContentTypes = new Set([
   "application/octet-stream",
   "application/pdf",
@@ -19,44 +17,55 @@ const prefixContentTypes = new Set([
   "application/vnd.",
 ]);
 
+function lookup(
+  headers: Record<string, string>,
+  name: string,
+): string | undefined {
+  for (const key of Object.keys(headers)) {
+    if (key.toLowerCase() === name) return headers[key];
+  }
+  return undefined;
+}
+
 /**
  * Determines if a request should be treated as a byte request based on its headers.
  *
- * This function checks the "Content-Type", "Content-Transfer-Encoding" and "Content-Encoding" headers
- * to determine if the request is for binary data (such as images, audio, video,
- * application binaries, etc.). If the headers indicate binary data, it returns true.
- *
- * @param {OutgoingHttpHeaders} headers - The headers of the request.
- * @returns {boolean} - Returns true if the request is for binary data, otherwise false.
+ * Checks "Content-Type", "Content-Transfer-Encoding" and "Content-Encoding"
+ * (case-insensitively) for binary payloads (images, audio, video, archives,
+ * base64 transfer encoding, …).
  */
-export function isByteRequest(headers: OutgoingHttpHeaders): boolean {
-  if (headers["content-encoding"] || headers["Content-Encoding"]) return true;
+export function isByteRequest(headers: Record<string, string>): boolean {
+  if (lookup(headers, "content-encoding")) return true;
 
-  const contentType = headers["content-type"] || headers["Content-Type"];
-  const contentTransferEncoding =
-    headers["content-transfer-encoding"] ||
-    headers["Content-Transfer-Encoding"];
-
-  if (contentTransferEncoding) {
-    const encodingString = String(contentTransferEncoding);
-    if (exactContentTypes.has(encodingString)) {
-      return true;
-    }
+  const contentTransferEncoding = lookup(headers, "content-transfer-encoding");
+  if (
+    contentTransferEncoding &&
+    exactContentTypes.has(contentTransferEncoding)
+  ) {
+    return true;
   }
 
+  const contentType = lookup(headers, "content-type");
   if (contentType) {
-    const contentTypeString = String(contentType);
-
-    if (exactContentTypes.has(contentTypeString)) {
-      return true;
-    }
-
+    if (exactContentTypes.has(contentType)) return true;
     for (const prefix of prefixContentTypes) {
-      if (contentTypeString.startsWith(prefix)) {
-        return true;
-      }
+      if (contentType.startsWith(prefix)) return true;
     }
   }
 
   return false;
+}
+
+/**
+ * Extract the response `id` from native's JSON (request/destroySession/
+ * destroyAll all register their C string under it). Returns "" when the
+ * payload is not parseable or carries no id — `freeMemory("")` is a no-op.
+ */
+export function parseNativeId(raw: string): string {
+  try {
+    const id = JSON.parse(raw)?.id;
+    return typeof id === "string" ? id : "";
+  } catch {
+    return "";
+  }
 }

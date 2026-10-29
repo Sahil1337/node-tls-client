@@ -12,7 +12,12 @@
     "build": "tsc",
     "prepare": "npm run build",
     "prepublishOnly": "npm run build && npm run docs",
-    "docs": "typedoc --out docs src/index.ts"
+    "pretest": "npm run build",
+    "test": "node --test test/download.test.js test/ffi.test.js test/headers.test.js test/misc.test.js test/payload.test.js test/semaphore.test.js",
+    "docs": "typedoc --out docs src/index.ts",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "keywords": [
     "tls-client",
@@ -24,20 +29,26 @@
     "cloudflare"
   ],
   "devDependencies": {
-    "@types/cookie-parser": "^1.4.9",
+    "@eslint/js": "^10.0.1",
     "@types/node": "^24.13.2",
     "@types/tough-cookie": "^4.0.5",
-    "typedoc": "^0.25.13",
-    "typescript": "^6.0.3"
+    "eslint": "^10.10.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.12.0",
+    "prettier": "^3.9.6",
+    "typedoc": "^0.28.20",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.69.0"
   },
   "dependencies": {
-    "cookie-parser": "^1.4.7",
-    "koffi": "^2.8.9",
-    "piscina": "^5.1.1",
+    "koffi": "^2.15.2",
     "tough-cookie": "^4.1.4"
   },
   "files": [
     "dist",
     "typings"
-  ]
+  ],
+  "engines": {
+    "node": ">=20"
+  }
 }

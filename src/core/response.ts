@@ -1,6 +1,5 @@
 import { TlsResponse } from "../interface";
 import { IncomingHttpHeaders } from "http";
-import { logger } from "../utils";
 
 export class Response {
   // Indicates whether the response was successful (status in the range 200-299) or not.
@@ -21,6 +20,9 @@ export class Response {
   // The cookies from the response
   public cookies: Record<string, string>;
 
+  // Protocol negotiated for this response, e.g. "HTTP/1.1", "HTTP/2.0", "HTTP/3.0"
+  public usedProtocol: string;
+
   constructor(response: TlsResponse) {
     this.ok = response.status >= 200 && response.status < 300;
     this.headers = response.headers;
@@ -28,6 +30,7 @@ export class Response {
     this.url = response.target;
     this.body = response.body;
     this.cookies = response.cookies;
+    this.usedProtocol = response.usedProtocol;
   }
 
   /**
@@ -42,10 +45,10 @@ export class Response {
   /**
    * Returns the body of the response as a JSON object.
    *
-   * @typeparam T - The type of the JSON object.
+   * @typeParam T - The type of the JSON object.
    * @returns A promise that resolves with the body of the response as a JSON object.
    */
-  public async json<T extends unknown>(): Promise<T> {
+  public async json<T>(): Promise<T> {
     return JSON.parse(this.body) as T;
   }
 }

@@ -22,7 +22,7 @@ import { TlsClientError } from "../utils";
  */
 export async function fetch(
   url: string,
-  options?: fetchOptions
+  options?: fetchOptions,
 ): Promise<Response> {
   const session = new Session(options?.options as SessionOptions);
   const method = options?.method?.toUpperCase() || "GET";
@@ -58,8 +58,10 @@ export async function fetch(
 
     return response;
   } catch (error) {
-    throw new TlsClientError(error as Error);
+    throw error instanceof TlsClientError
+      ? error
+      : new TlsClientError(error as Error);
   } finally {
-    await session.close();
+    await session.close().catch(() => {});
   }
 }

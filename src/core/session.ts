@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { Cookies } from "./Cookie";
+import { Cookies } from "./cookie";
 import {
   ClientIdentifier,
   DeleteRequestOptions,
@@ -14,20 +14,31 @@ import {
   SessionOptions,
   TlsResponse,
 } from "../interface";
-import { OutgoingHttpHeaders } from "http2";
 import { URL } from "url";
-import { isByteRequest, logger } from "../utils";
+import {
+  TlsClientError,
+  isByteRequest,
+  logger,
+  mergeHeaders,
+  packageVersion,
+  parseNativeId,
+} from "../utils";
 import { Payload } from "../interface/payload";
-import { Client } from "./Client";
-import { Response } from "./Response";
-
-const __version__ = "2.2.0";
+import { Client } from "./client";
+import { Response } from "./response";
 
 export class Session {
-  private jar = new Cookies();
-  private sessionId = randomUUID();
+  private static warnedBothTimeouts = false;
 
-  constructor(private readonly config: SessionOptions = {}) {}
+  private readonly jar = new Cookies();
+  private readonly sessionId: string;
+  private closePromise: Promise<string> | null = null;
+
+  constructor(private readonly config: SessionOptions = {}) {
+    // Two Session objects with the same id share one native session
+    // (cookie jar, connections); close() on either frees it.
+    this.sessionId = config.sessionId ?? randomUUID();
+  }
 
   public async cookies() {
     return this.jar.fetchAllCookies();
@@ -118,33 +129,65 @@ export class Session {
   }
 
   /**
-   * The 'close' method closes the current session.
+   * The 'close' method closes the current session (frees native session
+   * state). Idempotent: repeated calls return the first result.
    *
-   * @returns The response from the 'destroySession' function.
+   * @returns Native's JSON reply (`{ id, success }`).
    */
-  public async close() {
-    return Client.getInstance().pool?.run(
-      JSON.stringify({
-        sessionId: this.sessionId,
-      }),
-      { name: "destroySession" }
-    );
+  public close(): Promise<string> {
+    this.closePromise ??= (async () => {
+      const client = Client.getInstance();
+      const raw = await client.destroySession(this.sessionId);
+      // The reply itself is registered natively under `id` — release it.
+      client.freeMemory(parseNativeId(raw));
+      return raw;
+    })().catch((e) => {
+      this.closePromise = null; // let a failed close be retried
+      throw e;
+    });
+    return this.closePromise;
   }
 
   protected async execute(
     method: Methods,
     url: string | URL,
-    options: RequestOptions = {}
+    options: RequestOptions = {},
   ) {
     const headers =
-      options?.headers !== undefined
-        ? options.headers
-        : this.config.headers ?? this.getDefaultHeaders();
+      mergeHeaders(
+        this.config.headers,
+        options.headers,
+        this.config.headerMode ?? "merge",
+      ) ?? this.getDefaultHeaders();
+
+    const { requestBody, isByte } = Session.encodeBody(options.body);
 
     const requestCookies = await this.jar.mergeCookies(
       options?.cookies || {},
-      url.toString()
+      url.toString(),
     );
+
+    // Natively, `timeoutMilliseconds` and `timeoutSeconds` both non-zero is a
+    // hard error ("cannot build client with both …"); 0 means unset.
+    const timeoutMs =
+      this.config.timeout !== undefined && this.config.timeout !== 0
+        ? this.config.timeout
+        : undefined;
+    const timeoutSec =
+      this.config.timeoutSeconds !== undefined &&
+      this.config.timeoutSeconds !== 0
+        ? this.config.timeoutSeconds
+        : undefined;
+    if (
+      timeoutMs !== undefined &&
+      timeoutSec !== undefined &&
+      !Session.warnedBothTimeouts
+    ) {
+      Session.warnedBothTimeouts = true;
+      logger.warn(
+        "both `timeout` (ms) and `timeoutSeconds` are set; using `timeout` and ignoring `timeoutSeconds` (native rejects both together).",
+      );
+    }
 
     const payload: Payload = {
       sessionId: this.sessionId,
@@ -157,13 +200,13 @@ export class Session {
       proxyUrl: options.proxy || this.config.proxy || "",
       isRotatingProxy:
         options?.isRotatingProxy ?? this.config.isRotatingProxy ?? false,
-      requestUrl: url,
+      requestUrl: url.toString(),
       requestMethod: method,
-      requestBody: options?.body || null,
-      timeoutMilliseconds: this.config.timeout || 0,
+      requestBody,
+      timeoutMilliseconds: timeoutMs ?? 0,
       withRandomTLSExtensionOrder: this.config.randomTlsExtensionOrder ?? false,
       isByteResponse: options?.byteResponse ?? false,
-      isByteRequest: isByteRequest(headers),
+      isByteRequest: isByte || isByteRequest(headers),
       requestHostOverride: options?.hostOverride || null,
       disableIPV6: this.config.disableIPV6 ?? false,
       disableIPV4: this.config.disableIPV4 ?? false,
@@ -174,12 +217,13 @@ export class Session {
       streamOutputBlockSize: this.config.streamOutputBlockSize ?? null,
       serverNameOverwrite: this.config.serverNameOverwrite ?? "",
       connectHeaders:
-        this.config.connectHeaders ?? options.connectHeaders ?? {},
+        options.connectHeaders ?? this.config.connectHeaders ?? {},
       localAddress: this.config.localAddress ?? null,
       withoutCookieJar: this.config.withoutCookieJar ?? false,
       withCustomCookieJar: this.config.withCustomCookieJar ?? false,
       disableHttp3: this.config.disableHttp3 ?? false,
       withProtocolRacing: this.config.withProtocolRacing ?? false,
+      disableSessionTickets: this.config.disableSessionTickets ?? false,
       requestCookies,
     };
 
@@ -187,10 +231,8 @@ export class Session {
     // and native falls back to its zero-value behavior.
     if (this.config.certificatePinningHosts !== undefined)
       payload.certificatePinningHosts = this.config.certificatePinningHosts;
-    if (this.config.defaultHeaders !== undefined)
-      payload.defaultHeaders = this.config.defaultHeaders;
-    if (this.config.timeoutSeconds !== undefined)
-      payload.timeoutSeconds = this.config.timeoutSeconds;
+    if (timeoutMs === undefined && timeoutSec !== undefined)
+      payload.timeoutSeconds = timeoutSec;
 
     if (this.config.clientIdentifier) {
       payload["tlsClientIdentifier"] = this.config.clientIdentifier;
@@ -202,11 +244,6 @@ export class Session {
         pseudoHeaderOrder: this.config.pseudoHeaderOrder ?? [],
         connectionFlow: this.config.connectionFlow ?? 0,
         priorityFrames: this.config.priorityFrames ?? [],
-        headerPriority: this.config.headerPriority ?? {
-          streamDep: 0,
-          exclusive: false,
-          weight: 0,
-        },
         certCompressionAlgos:
           this.config.certCompressionAlgos ??
           (this.config.certCompressionAlgo
@@ -231,40 +268,57 @@ export class Session {
         streamId: this.config.streamId ?? 0,
         allowHttp: this.config.allowHttp ?? false,
       };
-    } else payload["tlsClientIdentifier"] = ClientIdentifier.chrome_146;
+      // Unset keeps 2.1.0's wire behavior (a zeroed priority is applied);
+      // `null` omits the field so native treats it as nil/unset.
+      if (this.config.headerPriority !== null)
+        payload.customTlsClient.headerPriority = this.config.headerPriority ?? {
+          streamDep: 0,
+          exclusive: false,
+          weight: 0,
+        };
+      if (this.config.trustAnchorsPayload !== undefined)
+        payload.customTlsClient.trustAnchorsPayload =
+          this.config.trustAnchorsPayload;
+    } else payload["tlsClientIdentifier"] = ClientIdentifier.chrome_150;
 
-    const requestPayloadString = JSON.stringify(payload);
-
-    const rawResponse = await Client.getInstance().pool.run(
-      requestPayloadString,
-      {
-        name: "request",
-      }
-    );
+    const client = Client.getInstance();
+    const rawResponse = await client.request(payload);
 
     const response: TlsResponse = JSON.parse(rawResponse);
+    // The JSON is copied into JS; release native's copy right away.
+    if (response.id) client.freeMemory(response.id);
 
     const cookies = await this.jar.syncCookies(
       response.cookies || {},
-      url.toString()
+      url.toString(),
     );
-
-    setImmediate(() => {
-      this.freeMemory(response.id).catch(() => {});
-    });
 
     return new Response({ ...response, cookies });
   }
 
-  private async freeMemory(id: string): Promise<void> {
-    return Client.getInstance().pool?.run(id.toString(), {
-      name: "freeMemory",
-    });
+  /** Body → native `requestBody` (`*string`) + whether it is base64 bytes. */
+  private static encodeBody(body: RequestOptions["body"]): {
+    requestBody: string | null;
+    isByte: boolean;
+  } {
+    if (body === undefined || body === null || body === "") {
+      return { requestBody: null, isByte: false };
+    }
+    if (typeof body === "string") return { requestBody: body, isByte: false };
+    if (Buffer.isBuffer(body) || body instanceof Uint8Array) {
+      return {
+        requestBody: Buffer.from(body).toString("base64"),
+        isByte: true,
+      };
+    }
+    throw new TlsClientError(
+      "body must be a string or Buffer; JSON.stringify objects before sending",
+    );
   }
 
-  private getDefaultHeaders(): OutgoingHttpHeaders {
+  private getDefaultHeaders(): Record<string, string> {
     return {
-      "User-Agent": `tls-client/${__version__}`,
+      "User-Agent": `tls-client/${packageVersion}`,
       "Accept-Encoding": "gzip, deflate, br",
       Accept: "*/*",
       Connection: "keep-alive",

@@ -15,6 +15,7 @@ import {
   TransportOptions,
 } from "./session";
 
+/** Mirrors native `RequestInput` (cffi_src/types.go). */
 export interface Payload {
   catchPanics: boolean;
   customTlsClient?: CustomTlsClient;
@@ -22,19 +23,19 @@ export interface Payload {
   transportOptions?: TransportOptions;
   followRedirects: boolean;
   forceHttp1: boolean;
-  headerOrder: OutgoingHttpHeaders[];
-  headers: OutgoingHttpHeaders;
+  headerOrder: string[] | OutgoingHttpHeaders[];
+  headers: Record<string, string>;
   connectHeaders: Record<string, string[]>;
   insecureSkipVerify: boolean;
   isByteRequest: boolean;
   isByteResponse: boolean;
   isRotatingProxy: boolean;
   proxyUrl: string;
-  requestBody: string;
+  requestBody: string | null;
   requestCookies: { name: string; value: string }[];
   requestHostOverride: string | null;
   requestMethod: Methods;
-  requestUrl: string | URL;
+  requestUrl: string;
   disableIPV6: boolean;
   disableIPV4: boolean;
   localAddress: string | null;
@@ -51,18 +52,19 @@ export interface Payload {
   withRandomTLSExtensionOrder: boolean;
   disableHttp3: boolean;
   withProtocolRacing: boolean;
+  disableSessionTickets: boolean;
   certificatePinningHosts?: Record<string, string[]>;
-  defaultHeaders?: Record<string, string[]>;
 }
 
-interface CustomTlsClient {
+export interface CustomTlsClient {
   ja3String: string;
   h2Settings: H2Settings;
   h2SettingsOrder: (keyof H2Settings)[];
   pseudoHeaderOrder: PseudoHeaderOrder[];
   connectionFlow: number;
   priorityFrames: PriorityFrames[];
-  headerPriority: PriorityParam;
+  /** Omitted only when the user passed `null` (native treats nil as "unset"). */
+  headerPriority?: PriorityParam;
   certCompressionAlgos: CertCompressionAlgo[];
   supportedVersions: SupportedVersions[];
   supportedSignatureAlgorithms: SupportedSignatureAlgorithms[];
@@ -80,4 +82,5 @@ interface CustomTlsClient {
   recordSizeLimit: number;
   streamId: number;
   allowHttp: boolean;
+  trustAnchorsPayload?: string;
 }

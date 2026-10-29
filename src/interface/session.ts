@@ -1,6 +1,26 @@
 import { IncomingHttpHeaders, OutgoingHttpHeaders } from "http";
 
 /**
+ * Headers as accepted by `SessionOptions.headers`, request options and
+ * `fetch()`. A superset of Node's `OutgoingHttpHeaders`: numbers are sent as
+ * strings, arrays joined with `", "`, and `null`/`undefined` REMOVES the header
+ * (useful per request to drop a session header).
+ */
+export type HeaderInput = Record<
+  string,
+  string | number | readonly string[] | null | undefined
+>;
+
+/**
+ * How per-request `headers` combine with session `headers`.
+ * - `"merge"` (default): request headers layer over session headers per key,
+ *   case-insensitively; the request's value and casing win.
+ * - `"replace"`: 2.1.0 behavior — request headers, when given, replace the
+ *   session headers entirely.
+ */
+export type HeaderMode = "merge" | "replace";
+
+/**
  * Represents various settings for HTTP/2 (h2) protocol.
  */
 export interface H2Settings {
@@ -10,9 +30,10 @@ export interface H2Settings {
   HEADER_TABLE_SIZE?: number;
 
   /**
-   * Indicates whether server push is enabled in HTTP/2.
+   * Indicates whether server push is enabled in HTTP/2 (`1`/`0` — the native
+   * settings map is numeric; booleans are rejected).
    */
-  ENABLE_PUSH?: boolean;
+  ENABLE_PUSH?: number;
 
   /**
    * The maximum number of concurrent streams allowed in HTTP/2.
@@ -52,14 +73,30 @@ export type SupportedSignatureAlgorithms =
   | "SHA224_ECDSA"
   | "PKCS1WithSHA1"
   | "ECDSAWithSHA1"
-  | "Ed25519";
+  | "Ed25519"
+  | "MLDSA44"
+  | "MLDSA65"
+  | "MLDSA87"
+  | "GREASE";
 
 /**
  * Represents supported delegated credentials algorithms for TLS.
- * Same value space as {@link SupportedSignatureAlgorithms}.
  */
 export type SupportedDelegatedCredentialsAlgorithms =
-  SupportedSignatureAlgorithms;
+  | "PKCS1WithSHA256"
+  | "PKCS1WithSHA384"
+  | "PKCS1WithSHA512"
+  | "PSSWithSHA256"
+  | "PSSWithSHA384"
+  | "PSSWithSHA512"
+  | "ECDSAWithP256AndSHA256"
+  | "ECDSAWithP384AndSHA384"
+  | "ECDSAWithP521AndSHA512"
+  | "SHA224_RSA"
+  | "SHA224_ECDSA"
+  | "PKCS1WithSHA1"
+  | "ECDSAWithSHA1"
+  | "Ed25519";
 
 /**
  * Represents various supported versions of TLS.
@@ -106,9 +143,7 @@ export type KdfId = "HKDF_SHA256" | "HKDF_SHA384" | "HKDF_SHA512";
  * ECH HPKE AEAD identifiers.
  */
 export type AeadId =
-  | "AEAD_AES_128_GCM"
-  | "AEAD_AES_256_GCM"
-  | "AEAD_CHACHA20_POLY1305";
+  "AEAD_AES_128_GCM" | "AEAD_AES_256_GCM" | "AEAD_CHACHA20_POLY1305";
 
 /**
  * A candidate cipher suite for Encrypted Client Hello (ECH).
@@ -159,13 +194,7 @@ export type PseudoHeaderOrder = ":method" | ":authority" | ":scheme" | ":path";
  * Represents various HTTP methods.
  */
 export type Methods =
-  | "GET"
-  | "POST"
-  | "PUT"
-  | "DELETE"
-  | "PATCH"
-  | "OPTIONS"
-  | "HEAD";
+  "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD";
 
 /**
  * Represents various client identifiers.
@@ -198,6 +227,10 @@ export enum ClientIdentifier {
   chrome_144_psk = "chrome_144_PSK",
   chrome_146 = "chrome_146",
   chrome_146_psk = "chrome_146_PSK",
+  chrome_150 = "chrome_150",
+  chrome_150_psk = "chrome_150_PSK",
+  chrome_152 = "chrome_152",
+  chrome_152_psk = "chrome_152_PSK",
 
   // Brave versions
   brave_146 = "brave_146",
@@ -282,14 +315,24 @@ export enum ClientIdentifier {
  */
 export interface SessionOptions {
   /**
-   * The unique identifier for the session.
+   * Identifier of the native session (cookie jar + connection pool). Random
+   * when omitted. Two `Session` objects with the same id share one native
+   * session; `close()` on either frees it.
    */
   sessionId?: string;
 
   /**
-   * The headers for the session.
+   * Default headers for every request of this session. Per-request `headers`
+   * layer over them (see {@link HeaderMode}). When neither the session nor the
+   * request provides headers, a small built-in set is sent.
    */
-  headers?: OutgoingHttpHeaders;
+  headers?: HeaderInput;
+
+  /**
+   * How per-request `headers` combine with these session headers.
+   * Default `"merge"`; use `"replace"` for the pre-2.2.0 behavior.
+   */
+  headerMode?: HeaderMode;
 
   /**
    * The headers for the connect request.
@@ -398,9 +441,10 @@ export interface SessionOptions {
   priorityFrames?: PriorityFrames[];
 
   /**
-   * The order of headers.
+   * The order of headers (header names, lower-case recommended; matched
+   * case-insensitively natively).
    */
-  headerOrder?: OutgoingHttpHeaders[];
+  headerOrder?: string[] | OutgoingHttpHeaders[];
 
   /**
    * The ALPN protocols.
@@ -413,9 +457,11 @@ export interface SessionOptions {
   alpsProtocols?: string[];
 
   /**
-   * The priority of headers.
+   * HTTP/2 priority applied to header frames (ja3string path). When omitted a
+   * zeroed priority (`{ streamDep: 0, exclusive: false, weight: 0 }`) is sent,
+   * as in earlier versions; pass `null` to send no priority at all.
    */
-  headerPriority?: PriorityParam;
+  headerPriority?: PriorityParam | null;
 
   /**
    * Whether to randomize TLS extension order.
@@ -458,20 +504,31 @@ export interface SessionOptions {
   disableHttp3?: boolean;
 
   /**
-   * If true, enables protocol racing (HTTP/2 vs HTTP/3).
+   * If true, enables protocol racing (HTTP/2 vs HTTP/3). Since tls-client
+   * 1.16.0 this is rejected with a config error (request `status: 0`) when
+   * combined with a non-SOCKS5 proxy, because only SOCKS5 can tunnel UDP.
    */
   withProtocolRacing?: boolean;
 
   /**
-   * If true, uses a custom cookie jar natively. Note: the wrapper's own JS
-   * cookie jar stays active regardless of this flag.
+   * If true, disables TLS session ticket caching and resumption.
+   *
+   * Needs a tls-client build newer than the 1.16.0 release binaries, which
+   * predate this field and silently ignore it.
+   */
+  disableSessionTickets?: boolean;
+
+  /**
+   * If true, uses tls-client's custom cookie jar natively instead of Go's
+   * default one. Cookie persistence between requests is native's job either
+   * way; `session.cookies()` reads a JS-side mirror.
    */
   withCustomCookieJar?: boolean;
 
   /**
-   * If true, disables the native per-request/redirect cookie jar. Note: the
-   * wrapper's own JS cookie jar stays active regardless of this flag, so
-   * cross-request cookie persistence still occurs at the JS layer.
+   * If true, disables the native session cookie jar: cookies set by a
+   * response are no longer sent on later requests (only per-request
+   * `cookies` are). `session.cookies()` still reports what was seen.
    */
   withoutCookieJar?: boolean;
 
@@ -482,15 +539,9 @@ export interface SessionOptions {
   certificatePinningHosts?: Record<string, string[]>;
 
   /**
-   * Default headers applied natively only as a fallback for headers not
-   * already set. Largely inert in this wrapper since a fully-populated header
-   * map is always sent.
-   */
-  defaultHeaders?: Record<string, string[]>;
-
-  /**
-   * The timeout duration for each request, in seconds. Exposed for parity;
-   * prefer `timeout` (ms), which takes precedence natively. Do not set both.
+   * The timeout duration for each request, in seconds. Only sent when
+   * `timeout` (ms) is unset or `0`: natively, setting BOTH is a hard error, so
+   * when both are given this wrapper keeps `timeout` and warns once.
    */
   timeoutSeconds?: number;
 
@@ -549,6 +600,15 @@ export interface SessionOptions {
    * ja3string path.
    */
   supportedDelegatedCredentialsAlgorithms?: SupportedDelegatedCredentialsAlgorithms[];
+
+  /**
+   * Trust-anchors extension payload; required when the `ja3string` lists
+   * extension 51764. Only applied on the ja3string path.
+   *
+   * Needs a tls-client build newer than the 1.16.0 release binaries, which
+   * predate this field and silently ignore it.
+   */
+  trustAnchorsPayload?: string;
 }
 
 /**
@@ -556,9 +616,10 @@ export interface SessionOptions {
  */
 export interface BaseRequestOptions {
   /**
-   * The headers for the request.
+   * The headers for the request. Layered over the session headers (see
+   * {@link HeaderMode}); a `null`/`undefined` value removes a session header.
    */
-  headers?: OutgoingHttpHeaders;
+  headers?: HeaderInput;
 
   /**
    * The headers for the connect request.
@@ -568,7 +629,7 @@ export interface BaseRequestOptions {
   /**
    * The order of headers.
    */
-  headerOrder?: OutgoingHttpHeaders[];
+  headerOrder?: string[] | OutgoingHttpHeaders[];
 
   /**
    * Whether to follow redirects.
@@ -588,7 +649,7 @@ export interface BaseRequestOptions {
   /**
    * Cookies for the request.
    */
-  cookies?: Record<string, any>;
+  cookies?: Record<string, string | number>;
 
   /**
    * If true, indicates the response is in binary format, like base64-encoded images.
@@ -650,9 +711,10 @@ export interface TransportOptions {
  */
 export interface RequestOptions extends BaseRequestOptions {
   /**
-   * Request body.
+   * Request body: a string, or a `Buffer`/`Uint8Array` (sent base64-encoded as
+   * a byte request). Objects are rejected — `JSON.stringify` them first.
    */
-  body?: any;
+  body?: string | Buffer | Uint8Array | null;
 }
 
 /**
@@ -702,12 +764,12 @@ export interface fetchOptions {
   /**
    * The headers for the request.
    */
-  headers?: OutgoingHttpHeaders;
+  headers?: HeaderInput;
 
   /**
-   * The body of the request.
+   * The body of the request (string, or Buffer for binary payloads).
    */
-  body?: any;
+  body?: string | Buffer | Uint8Array | null;
 
   /**
    * Whether to follow redirects.
@@ -727,7 +789,7 @@ export interface fetchOptions {
   /**
    * Cookies for the request.
    */
-  cookies?: Record<string, any>;
+  cookies?: Record<string, string | number>;
 
   /**
    * Additional session options.
@@ -755,7 +817,8 @@ export interface TlsResponse {
   cookies: Record<string, string>;
 
   /**
-   * Headers included in the response.
+   * Headers included in the response. Note: at runtime every value is a
+   * `string[]` (native returns `map[string][]string`).
    */
   headers: IncomingHttpHeaders;
 
