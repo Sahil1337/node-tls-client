@@ -10,22 +10,22 @@ Tested against the native shared library **v1.16.0**.
 > - **`connectHeaders`**: the request-level value now wins over the session-level one (previously inverted).
 > - **`body`** must be a string or `Buffer`/`Uint8Array` (sent base64-encoded as a byte request). Objects now throw `TlsClientError` instead of failing natively with `status: 0`.
 
+### Transport rewrite
+
+- **Piscina worker pool removed.** Native calls now use koffi's asynchronous calls on the libuv threadpool, throttled by an in-process semaphore, with an unbounded FIFO queue for bursts. This avoids the `max_async_calls` limit that broke the first attempt: koffi ≥ 2.15.2 is required and its limit is raised to 4096.
+- **`initTLS({ concurrency })`** caps in-flight native calls (admission depth). Real parallelism is the libuv threadpool: the library sets `UV_THREADPOOL_SIZE` to cores×2 at import when unset (libuv caps it at 1024; set `UV_THREADPOOL_SIZE=4` to keep Node's default). Each in-flight call reserves ~256 KiB in koffi.
+- `destroyTLS()` rejects new requests, waits for in-flight ones (each bounded by its own timeout), then clears native state.
+- koffi keeps as many async memory pools resident as requests are expected in flight (up to its maximum of 16), so steady-state requests reuse pools instead of mapping 256 KiB each.
+
 ### Additions
 
 - **New client profiles:** `chrome_130_psk`, `chrome_133(_psk)`, `chrome_144(_psk)`, `chrome_146(_psk)`, `chrome_150(_psk)`, `chrome_152(_psk)`, `brave_146(_psk)`, `safari_ios_18_5`, `safari_ios_26_0`, `firefox_135`, `firefox_146_psk`, `firefox_147(_psk)`, `firefox_148`.
 - **New SessionOptions:** `headerMode`, `disableHttp3`, `withProtocolRacing`, `withoutCookieJar`, `withCustomCookieJar`, `certificatePinningHosts`, `timeoutSeconds`, `disableSessionTickets`.
 - **New custom-client (ja3string) options:** `h3Settings`, `h3SettingsOrder`, `h3PseudoHeaderOrder`, `h3PriorityParam`, `h3SendGreaseFrames`, `echCandidatePayloads`, `echCandidateCipherSuites`, `recordSizeLimit`, `streamId`, `allowHttp`, `supportedDelegatedCredentialsAlgorithms`, `trustAnchorsPayload` (required when the ja3 string lists extension 51764).
 - **New enum values:** `KeyShareCurves` gains `X25519Kyber768Old`, `X25519MLKEM768`; `SupportedSignatureAlgorithms` gains `SHA224_RSA`, `SHA224_ECDSA`, `MLDSA44`, `MLDSA65`, `MLDSA87`, `GREASE`.
-- **`initTLS({ concurrency })`** limits how many requests run natively at once. Default: the libuv threadpool size.
 - `HeaderInput` type for all `headers` options (numbers, arrays and `null` accepted).
 - Linux ppc64le, s390x and riscv64 are supported.
 - **HTTP/3 example:** [examples/http3.js](https://github.com/Sahil1337/node-tls-client/tree/main/examples/http3.js)
-
-### Changes
-
-- Importing the library sets `UV_THREADPOOL_SIZE` to cores×2 when it is unset. The threadpool is shared with Node's `fs`/DNS/zlib/crypto work; set `UV_THREADPOOL_SIZE` yourself to choose another size (`4` is Node's default).
-- `destroyTLS()` waits for in-flight requests to finish; requests made after it is called are rejected.
-- Requires Node.js ≥ 20.
 
 ### Deprecations
 
@@ -51,6 +51,8 @@ Tested against the native shared library **v1.16.0**.
 - `withProtocolRacing` with a non-SOCKS5 proxy is rejected by native 1.16.0 (`status: 0`).
 - `disableSessionTickets` and `trustAnchorsPayload` need a tls-client build newer than the 1.16.0 release binaries, which predate those fields and silently ignore them.
 - Alpine (musl) is not supported yet: upstream only publishes an amd64 Alpine build, and this version does not download it. Use a glibc-based image such as `node:<version>-slim`.
+- Native calls share the libuv threadpool with Node's `fs`/DNS/zlib/crypto work; size `UV_THREADPOOL_SIZE` for both.
+- Requires Node.js ≥ 20.
 - `initTLS()` downloads the newest upstream release on first use and after a wrapper upgrade. Response `headers` values are `string[]` at runtime.
 
 # 2.1.0 (June 21, 2025)
