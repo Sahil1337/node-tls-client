@@ -129,6 +129,45 @@ test("a stalled connection rejects instead of hanging", async () => {
   );
 });
 
+test("a TLS error mid-download rejects instead of crashing the process (#16)", async () => {
+  // What https.request does when the socket hits a bad TLS record mid-body:
+  // the error goes to the request, and the response is destroyed.
+  const tlsError = Object.assign(new Error("packet length too long"), {
+    code: "ERR_SSL_PACKET_LENGTH_TOO_LONG",
+  });
+  const fake = fakeRequest({
+    [LATEST]: { status: 302, headers: { location: tagPage } },
+  });
+  const request = (url, options, cb) => {
+    if (url === LATEST) return fake.request(url, options, cb);
+    const req = new EventEmitter();
+    req.end = () =>
+      setImmediate(() => {
+        const res = new PassThrough();
+        res.statusCode = 200;
+        res.headers = { "content-length": "100" };
+        cb(res);
+        res.write("PARTIAL");
+        setImmediate(() => {
+          req.emit("error", tlsError);
+          res.destroy(new Error("aborted"));
+        });
+      });
+    return req;
+  };
+  const dir = scratch();
+  await assert.rejects(
+    LibraryDownloader.retrieveLibrary(
+      info,
+      path.join(dir, "lib.bin"),
+      REPO,
+      request,
+    ),
+    (e) => e.name === "TlsClientError",
+  );
+  assert.deepEqual(fs.readdirSync(dir), [], "no partial or temp file left");
+});
+
 const pkgVersion = require("../package.json").version;
 
 test("validateFile: failure leaves the process alive and a later attempt succeeds", async () => {
