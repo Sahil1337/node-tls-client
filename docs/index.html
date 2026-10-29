@@ -84,7 +84,7 @@ Some people think it is enough to change the user-agent header of a request to l
 </tr>
 <tr>
 <td>Linux musl (Alpine)</td>
-<td><strong>no</strong> — upstream ships glibc-linked binaries only; use <code>node:&lt;version&gt;-slim</code></td>
+<td><strong>no</strong> — upstream publishes an amd64 Alpine build, but this version does not download it yet; use <code>node:&lt;version&gt;-slim</code></td>
 </tr>
 <tr>
 <td>Windows x64 / ia32</td>
@@ -331,6 +331,11 @@ Some people think it is enough to change the user-agent header of a request to l
 </tr>
 </tbody>
 </table>
+<p><strong>HTTP/3 known issues (native v1.16.0).</strong> These only affect sessions that actually use HTTP/3, i.e. with <code>withProtocolRacing</code> enabled; a session without protocol racing is unaffected.</p>
+<ul>
+<li>Only <code>ClientIdentifier.chrome_144</code>, <code>chrome_144_psk</code>, <code>firefox_147</code>, <code>firefox_147_psk</code> and <code>firefox_148</code> carry HTTP/3 settings. Every other profile sends a minimal HTTP/3 SETTINGS frame that does not match the browser it imitates (TLS and HTTP/2 fingerprints are unaffected). If the HTTP/3 fingerprint matters, use one of those five profiles or set <code>disableHttp3: true</code>.</li>
+<li>Both racing legs share one request object, a data race on the header map that can crash the process when many requests race at the same time. Prefer <code>disableHttp3: true</code> for high concurrent volume.</li>
+</ul>
 </div>
 <div id="session-methods">
 <h2 id="session-methods" class="tsd-anchor-link">Session methods<a href="#session-methods" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>

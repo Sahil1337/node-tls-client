@@ -15,7 +15,7 @@
 </div></section>
 <div class="tsd-signature"><span class="tsd-signature-keyword">interface</span> <span class="tsd-kind-interface">fetchOptions</span> <span class="tsd-signature-symbol">{</span><br/>    <a class="tsd-kind-property" href="#body">body</a><span class="tsd-signature-symbol">?:</span><br/>        <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">string</span><br/>        <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">Buffer</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">ArrayBufferLike</span><span class="tsd-signature-symbol">&gt;</span><br/>        <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">Uint8Array</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">ArrayBufferLike</span><span class="tsd-signature-symbol">&gt;</span><br/>        <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">null</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#cookies">cookies</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">Record</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">,</span> <span class="tsd-signature-type">string</span> <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#followredirects">followRedirects</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#headers">headers</a><span class="tsd-signature-symbol">?:</span> <a href="../types/HeaderInput.html" class="tsd-signature-type tsd-kind-type-alias">HeaderInput</a><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#isrotatingproxy">isRotatingProxy</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#method">method</a><span class="tsd-signature-symbol">?:</span> <a href="../types/Methods.html" class="tsd-signature-type tsd-kind-type-alias">Methods</a><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#options">options</a><span class="tsd-signature-symbol">?:</span> <a href="SessionOptions.html" class="tsd-signature-type tsd-kind-interface">SessionOptions</a><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#proxy">proxy</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">;</span><br/><span class="tsd-signature-symbol">}</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/6842e2f4b7afb905f0afafe91a35108f2ab3c3f5/src/interface/session.ts#L744">interface/session.ts:744</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/d2cf5f524187b6cc03198f914a4f3084c10d1201/src/interface/session.ts#L759">interface/session.ts:759</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-accordion" open><summary class="tsd-accordion-summary tsd-index-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>
@@ -41,56 +41,56 @@
 <div class="tsd-comment tsd-typography"><p>The body of the request (string, or Buffer for binary payloads).</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/6842e2f4b7afb905f0afafe91a35108f2ab3c3f5/src/interface/session.ts#L758">interface/session.ts:758</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/d2cf5f524187b6cc03198f914a4f3084c10d1201/src/interface/session.ts#L773">interface/session.ts:773</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="cookies"><code class="tsd-tag">Optional</code><span>cookies</span><a href="#cookies" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">cookies</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">Record</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">,</span> <span class="tsd-signature-type">string</span> <span class="tsd-signature-symbol">|</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">&gt;</span></div>
 <div class="tsd-comment tsd-typography"><p>Cookies for the request.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/6842e2f4b7afb905f0afafe91a35108f2ab3c3f5/src/interface/session.ts#L778">interface/session.ts:778</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/d2cf5f524187b6cc03198f914a4f3084c10d1201/src/interface/session.ts#L793">interface/session.ts:793</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="followredirects"><code class="tsd-tag">Optional</code><span>follow<wbr/>Redirects</span><a href="#followredirects" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">followRedirects</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span></div>
 <div class="tsd-comment tsd-typography"><p>Whether to follow redirects.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/6842e2f4b7afb905f0afafe91a35108f2ab3c3f5/src/interface/session.ts#L763">interface/session.ts:763</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/d2cf5f524187b6cc03198f914a4f3084c10d1201/src/interface/session.ts#L778">interface/session.ts:778</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="headers"><code class="tsd-tag">Optional</code><span>headers</span><a href="#headers" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">headers</span><span class="tsd-signature-symbol">?:</span> <a href="../types/HeaderInput.html" class="tsd-signature-type tsd-kind-type-alias">HeaderInput</a></div>
 <div class="tsd-comment tsd-typography"><p>The headers for the request.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/6842e2f4b7afb905f0afafe91a35108f2ab3c3f5/src/interface/session.ts#L753">interface/session.ts:753</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/d2cf5f524187b6cc03198f914a4f3084c10d1201/src/interface/session.ts#L768">interface/session.ts:768</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="isrotatingproxy"><code class="tsd-tag">Optional</code><span>is<wbr/>Rotating<wbr/>Proxy</span><a href="#isrotatingproxy" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">isRotatingProxy</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span></div>
 <div class="tsd-comment tsd-typography"><p>Whether proxy is rotating proxy or not.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/6842e2f4b7afb905f0afafe91a35108f2ab3c3f5/src/interface/session.ts#L773">interface/session.ts:773</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/d2cf5f524187b6cc03198f914a4f3084c10d1201/src/interface/session.ts#L788">interface/session.ts:788</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="method"><code class="tsd-tag">Optional</code><span>method</span><a href="#method" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">method</span><span class="tsd-signature-symbol">?:</span> <a href="../types/Methods.html" class="tsd-signature-type tsd-kind-type-alias">Methods</a></div>
 <div class="tsd-comment tsd-typography"><p>Request method.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/6842e2f4b7afb905f0afafe91a35108f2ab3c3f5/src/interface/session.ts#L748">interface/session.ts:748</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/d2cf5f524187b6cc03198f914a4f3084c10d1201/src/interface/session.ts#L763">interface/session.ts:763</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="options"><code class="tsd-tag">Optional</code><span>options</span><a href="#options" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">options</span><span class="tsd-signature-symbol">?:</span> <a href="SessionOptions.html" class="tsd-signature-type tsd-kind-interface">SessionOptions</a></div>
 <div class="tsd-comment tsd-typography"><p>Additional session options.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/6842e2f4b7afb905f0afafe91a35108f2ab3c3f5/src/interface/session.ts#L783">interface/session.ts:783</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/d2cf5f524187b6cc03198f914a4f3084c10d1201/src/interface/session.ts#L798">interface/session.ts:798</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
 <h3 class="tsd-anchor-link" id="proxy"><code class="tsd-tag">Optional</code><span>proxy</span><a href="#proxy" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <div class="tsd-signature"><span class="tsd-kind-property">proxy</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">string</span></div>
 <div class="tsd-comment tsd-typography"><p>The proxy server to use for the request.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/6842e2f4b7afb905f0afafe91a35108f2ab3c3f5/src/interface/session.ts#L768">interface/session.ts:768</a></li></ul></aside></section></section></details></div>
+<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/d2cf5f524187b6cc03198f914a4f3084c10d1201/src/interface/session.ts#L783">interface/session.ts:783</a></li></ul></aside></section></section></details></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">

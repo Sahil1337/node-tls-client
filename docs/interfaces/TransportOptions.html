@@ -14,9 +14,9 @@
 <div class="tsd-comment tsd-typography"><p>Transport-level options for HTTP requests.</p>
 <p>These options control connection reuse, compression, buffer sizes, and other low-level transport behaviors.</p>
 </div></section>
-<div class="tsd-signature"><span class="tsd-signature-keyword">interface</span> <span class="tsd-kind-interface">TransportOptions</span> <span class="tsd-signature-symbol">{</span><br/>    <a class="tsd-kind-property" href="#disablecompression">disableCompression</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#disablekeepalives">disableKeepAlives</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#idleconntimeout">idleConnTimeout</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#maxconnsperhost">maxConnsPerHost</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#maxidleconns">maxIdleConns</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#maxidleconnsperhost">maxIdleConnsPerHost</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#maxresponseheaderbytes">maxResponseHeaderBytes</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#readbuffersize">readBufferSize</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#writebuffersize">writeBufferSize</a><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/><span class="tsd-signature-symbol">}</span></div><aside class="tsd-sources">
+<div class="tsd-signature"><span class="tsd-signature-keyword">interface</span> <span class="tsd-kind-interface">TransportOptions</span> <span class="tsd-signature-symbol">{</span><br/>    <a class="tsd-kind-property" href="#disablecompression">disableCompression</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#disablekeepalives">disableKeepAlives</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#idleconntimeout">idleConnTimeout</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#maxconnsperhost">maxConnsPerHost</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#maxidleconns">maxIdleConns</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#maxidleconnsperhost">maxIdleConnsPerHost</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#maxresponseheaderbytes">maxResponseHeaderBytes</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#readbuffersize">readBufferSize</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/>    <a class="tsd-kind-property" href="#writebuffersize">writeBufferSize</a><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">;</span><br/><span class="tsd-signature-symbol">}</span></div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/6842e2f4b7afb905f0afafe91a35108f2ab3c3f5/src/interface/session.ts#L656">interface/session.ts:656</a></li></ul></aside>
+<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/d2cf5f524187b6cc03198f914a4f3084c10d1201/src/interface/session.ts#L671">interface/session.ts:671</a></li></ul></aside>
 <section class="tsd-panel-group tsd-index-group">
 <section class="tsd-panel tsd-index-panel">
 <details class="tsd-index-content tsd-accordion" open><summary class="tsd-accordion-summary tsd-index-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>
@@ -24,82 +24,82 @@
 <div class="tsd-accordion-details">
 <section class="tsd-index-section">
 <h3 class="tsd-index-heading tsd-anchor-link" id="properties">Properties<a href="#properties" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
-<div class="tsd-index-list"><a href="#disablecompression" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>disable<wbr/>Compression</span></a>
-<a href="#disablekeepalives" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>disable<wbr/>Keep<wbr/>Alives</span></a>
-<a href="#idleconntimeout" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>idle<wbr/>Conn<wbr/>Timeout</span></a>
-<a href="#maxconnsperhost" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>max<wbr/>Conns<wbr/>Per<wbr/>Host</span></a>
-<a href="#maxidleconns" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>max<wbr/>Idle<wbr/>Conns</span></a>
-<a href="#maxidleconnsperhost" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>max<wbr/>Idle<wbr/>Conns<wbr/>Per<wbr/>Host</span></a>
-<a href="#maxresponseheaderbytes" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>max<wbr/>Response<wbr/>Header<wbr/>Bytes</span></a>
-<a href="#readbuffersize" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>read<wbr/>Buffer<wbr/>Size</span></a>
-<a href="#writebuffersize" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>write<wbr/>Buffer<wbr/>Size</span></a>
+<div class="tsd-index-list"><a href="#disablecompression" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>disable<wbr/>Compression?</span></a>
+<a href="#disablekeepalives" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>disable<wbr/>Keep<wbr/>Alives?</span></a>
+<a href="#idleconntimeout" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>idle<wbr/>Conn<wbr/>Timeout?</span></a>
+<a href="#maxconnsperhost" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>max<wbr/>Conns<wbr/>Per<wbr/>Host?</span></a>
+<a href="#maxidleconns" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>max<wbr/>Idle<wbr/>Conns?</span></a>
+<a href="#maxidleconnsperhost" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>max<wbr/>Idle<wbr/>Conns<wbr/>Per<wbr/>Host?</span></a>
+<a href="#maxresponseheaderbytes" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>max<wbr/>Response<wbr/>Header<wbr/>Bytes?</span></a>
+<a href="#readbuffersize" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>read<wbr/>Buffer<wbr/>Size?</span></a>
+<a href="#writebuffersize" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>write<wbr/>Buffer<wbr/>Size?</span></a>
 </div></section></div></details></section></section>
 <details class="tsd-panel-group tsd-member-group tsd-accordion" open><summary class="tsd-accordion-summary" data-key="section-Properties"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>
 <h2 class="tsd-anchor-link" id="properties-1">Properties<a href="#properties-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2></summary>
 <section>
 <section class="tsd-panel tsd-member">
-<h3 class="tsd-anchor-link" id="disablecompression"><span>disable<wbr/>Compression</span><a href="#disablecompression" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
-<div class="tsd-signature"><span class="tsd-kind-property">disableCompression</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
+<h3 class="tsd-anchor-link" id="disablecompression"><code class="tsd-tag">Optional</code><span>disable<wbr/>Compression</span><a href="#disablecompression" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<div class="tsd-signature"><span class="tsd-kind-property">disableCompression</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span></div>
 <div class="tsd-comment tsd-typography"><p>If true, disables automatic response decompression (gzip, deflate, etc.).</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/6842e2f4b7afb905f0afafe91a35108f2ab3c3f5/src/interface/session.ts#L664">interface/session.ts:664</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/d2cf5f524187b6cc03198f914a4f3084c10d1201/src/interface/session.ts#L679">interface/session.ts:679</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
-<h3 class="tsd-anchor-link" id="disablekeepalives"><span>disable<wbr/>Keep<wbr/>Alives</span><a href="#disablekeepalives" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
-<div class="tsd-signature"><span class="tsd-kind-property">disableKeepAlives</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
+<h3 class="tsd-anchor-link" id="disablekeepalives"><code class="tsd-tag">Optional</code><span>disable<wbr/>Keep<wbr/>Alives</span><a href="#disablekeepalives" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<div class="tsd-signature"><span class="tsd-kind-property">disableKeepAlives</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">boolean</span></div>
 <div class="tsd-comment tsd-typography"><p>If true, disables HTTP keep-alive connections.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/6842e2f4b7afb905f0afafe91a35108f2ab3c3f5/src/interface/session.ts#L660">interface/session.ts:660</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/d2cf5f524187b6cc03198f914a4f3084c10d1201/src/interface/session.ts#L675">interface/session.ts:675</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
-<h3 class="tsd-anchor-link" id="idleconntimeout"><span>idle<wbr/>Conn<wbr/>Timeout</span><a href="#idleconntimeout" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
-<div class="tsd-signature"><span class="tsd-kind-property">idleConnTimeout</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
+<h3 class="tsd-anchor-link" id="idleconntimeout"><code class="tsd-tag">Optional</code><span>idle<wbr/>Conn<wbr/>Timeout</span><a href="#idleconntimeout" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<div class="tsd-signature"><span class="tsd-kind-property">idleConnTimeout</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span></div>
 <div class="tsd-comment tsd-typography"><p>The maximum idle connection timeout, in nanoseconds.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/6842e2f4b7afb905f0afafe91a35108f2ab3c3f5/src/interface/session.ts#L692">interface/session.ts:692</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/d2cf5f524187b6cc03198f914a4f3084c10d1201/src/interface/session.ts#L707">interface/session.ts:707</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
-<h3 class="tsd-anchor-link" id="maxconnsperhost"><span>max<wbr/>Conns<wbr/>Per<wbr/>Host</span><a href="#maxconnsperhost" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
-<div class="tsd-signature"><span class="tsd-kind-property">maxConnsPerHost</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
+<h3 class="tsd-anchor-link" id="maxconnsperhost"><code class="tsd-tag">Optional</code><span>max<wbr/>Conns<wbr/>Per<wbr/>Host</span><a href="#maxconnsperhost" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<div class="tsd-signature"><span class="tsd-kind-property">maxConnsPerHost</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span></div>
 <div class="tsd-comment tsd-typography"><p>The maximum number of total connections per host (idle + active).</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/6842e2f4b7afb905f0afafe91a35108f2ab3c3f5/src/interface/session.ts#L676">interface/session.ts:676</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/d2cf5f524187b6cc03198f914a4f3084c10d1201/src/interface/session.ts#L691">interface/session.ts:691</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
-<h3 class="tsd-anchor-link" id="maxidleconns"><span>max<wbr/>Idle<wbr/>Conns</span><a href="#maxidleconns" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
-<div class="tsd-signature"><span class="tsd-kind-property">maxIdleConns</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
+<h3 class="tsd-anchor-link" id="maxidleconns"><code class="tsd-tag">Optional</code><span>max<wbr/>Idle<wbr/>Conns</span><a href="#maxidleconns" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<div class="tsd-signature"><span class="tsd-kind-property">maxIdleConns</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span></div>
 <div class="tsd-comment tsd-typography"><p>The maximum number of idle (keep-alive) connections across all hosts.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/6842e2f4b7afb905f0afafe91a35108f2ab3c3f5/src/interface/session.ts#L668">interface/session.ts:668</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/d2cf5f524187b6cc03198f914a4f3084c10d1201/src/interface/session.ts#L683">interface/session.ts:683</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
-<h3 class="tsd-anchor-link" id="maxidleconnsperhost"><span>max<wbr/>Idle<wbr/>Conns<wbr/>Per<wbr/>Host</span><a href="#maxidleconnsperhost" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
-<div class="tsd-signature"><span class="tsd-kind-property">maxIdleConnsPerHost</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
+<h3 class="tsd-anchor-link" id="maxidleconnsperhost"><code class="tsd-tag">Optional</code><span>max<wbr/>Idle<wbr/>Conns<wbr/>Per<wbr/>Host</span><a href="#maxidleconnsperhost" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<div class="tsd-signature"><span class="tsd-kind-property">maxIdleConnsPerHost</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span></div>
 <div class="tsd-comment tsd-typography"><p>The maximum number of idle (keep-alive) connections to keep per-host.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/6842e2f4b7afb905f0afafe91a35108f2ab3c3f5/src/interface/session.ts#L672">interface/session.ts:672</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/d2cf5f524187b6cc03198f914a4f3084c10d1201/src/interface/session.ts#L687">interface/session.ts:687</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
-<h3 class="tsd-anchor-link" id="maxresponseheaderbytes"><span>max<wbr/>Response<wbr/>Header<wbr/>Bytes</span><a href="#maxresponseheaderbytes" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
-<div class="tsd-signature"><span class="tsd-kind-property">maxResponseHeaderBytes</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
+<h3 class="tsd-anchor-link" id="maxresponseheaderbytes"><code class="tsd-tag">Optional</code><span>max<wbr/>Response<wbr/>Header<wbr/>Bytes</span><a href="#maxresponseheaderbytes" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<div class="tsd-signature"><span class="tsd-kind-property">maxResponseHeaderBytes</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span></div>
 <div class="tsd-comment tsd-typography"><p>The maximum number of bytes allowed in response headers. If zero, a default is used.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/6842e2f4b7afb905f0afafe91a35108f2ab3c3f5/src/interface/session.ts#L680">interface/session.ts:680</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/d2cf5f524187b6cc03198f914a4f3084c10d1201/src/interface/session.ts#L695">interface/session.ts:695</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
-<h3 class="tsd-anchor-link" id="readbuffersize"><span>read<wbr/>Buffer<wbr/>Size</span><a href="#readbuffersize" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
-<div class="tsd-signature"><span class="tsd-kind-property">readBufferSize</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
+<h3 class="tsd-anchor-link" id="readbuffersize"><code class="tsd-tag">Optional</code><span>read<wbr/>Buffer<wbr/>Size</span><a href="#readbuffersize" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<div class="tsd-signature"><span class="tsd-kind-property">readBufferSize</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span></div>
 <div class="tsd-comment tsd-typography"><p>The size of the read buffer in bytes. If zero, a default (typically 4KB) is used.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/6842e2f4b7afb905f0afafe91a35108f2ab3c3f5/src/interface/session.ts#L688">interface/session.ts:688</a></li></ul></aside></section>
+<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/d2cf5f524187b6cc03198f914a4f3084c10d1201/src/interface/session.ts#L703">interface/session.ts:703</a></li></ul></aside></section>
 <section class="tsd-panel tsd-member">
-<h3 class="tsd-anchor-link" id="writebuffersize"><span>write<wbr/>Buffer<wbr/>Size</span><a href="#writebuffersize" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
-<div class="tsd-signature"><span class="tsd-kind-property">writeBufferSize</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
+<h3 class="tsd-anchor-link" id="writebuffersize"><code class="tsd-tag">Optional</code><span>write<wbr/>Buffer<wbr/>Size</span><a href="#writebuffersize" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<div class="tsd-signature"><span class="tsd-kind-property">writeBufferSize</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">number</span></div>
 <div class="tsd-comment tsd-typography"><p>The size of the write buffer in bytes. If zero, a default (typically 4KB) is used.</p>
 </div><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/6842e2f4b7afb905f0afafe91a35108f2ab3c3f5/src/interface/session.ts#L684">interface/session.ts:684</a></li></ul></aside></section></section></details></div>
+<li>Defined in <a href="https://github.com/Sahil1337/node-tls-client/blob/d2cf5f524187b6cc03198f914a4f3084c10d1201/src/interface/session.ts#L699">interface/session.ts:699</a></li></ul></aside></section></section></details></div>
 <div class="col-sidebar">
 <div class="page-menu">
 <div class="tsd-navigation settings">
