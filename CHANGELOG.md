@@ -7,6 +7,7 @@
 > - **Per-request `headers` now merge over session `headers`** ([#14](https://github.com/Sahil1337/node-tls-client/issues/14)): case-insensitive, the request's value and casing win, `null`/`undefined` removes a session header. Previously any per-request `headers` object replaced the whole session set — silently dropping the session `User-Agent`, so native sent `Go-http-client/1.1`. This matches axios, got and Python requests; to send a request without a session header, set that key to `null`.
 > - **`connectHeaders`**: the request-level value now wins over the session-level one (previously inverted).
 > - **`body`** must be a string or `Buffer`/`Uint8Array` (sent base64-encoded as a byte request). Objects now throw `TlsClientError` instead of failing natively with `status: 0`.
+> - **Idle connections:** a session now keeps up to 256 idle HTTP/1.1 connections per host, as Node's `http.Agent` (and so node-fetch) does. Native's previous default of 2 made parallel requests to one host open and close a connection each, which could run out of local ports (`EADDRNOTAVAIL`). Set `transportOptions.maxIdleConnsPerHost` to change it (`0` restores the old default).
 
 ### Transport rewrite
 

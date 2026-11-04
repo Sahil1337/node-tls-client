@@ -330,7 +330,9 @@ export interface TransportOptions {
    */
   maxIdleConns?: number;
   /**
-   * The maximum number of idle (keep-alive) connections to keep per-host.
+   * The maximum number of idle (keep-alive) HTTP/1.1 connections to keep
+   * per host. Default: 256, as in Node's `http.Agent` (0 means Go's default
+   * of 2).
    */
   maxIdleConnsPerHost?: number;
   /**

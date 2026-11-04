@@ -19,6 +19,14 @@ const DEFAULT_HEADERS: Readonly<Record<string, string>> = Object.freeze({
   Connection: "keep-alive",
 });
 
+/**
+ * Idle keep-alive connections kept per host (HTTP/1.1) when the session sets
+ * none: Node's `http.Agent` default (`maxFreeSockets`), which node-fetch uses.
+ * Go's default of 2 makes parallel requests to one host open and close a
+ * connection each, leaving thousands of sockets in TIME_WAIT.
+ */
+const DEFAULT_MAX_IDLE_CONNS_PER_HOST = 256;
+
 export interface PayloadInput {
   sessionId: string;
   session: SessionOptions;
@@ -61,7 +69,12 @@ export function buildPayload({
     requestHostOverride: request.hostOverride || null,
     disableIPV6: session.disableIPV6 ?? false,
     disableIPV4: session.disableIPV4 ?? false,
-    transportOptions: session.transportOptions,
+    transportOptions: {
+      ...session.transportOptions,
+      maxIdleConnsPerHost:
+        session.transportOptions?.maxIdleConnsPerHost ??
+        DEFAULT_MAX_IDLE_CONNS_PER_HOST,
+    },
     catchPanics: false,
     streamOutputEOFSymbol: session.streamOutputEOFSymbol ?? null,
     streamOutputPath: session.streamOutputPath ?? null,

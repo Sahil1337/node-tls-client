@@ -208,11 +208,26 @@ test("h2Settings: UNKNOWN_SETTING_9 and its order entry pass through unchanged",
   assert.deepEqual(p.customTlsClient.h2SettingsOrder, order);
 });
 
-test("transportOptions: a partial object is sent unchanged", async () => {
+test("transportOptions: a partial object is sent unchanged, plus the idle-connection default", async () => {
   const p = await payloadFor({
     transportOptions: { idleConnTimeout: 30_000_000_000 },
   });
-  assert.deepEqual(p.transportOptions, { idleConnTimeout: 30_000_000_000 });
+  assert.deepEqual(p.transportOptions, {
+    idleConnTimeout: 30_000_000_000,
+    maxIdleConnsPerHost: 256,
+  });
+});
+
+test("transportOptions: maxIdleConnsPerHost defaults to 256; a set value, 0 included, wins", async () => {
+  assert.deepEqual((await payloadFor({})).transportOptions, {
+    maxIdleConnsPerHost: 256,
+  });
+  for (const n of [0, 8]) {
+    const p = await payloadFor({
+      transportOptions: { maxIdleConnsPerHost: n },
+    });
+    assert.deepEqual(p.transportOptions, { maxIdleConnsPerHost: n });
+  }
 });
 
 test("h2Settings: a boolean ENABLE_PUSH (2.1.0 type) is sent as 1/0", async () => {
