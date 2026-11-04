@@ -2,7 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const { TlsClientError } = require("../dist");
 const { NativeClient } = require("../dist/native/client");
-const { Session, fetch } = require("../dist");
+const { Session, fetch, destroyTLS } = require("../dist");
 
 test("TlsClientError keeps the wrapped error as cause and its stack", () => {
   const inner = new Error("boom");
@@ -53,6 +53,28 @@ test("Response exposes usedProtocol; fetch() surfaces the request error, not clo
       return true;
     });
     assert.deepEqual(calls, ["request", "request", "destroySession"]);
+  } finally {
+    NativeClient.instance = null;
+  }
+});
+
+test("concurrent destroyTLS() calls share one close()", async () => {
+  let destroyAllCalls = 0;
+  NativeClient.instance = new NativeClient(
+    {
+      async request() {},
+      async destroySession() {},
+      freeMemory() {},
+      async destroyAll() {
+        destroyAllCalls++;
+      },
+    },
+    8,
+  );
+  try {
+    await Promise.all([destroyTLS(), destroyTLS()]);
+    assert.equal(destroyAllCalls, 1);
+    assert.equal(NativeClient.instance, null);
   } finally {
     NativeClient.instance = null;
   }

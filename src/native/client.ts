@@ -13,6 +13,7 @@ import { Semaphore } from "./semaphore";
 export class NativeClient {
   private static instance: NativeClient | null = null;
   private static pending: Promise<void> | null = null;
+  private static destroying: Promise<void> | null = null;
 
   private readonly gate: Semaphore;
 
@@ -24,6 +25,10 @@ export class NativeClient {
   }
 
   static async init(options: InitTLSOptions = {}): Promise<void> {
+    // A destroy in progress nulls `instance` when it finishes, so wait for it
+    // and create a fresh client with these options. Its failure is its
+    // caller's to handle; the instance is cleared either way.
+    await NativeClient.destroying?.catch(() => {});
     if (NativeClient.instance) {
       // Options are only read on the FIRST successful init() — warn once so a
       // changed `concurrency` doesn't silently do nothing.
@@ -42,15 +47,18 @@ export class NativeClient {
   }
 
   static async destroy(): Promise<void> {
-    const client = NativeClient.get();
-    // Waits for in-flight requests (each bounded by its own timeout; native
-    // defaults to 30 s when none is set). Returning early would let this
-    // client's deferred destroyAll() wipe the sessions of a later initTLS().
-    try {
-      await client.close();
-    } finally {
-      NativeClient.instance = null;
-    }
+    // Concurrent callers share one close(); a second would run destroyAll()
+    // again. Waits for in-flight requests (each bounded by its own timeout;
+    // native defaults to 30 s when none is set). Returning early would let
+    // this client's deferred destroyAll() wipe the sessions of a later
+    // initTLS().
+    NativeClient.destroying ??= NativeClient.get()
+      .close()
+      .finally(() => {
+        NativeClient.instance = null;
+        NativeClient.destroying = null;
+      });
+    await NativeClient.destroying;
   }
 
   static get(): NativeClient {

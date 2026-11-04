@@ -105,3 +105,10 @@ test("destroyTLS then initTLS again works (koffi config already applied)", async
   assert.equal((await s.get(`${server.base}/reinit`)).status, 200);
   await s.close();
 });
+
+test("destroyTLS and initTLS called together leave the client initialized", async () => {
+  await Promise.all([destroyTLS(), initTLS()]);
+  const s = new Session(opts);
+  assert.equal((await s.get(`${server.base}/reinit`)).status, 200);
+  await s.close();
+});
