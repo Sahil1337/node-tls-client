@@ -1,4 +1,4 @@
-# 2.2.0 (unreleased)
+# 2.2.0 (November 5, 2026)
 
 > [!IMPORTANT]
 > **Behavior changes** (no API removals):
