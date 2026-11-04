@@ -18,9 +18,11 @@ function drainTimeWait(limit = 2500) {
   }
 }
 const CLIENTS = ["v210", "v220", "v220q", "nodefetch"];
+/** BENCH_ONLY=name,name runs only those scenarios (e.g. to redo some after a harness fix). */
+const ONLY = process.env.BENCH_ONLY?.split(",").filter(Boolean);
 const REPS = 3;
 
-const groups = [
+let groups = [
   {
     server: ["50"],
     runs: [
@@ -53,6 +55,15 @@ const groups = [
       { name: "https-burst-2000", scenario: "burst", count: 2000, conc: 2000 },
     ],
   },
+  {
+    // HTTP/2 only: node-fetch has no HTTP/2, so it sits these out.
+    server: ["50", "h2"],
+    clients: ["v210", "v220", "v220q"],
+    runs: [
+      { name: "h2-c64", scenario: "closed", count: 1280, conc: 64 },
+      { name: "h2-burst-2000", scenario: "burst", count: 2000, conc: 2000 },
+    ],
+  },
 ];
 
 function startServer(args) {
@@ -77,18 +88,28 @@ if (process.platform === "darwin")
     stdio: "ignore",
   }).unref();
 
+if (ONLY) {
+  for (const group of groups)
+    group.runs = group.runs.filter((run) => ONLY.includes(run.name));
+  groups = groups.filter((group) => group.runs.length);
+}
+
 (async () => {
   const total =
-    groups.reduce((n, g) => n + g.runs.length, 0) * REPS * CLIENTS.length;
+    groups.reduce(
+      (n, g) => n + g.runs.length * (g.clients ?? CLIENTS).length,
+      0,
+    ) * REPS;
   let done = 0;
   const t0 = Date.now();
   for (const group of groups) {
     const { child, url } = await startServer(group.server);
-    const tls = group.server.includes("tls");
+    const tls = group.server.includes("tls") || group.server.includes("h2");
+    const clients = group.clients ?? CLIENTS;
     for (const run of group.runs) {
       for (let rep = 1; rep <= REPS; rep++) {
-        const order = CLIENTS.map(
-          (_, i) => CLIENTS[(i + rep - 1) % CLIENTS.length],
+        const order = clients.map(
+          (_, i) => clients[(i + rep - 1) % clients.length],
         );
         for (const client of order) {
           drainTimeWait();

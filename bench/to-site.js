@@ -153,18 +153,23 @@ const table = [
     metric: "cpuUsPerReq",
     unit: "µs",
   },
-  {
-    label: "HTTPS, 64 in flight, 50 ms server: requests/s",
-    scenario: "https-c64",
-    metric: "rps",
-    unit: "req/s",
-  },
-  {
-    label: "HTTPS, 2,000 at once, 50 ms server: time to finish",
-    scenario: "https-burst-2000",
-    metric: "wallMs",
-    unit: "s",
-  },
+  ...[
+    ["HTTP/1.1", "https"],
+    ["HTTP/2", "h2"],
+  ].flatMap(([protocol, prefix]) => [
+    {
+      label: `HTTPS (${protocol}), 64 in flight, 50 ms server: requests/s`,
+      scenario: `${prefix}-c64`,
+      metric: "rps",
+      unit: "req/s",
+    },
+    {
+      label: `HTTPS (${protocol}), 2,000 at once, 50 ms server: time to finish`,
+      scenario: `${prefix}-burst-2000`,
+      metric: "wallMs",
+      unit: "s",
+    },
+  ]),
 ];
 const nf = new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 });
 const fmt = {
@@ -174,6 +179,19 @@ const fmt = {
   MB: (v) => `${Math.round(v)} MB`,
   "req/s": (v) => `${Math.round(v).toLocaleString("en-US")} req/s`,
 };
+/** A cell's median, plus how many requests failed when any did, so a slow cell isn't read as a clean one. */
+function cell(t, m) {
+  // node-fetch has no HTTP/2, so it has no HTTP/2 runs.
+  if (!m) return "not supported";
+  const value = fmt[t.unit](m[t.metric]);
+  if (!m.bad) return value;
+  const total = scenarioCount[t.scenario] * m.runs;
+  return `${value} (${m.bad.toLocaleString("en-US")} of ${total.toLocaleString("en-US")} requests failed)`;
+}
+/** Requests per run, by scenario. */
+const scenarioCount = Object.fromEntries(
+  rows.filter((r) => !r.error).map((r) => [r.name, r.count]),
+);
 const columns = [
   ...out.clients,
   { id: "nodefetch", label: "node-fetch 2.7.0" },
@@ -183,7 +201,7 @@ const md = [
   `| --- | ${columns.map(() => "---:").join(" | ")} |`,
   ...table.map(
     (t) =>
-      `| ${t.label} | ${columns.map((c) => fmt[t.unit](scenarios[t.scenario][c.id][t.metric])).join(" | ")} |`,
+      `| ${t.label} | ${columns.map((c) => cell(t, scenarios[t.scenario]?.[c.id])).join(" | ")} |`,
   ),
 ];
 fs.writeFileSync(

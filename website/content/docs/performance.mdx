@@ -42,9 +42,19 @@ Against a server that answers in 50 ms. 2.1.0 and 2.2.0 both run 20 requests at 
   scenario="https-burst-2000"
   metric="wallMs"
   unit="s"
-  title="2,000 HTTPS requests started at once, 50 ms server: time until all have finished"
+  title="2,000 HTTPS requests over HTTP/1.1 started at once, 50 ms server: time until all have finished"
   better="lower"
 />
+
+<BenchBars
+  scenario="h2-burst-2000"
+  metric="wallMs"
+  unit="s"
+  title="2,000 HTTPS requests over HTTP/2 started at once, 50 ms server: time until all have finished"
+  better="lower"
+/>
+
+Over HTTP/1.1, each request opens its own connection. Over HTTP/2, the requests share one connection, so the node-tls-client binary finishes in 0.10 s instead of 0.47 s. node-fetch doesn't support HTTP/2, so the table below compares it on HTTP/1.1 only. In two of three HTTP/1.1 runs, node-fetch lost connections (401 of 6,000 requests failed with `ETIMEDOUT`) and took about 8 s; its clean run took 0.8 s. The test server's queue of waiting connections holds 128 on macOS by default, and node-fetch overflowed it; the tls-client builds never did.
 
 ### CPU and memory
 
@@ -77,7 +87,7 @@ Medians of three runs.
 ### How this was measured
 
 - Apple M5 (10 cores, 16 GB), macOS 26.6, Node.js 26.7.0.
-- A local server in a separate process answered each request after 50 ms (or at once, for the CPU and latency rows), over HTTP/1.1, or over HTTPS with HTTP/2 for the HTTPS rows.
+- A local server in a separate process answered each request after 50 ms (or at once, for the CPU and latency rows), over HTTP/1.1. The HTTPS rows ran twice: over HTTP/1.1 with every client, and over HTTP/2 without node-fetch, which doesn't support it.
 - Each run was a fresh process with one `Session` and each client's default settings: 20 workers in 2.1.0, and `UV_THREADPOOL_SIZE` 20 in 2.2.0. Three runs per cell, clients in rotating order, with leftover sockets drained between runs.
 - Native libraries: 2.1.0 and 2.2.0's default binary used tls-client 1.16.0; the node-tls-client binary was built from tls-client 1.18.0.
 - The harness is [`bench/`](https://github.com/Sahil1337/node-tls-client/tree/main/bench) in the repository.

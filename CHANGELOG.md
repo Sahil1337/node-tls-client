@@ -15,15 +15,18 @@
 
 Medians of three runs on an Apple M5 (10 cores) with Node.js 26.7.0, against a local server that answers in 50 ms. Charts, all results and the method are on the [Performance](https://sahil1337.github.io/node-tls-client/performance) page; the harness is in [`bench/`](https://github.com/Sahil1337/node-tls-client/tree/main/bench).
 
-|                                     |   2.1.0 |   2.2.0 | 2.2.0 + `binary: "node-tls-client"` | node-fetch 2.7.0 |
-| ----------------------------------- | ------: | ------: | ----------------------------------: | ---------------: |
-| 64 in flight: requests/s            |     377 |     385 |                               1,207 |            1,228 |
-| 1,024 in flight: requests/s         |     383 |     384 |                              15,432 |           14,339 |
-| 5,000 at once: time to finish       |  13.1 s |  13.0 s |                              0.26 s |           0.43 s |
-| 2,000 HTTPS at once: time to finish |  5.27 s |  5.25 s |                              0.10 s |           0.78 s |
-| 16 in flight: CPU per request       | 9.83 ms | 0.56 ms |                             0.50 ms |          0.42 ms |
-| 64 in flight: CPU per request       | 1.33 ms | 0.49 ms |                             0.31 ms |          0.23 ms |
-| 64 in flight: peak memory           |  372 MB |   86 MB |                               89 MB |            84 MB |
+|                                                |   2.1.0 |   2.2.0 | 2.2.0 + `binary: "node-tls-client"` | node-fetch 2.7.0 |
+| ---------------------------------------------- | ------: | ------: | ----------------------------------: | ---------------: |
+| 64 in flight: requests/s                       |     377 |     385 |                               1,207 |            1,228 |
+| 1,024 in flight: requests/s                    |     383 |     384 |                              15,432 |           14,339 |
+| 5,000 at once: time to finish                  |  13.1 s |  13.0 s |                              0.26 s |           0.43 s |
+| 2,000 HTTPS (HTTP/1.1) at once: time to finish |  5.21 s |  5.20 s |                              0.47 s |         8.08 s ¹ |
+| 2,000 HTTPS (HTTP/2) at once: time to finish   |  5.26 s |  5.21 s |                              0.10 s |    not supported |
+| 16 in flight: CPU per request                  | 9.83 ms | 0.56 ms |                             0.50 ms |          0.42 ms |
+| 64 in flight: CPU per request                  | 1.33 ms | 0.49 ms |                             0.31 ms |          0.23 ms |
+| 64 in flight: peak memory                      |  372 MB |   86 MB |                               89 MB |            84 MB |
+
+¹ node-fetch lost connections in two of three runs (401 of 6,000 requests failed with `ETIMEDOUT`): the test server's queue of waiting connections holds 128 on macOS by default. Its clean run took 0.8 s.
 
 2.1.0 and 2.2.0 run CPU cores × 2 requests at once (20 here), which caps them near 385 requests/s against this server; 2.2.0 can go higher with `UV_THREADPOOL_SIZE`. The node-tls-client binary has no such cap.
 

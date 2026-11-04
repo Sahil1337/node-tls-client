@@ -55,6 +55,8 @@ async function setup() {
 const latencies = [];
 let bad = 0;
 let firstError = null;
+/** HTTP versions the server saw (it echoes req.httpVersion), so a run shows what it measured. */
+const httpVersions = new Set();
 async function one(i) {
   const url = `${base}/r/${i}`;
   const t = performance.now();
@@ -64,6 +66,8 @@ async function one(i) {
       bad++;
       firstError ??= `status ${r.status}: ${String(r.body).slice(0, 120)}`;
     }
+    const version = /"httpVersion":"([^"]+)"/.exec(r.body)?.[1];
+    if (version) httpVersions.add(version);
   } catch (e) {
     bad++;
     firstError ??= String(e?.cause?.code ?? e?.message ?? e);
@@ -132,6 +136,7 @@ async function one(i) {
       cpuUsPerReq: Math.round((cpu.user + cpu.system) / COUNT),
       peakRssMB: Math.round(peakRss / 1048576),
       bad,
+      httpVersions: [...httpVersions].sort(),
       ...(firstError ? { firstError } : {}),
     }),
   );

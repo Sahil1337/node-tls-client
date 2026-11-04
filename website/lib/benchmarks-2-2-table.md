@@ -13,5 +13,7 @@
 | One at a time, instant server: median latency | 1.5 ms | 1.4 ms | 1.5 ms | 1.4 ms |
 | 64 in flight, instant server: requests/s | 10,068 req/s | 10,302 req/s | 31,343 req/s | 29,790 req/s |
 | 64 in flight, instant server: CPU per request | 364 µs | 240 µs | 125 µs | 47 µs |
-| HTTPS, 64 in flight, 50 ms server: requests/s | 376 req/s | 381 req/s | 1,192 req/s | 1,224 req/s |
-| HTTPS, 2,000 at once, 50 ms server: time to finish | 5.27 s | 5.25 s | 0.10 s | 0.78 s |
+| HTTPS (HTTP/1.1), 64 in flight, 50 ms server: requests/s | 383 req/s | 382 req/s | 1,219 req/s | 1,226 req/s |
+| HTTPS (HTTP/1.1), 2,000 at once, 50 ms server: time to finish | 5.21 s | 5.20 s | 0.47 s | 8.08 s (401 of 6,000 requests failed) |
+| HTTPS (HTTP/2), 64 in flight, 50 ms server: requests/s | 378 req/s | 382 req/s | 1,202 req/s | not supported |
+| HTTPS (HTTP/2), 2,000 at once, 50 ms server: time to finish | 5.26 s | 5.21 s | 0.10 s | not supported |

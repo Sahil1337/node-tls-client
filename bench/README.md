@@ -11,6 +11,7 @@ node to-site.js               # medians → ../website/lib/benchmarks-2-2.json
 
 - `NODETLS_LIB_DIR` is a directory holding a node-tls-client build under its cache name (`tls-client-<package version>-nodetls-<platform>`, e.g. `tls-client-2.2.0-nodetls-darwin-arm64.dylib`). Leave it unset to download the release.
 - `run.js` runs every scenario three times, each run in a fresh process, with the clients in rotating order, and waits for leftover `TIME_WAIT` sockets between runs. It takes about 15 minutes and appends one line per run to `results.jsonl`.
-- The HTTPS server uses a self-signed certificate made with `openssl` on first use (`certs/`).
+- The HTTPS scenarios run twice: `https-*` against an HTTP/1.1-only server with every client, and `h2-*` against an HTTP/2-only server without node-fetch, which has no HTTP/2. Both use a self-signed certificate made with `openssl` on first use (`certs/`). Each result records the HTTP versions the server saw (`httpVersions`).
+- `BENCH_ONLY=https-c64,https-burst-2000 node run.js` runs only the named scenarios. Remove their old lines from `results.jsonl` first, or the medians mix both runs.
 - Close other heavy programs while it runs: the numbers are only comparable when nothing else competes for the CPU.
 - On macOS, `run.js` keeps the machine awake with `caffeinate` until it exits; a Mac that sleeps mid-run (or closes its lid on battery) gives numbers that are off by 10× or more. Elsewhere, turn off sleep yourself.
