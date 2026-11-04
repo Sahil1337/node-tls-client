@@ -27,6 +27,8 @@ UV_THREADPOOL_SIZE=64 node app.js
 
 The import-time default only works if nothing used the threadpool before this package was imported (an `fs.promises` call, a DNS lookup, …). It also doesn't apply when your entry file is an ES module on Node 20, Node 22 before 22.18 or Node 24 before 24.3; a warning says so. Set it in the real environment for a guaranteed effect. Set `UV_THREADPOOL_SIZE=4` to keep Node's default.
 
+To remove the limit altogether, use the [node-tls-client binary](/guides/node-tls-client-binary): its requests don't hold a thread, so every request you start runs at once.
+
 ## `initTLS({ concurrency })`
 
 `concurrency` caps how many requests are **admitted** to the native layer at once. It defaults to the threadpool size.

@@ -1,0 +1,74 @@
+---
+title: node-tls-client binary
+description: Our build of tls-client runs requests without holding a thread, so throughput is no longer capped at the thread count.
+---
+
+By default, `initTLS()` downloads [tls-client](https://github.com/bogdanfinn/tls-client)'s official release. `binary: "node-tls-client"` downloads our build instead: the same tls-client code, with two additions that let a request wait for its server without occupying a thread.
+
+<include cwd lang="js">
+  ../examples/advanced/native-binary.mjs#opt-in
+</include>
+
+Nothing else in your code changes: the API, browser profiles, options and responses are the same.
+
+## Why it's faster
+
+With the official binary, each request holds a libuv threadpool thread until its response arrives, so requests running at once are capped at `UV_THREADPOOL_SIZE` (CPU cores × 2 by default). Against a server that takes 50 ms, 20 threads finish at most 400 requests per second, however many you start.
+
+Our build starts the request inside the library and returns at once. Waiting for the network happens there, the way node-fetch waits inside Node, and the library calls back when responses arrive. No thread is held per request, so every request you start runs at once:
+
+<include cwd lang="js">
+  ../examples/advanced/native-binary.mjs#at-once
+</include>
+
+|                            | Official binary (default)        | `binary: "node-tls-client"`          |
+| -------------------------- | -------------------------------- | ------------------------------------ |
+| Requests running at once   | up to `UV_THREADPOOL_SIZE`       | every request you start              |
+| `UV_THREADPOOL_SIZE`       | sets the speed limit             | doesn't matter                       |
+| `initTLS({ concurrency })` | caps requests in flight          | ignored, with a warning              |
+| tls-client version         | newest official release (1.16.0) | newest upstream version tag (1.18.0) |
+
+Against a server that answers in 50 ms, 64 requests in flight reach 1,207 requests per second instead of 385, and 5,000 started at once finish in 0.26 s instead of 13 s. Charts and all results are on [Performance](/performance).
+
+## Memory
+
+Like node-fetch, nothing limits how many requests are in flight, so memory grows with them: peak memory was about 190 MB with 1,024 requests in flight and 350 MB with 5,000 started at once, close to node-fetch (180 MB and 280 MB). To bound it, limit requests in flight in your own code, for example with a small pool or [p-limit](https://github.com/sindresorhus/p-limit), as you would with node-fetch.
+
+## When it falls back
+
+`initTLS()` uses the official binary instead, with a warning, when:
+
+- our release has no build for your platform, or the download fails and no copy is cached;
+- you call it from a [worker thread](https://nodejs.org/api/worker_threads.html). The faster mode works on the main thread only: the library has one completion queue per process, so threads would collect each other's responses. In a worker, each request holds a threadpool thread, as with the official binary.
+
+The library is loaded once per process. To switch between the two binaries, restart the process.
+
+<Callout type="warn" title="Worker threads and in-flight requests">
+  With either binary, terminating a worker thread while one of its requests is
+  still in flight can crash the whole process. Await or close the worker's
+  requests before calling `worker.terminate()`.
+</Callout>
+
+## What differs from upstream
+
+Our build lives at [Sahil1337/tls-client](https://github.com/Sahil1337/tls-client), a fork of tls-client. The only changes are two files in `cffi_dist`, the folder that turns tls-client into a shared library:
+
+| Added                                                                                  | What it does                                                                            |
+| -------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| [`async.go`](https://github.com/Sahil1337/tls-client/blob/master/cffi_dist/async.go)   | `requestAsync` starts a request and returns at once; `waitNext` collects finished ones. |
+| [`notify.go`](https://github.com/Sahil1337/tls-client/blob/master/cffi_dist/notify.go) | `setNotify` lets the library call node-tls-client back when requests have finished.     |
+
+Everything else, including the TLS fingerprints and the blocking `request` call the official binary uses, is upstream's code at the tagged version.
+
+## How it's built and released
+
+- **Versions follow upstream.** Each upstream version tag is merged and released as `v<version>-nodetls.<n>`, e.g. `v1.18.0-nodetls.1`. A daily job checks for new upstream tags.
+- **Built in public CI.** GitHub Actions builds every platform from the tagged source, then loads each build on Linux x64 and arm64, macOS arm64 and Windows x64 and runs real requests through it before publishing.
+- **Platforms:** the same as upstream's builds. macOS x64 and arm64; Linux x64, arm64, armv5/6/7, ia32, ppc64le, riscv64 and s390x (glibc); Windows x64 and ia32.
+- **Checksums and licenses.** Each release includes `SHA256SUMS` and `THIRD_PARTY_NOTICES.txt` (tls-client is BSD-3-Clause). To verify a downloaded file:
+
+```sh
+sha256sum -c SHA256SUMS --ignore-missing
+```
+
+node-tls-client downloads the newest release into the same [cache directory](/installation#the-native-library) as the official binary, under its own file name.

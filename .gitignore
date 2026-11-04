@@ -4,3 +4,7 @@ dist/
 typings/
 plans/*
 .DS_Store
+
+bench/node_modules
+bench/certs/
+bench/results.jsonl

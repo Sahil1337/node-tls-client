@@ -61,7 +61,7 @@ The profile sets the handshake, not the headers: always send a `user-agent` that
 - [Concurrency](https://sahil1337.github.io/node-tls-client/guides/concurrency) and [errors](https://sahil1337.github.io/node-tls-client/guides/errors)
 - [Every session option](https://sahil1337.github.io/node-tls-client/reference/session-options), grouped
 
-Upgrading from 2.1? Check the [changelog](https://sahil1337.github.io/node-tls-client/changelog): request headers now merge over session headers, and the default profile is `chrome_150`.
+Upgrading from 2.1? Check the [changelog](https://sahil1337.github.io/node-tls-client/changelog): request headers now merge over session headers, and the default profile is `chrome_150`. 2.2 uses a fraction of 2.1's CPU and memory, and the [node-tls-client binary](https://sahil1337.github.io/node-tls-client/guides/node-tls-client-binary) runs requests without holding a thread; see [Performance](https://sahil1337.github.io/node-tls-client/performance).
 
 Runnable versions of every example are in [`examples/`](examples).
 

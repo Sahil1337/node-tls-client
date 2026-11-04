@@ -3,11 +3,29 @@
 > [!IMPORTANT]
 > **Behavior changes** (no API removals):
 >
+> - **New `binary` option for the native library.** The default is unchanged: `"upstream"`, tls-client's official release. `binary: "node-tls-client"` opts into [our build](https://sahil1337.github.io/node-tls-client/guides/node-tls-client-binary), which runs requests differently: every request you start runs at once instead of waiting for a free thread, so memory grows with requests in flight, `UV_THREADPOOL_SIZE` no longer limits them, and `concurrency` is ignored with a warning. It is built from tls-client 1.18.0 (the official release is 1.16.0) and runs this way on the main thread only: in a worker thread, or when our build isn't available for your platform or can't be downloaded, `initTLS()` warns and uses the official binary.
+> - **Requests run on Node's libuv threadpool** instead of 2.1.0's worker threads. Importing the package sets `UV_THREADPOOL_SIZE` to CPU cores × 2 when it's unset, which also sizes the pool your own `fs`, `dns` and `crypto` calls use; set it yourself to choose the size. See [Concurrency](https://sahil1337.github.io/node-tls-client/guides/concurrency).
 > - **Default client profile is now `chrome_150`** (previously `chrome_131`), matching native's default. Applies only to sessions with no explicit `clientIdentifier` or `ja3string`. Pin `clientIdentifier: ClientIdentifier.chrome_131` to keep the old fingerprint.
 > - **Per-request `headers` now merge over session `headers`** ([#14](https://github.com/Sahil1337/node-tls-client/issues/14)): case-insensitive, the request's value and casing win, `null`/`undefined` removes a session header. Previously any per-request `headers` object replaced the whole session set — silently dropping the session `User-Agent`, so native sent `Go-http-client/1.1`. This matches axios, got and Python requests; to send a request without a session header, set that key to `null`.
 > - **`connectHeaders`**: the request-level value now wins over the session-level one (previously inverted).
 > - **`body`** must be a string or `Buffer`/`Uint8Array` (sent base64-encoded as a byte request). Objects now throw `TlsClientError` instead of failing natively with `status: 0`.
 > - **Idle connections:** a session now keeps up to 256 idle HTTP/1.1 connections per host, as Node's `http.Agent` (and so node-fetch) does. Native's previous default of 2 made parallel requests to one host open and close a connection each, which could run out of local ports (`EADDRNOTAVAIL`). Set `transportOptions.maxIdleConnsPerHost` to change it (`0` restores the old default).
+
+### Performance
+
+Medians of three runs on an Apple M5 (10 cores) with Node.js 26.7.0, against a local server that answers in 50 ms. Charts, all results and the method are on the [Performance](https://sahil1337.github.io/node-tls-client/performance) page; the harness is in [`bench/`](https://github.com/Sahil1337/node-tls-client/tree/main/bench).
+
+|                                     |   2.1.0 |   2.2.0 | 2.2.0 + `binary: "node-tls-client"` | node-fetch 2.7.0 |
+| ----------------------------------- | ------: | ------: | ----------------------------------: | ---------------: |
+| 64 in flight: requests/s            |     377 |     385 |                               1,207 |            1,228 |
+| 1,024 in flight: requests/s         |     383 |     384 |                              15,432 |           14,339 |
+| 5,000 at once: time to finish       |  13.1 s |  13.0 s |                              0.26 s |           0.43 s |
+| 2,000 HTTPS at once: time to finish |  5.27 s |  5.25 s |                              0.10 s |           0.78 s |
+| 16 in flight: CPU per request       | 9.83 ms | 0.56 ms |                             0.50 ms |          0.42 ms |
+| 64 in flight: CPU per request       | 1.33 ms | 0.49 ms |                             0.31 ms |          0.23 ms |
+| 64 in flight: peak memory           |  372 MB |   86 MB |                               89 MB |            84 MB |
+
+2.1.0 and 2.2.0 run CPU cores × 2 requests at once (20 here), which caps them near 385 requests/s against this server; 2.2.0 can go higher with `UV_THREADPOOL_SIZE`. The node-tls-client binary has no such cap.
 
 ### Transport rewrite
 
@@ -20,7 +38,7 @@
 
 ### Additions
 
-- **Faster native binary, opt-in:** `initTLS({ binary: "node-tls-client" })` downloads our build of tls-client ([Sahil1337/tls-client](https://github.com/Sahil1337/tls-client)), made from upstream's newest version tag (v1.18.0; the default downloads upstream's newest prebuilt release, v1.16.0, so `disableSessionTickets` and `trustAnchorsPayload` work with ours). It adds a completion queue: a request no longer holds a thread while it waits for the server (the library calls back when responses arrive), so every request you start runs at once, like node-fetch, and `UV_THREADPOOL_SIZE` stops mattering. This applies on the main thread; in a worker thread requests run as with the upstream binary, with a warning. Against a server that answers in 50 ms: 5,000 requests at once finish in 0.23 s instead of 13.1 s, and 64 at a time reach 1,218 requests/s instead of 383 (node-fetch: 1,230). Memory grows with requests in flight, about 50 KB each (~300 MB at 5,000 at once, close to node-fetch). As with node-fetch there is no built-in cap: `concurrency` applies to the upstream binary only, so limit requests in flight in your own code if memory matters. When our release has no binary for your platform or can't be downloaded, `initTLS()` warns and uses upstream's. The default stays `"upstream"`.
+- **Faster native binary, opt-in:** `initTLS({ binary: "node-tls-client" })` downloads our build of tls-client ([Sahil1337/tls-client](https://github.com/Sahil1337/tls-client)), made from upstream's newest version tag, so `disableSessionTickets` and `trustAnchorsPayload` work with it. It adds a completion queue: a request no longer holds a thread while it waits for the server, and the library calls back when responses arrive. Against a server that answers in 50 ms, 5,000 requests at once finish in 0.26 s instead of 13.0 s, and 64 at a time reach 1,207 requests/s instead of 385 (node-fetch: 1,228); see [Performance](#performance). Memory peaks at 349 MB with 5,000 at once (node-fetch: 278 MB); as with node-fetch there is no built-in cap, so limit requests in flight in your own code if memory matters.
 - **New client profiles:** `chrome_130_psk`, `chrome_133(_psk)`, `chrome_144(_psk)`, `chrome_146(_psk)`, `chrome_150(_psk)`, `chrome_152(_psk)`, `brave_146(_psk)`, `safari_ios_18_5`, `safari_ios_26_0`, `firefox_135`, `firefox_146_psk`, `firefox_147(_psk)`, `firefox_148`.
 - **New SessionOptions:** `disableHttp3`, `withProtocolRacing`, `withoutCookieJar`, `withCustomCookieJar`, `certificatePinningHosts`, `timeoutSeconds`, `disableSessionTickets`.
 - **New custom-client (ja3string) options:** `h3Settings`, `h3SettingsOrder`, `h3PseudoHeaderOrder`, `h3PriorityParam`, `h3SendGreaseFrames`, `echCandidatePayloads`, `echCandidateCipherSuites`, `recordSizeLimit`, `streamId`, `allowHttp`, `supportedDelegatedCredentialsAlgorithms`, `trustAnchorsPayload` (required when the ja3 string lists extension 51764).

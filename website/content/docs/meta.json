@@ -20,6 +20,8 @@
     "guides/connection-tuning",
     "---Production---",
     "guides/concurrency",
+    "performance",
+    "guides/node-tls-client-binary",
     "guides/errors",
     "guides/bundling",
     "---Reference---",

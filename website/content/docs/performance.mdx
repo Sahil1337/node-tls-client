@@ -1,0 +1,83 @@
+---
+title: Performance
+description: How 2.1.0, 2.2.0 and the node-tls-client binary run requests, and how their speed, CPU and memory compare.
+---
+
+<BenchStats />
+
+## How requests run
+
+The TLS work is done by [tls-client](https://github.com/bogdanfinn/tls-client), a native library. With its official binary, a request is one call that returns only when the response has arrived, so a thread waits on every request in flight. What changed between versions is that thread:
+
+|                              | 2.1.0                                                            | 2.2.0                                                      | 2.2.0 + node-tls-client binary              |
+| ---------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------- |
+| Each request in flight holds | a worker thread, each with its own copy of the JavaScript engine | a thread from Node's libuv threadpool                      | no thread                                   |
+| Requests running at once     | CPU cores × 2, fixed                                             | `UV_THREADPOOL_SIZE`: CPU cores × 2 by default, up to 1024 | every request you start, as with node-fetch |
+
+- **2.1.0** passed every request and response between threads and ran a JavaScript engine per worker. That is where most of its CPU and memory went.
+- **2.2.0** makes the same call from the main thread, and Node runs it on a threadpool thread. Raise the limit with `UV_THREADPOOL_SIZE` (see [Concurrency](/guides/concurrency)); 2.1.0 had no setting for it.
+- **The [node-tls-client binary](/guides/node-tls-client-binary)** is our build of tls-client. Its call returns at once, and the library calls back when responses arrive, so requests in flight hold no thread. Opt in with `initTLS({ binary: "node-tls-client" })`.
+
+## Benchmarks
+
+The three columns use the same browser profile and options. node-fetch 2.7.0 is in the table for reference.
+
+### Requests in flight
+
+Against a server that answers in 50 ms. 2.1.0 and 2.2.0 both run 20 requests at once on the test machine, so they stop at about 385 requests per second and their lines overlap. With the node-tls-client binary, throughput keeps growing with requests in flight.
+
+<ThroughputChart />
+
+### Bursts
+
+<BenchBars
+  scenario="burst-5000"
+  metric="wallMs"
+  unit="s"
+  title="5,000 requests started at once, 50 ms server: time until all have finished"
+  better="lower"
+/>
+
+<BenchBars
+  scenario="https-burst-2000"
+  metric="wallMs"
+  unit="s"
+  title="2,000 HTTPS requests started at once, 50 ms server: time until all have finished"
+  better="lower"
+/>
+
+### CPU and memory
+
+<BenchBars
+  scenario="scale-c64"
+  metric="cpuUsPerReq"
+  unit="µs"
+  title="CPU time per request, 64 in flight, 50 ms server"
+  better="lower"
+/>
+
+<BenchBars
+  scenario="scale-c64"
+  metric="peakRssMB"
+  unit="MB"
+  title="Peak memory, 64 in flight, 50 ms server"
+  better="lower"
+/>
+
+2.1.0 used the most CPU at moderate load: with 16 requests in flight it kept about 3 CPU cores busy (9.8 ms per request, against 0.56 ms in 2.2.0), because its pool stopped idle worker threads and started new ones as requests came and went.
+
+With the node-tls-client binary, memory grows with requests in flight instead of stopping at the thread count: see the burst rows in the table below, and [Memory](/guides/node-tls-client-binary#memory).
+
+### All results
+
+Medians of three runs.
+
+<include cwd>lib/benchmarks-2-2-table.md</include>
+
+### How this was measured
+
+- Apple M5 (10 cores, 16 GB), macOS 26.6, Node.js 26.7.0.
+- A local server in a separate process answered each request after 50 ms (or at once, for the CPU and latency rows), over HTTP/1.1, or over HTTPS with HTTP/2 for the HTTPS rows.
+- Each run was a fresh process with one `Session` and each client's default settings: 20 workers in 2.1.0, and `UV_THREADPOOL_SIZE` 20 in 2.2.0. Three runs per cell, clients in rotating order, with leftover sockets drained between runs.
+- Native libraries: 2.1.0 and 2.2.0's default binary used tls-client 1.16.0; the node-tls-client binary was built from tls-client 1.18.0.
+- The harness is [`bench/`](https://github.com/Sahil1337/node-tls-client/tree/main/bench) in the repository.

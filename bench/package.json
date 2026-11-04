@@ -1,0 +1,9 @@
+{
+  "name": "node-tls-client-bench",
+  "private": true,
+  "description": "Benchmarks for the Performance docs page: node-tls-client 2.1.0 vs this checkout.",
+  "dependencies": {
+    "node-fetch": "2.7.0",
+    "node-tls-client": "2.1.0"
+  }
+}
