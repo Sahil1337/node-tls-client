@@ -1,0 +1,172 @@
+---
+title: SessionOptions
+description: Every option you can pass to new Session(), and to fetch() as its options field.
+---
+
+```js
+const session = new Session({
+  clientIdentifier: ClientIdentifier.chrome_150,
+  headers: { "user-agent": "Mozilla/5.0 …" },
+  proxy: "http://user:pass@proxy.example.com:8080",
+  timeout: 10_000,
+});
+```
+
+Every option is optional and applies to every request the session sends. [`fetch()`](/reference/fetch) takes the same object as `options`. Per-request settings (body, redirects, per-request headers, …) are in [Request options](/guides/requests#options).
+
+Options are grouped by what they control. A default of "—" means the option isn't sent, and the browser profile or the native library decides.
+
+## All options
+
+### Fingerprint
+
+| Option                    | Type                                               | Default      | What it does                                                                                                                                                    |
+| ------------------------- | -------------------------------------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `clientIdentifier`        | [`ClientIdentifier`](/reference/client-identifier) | `chrome_150` | Built-in browser or app profile to impersonate. See [Browser profiles](/guides/browser-profiles).                                                               |
+| `ja3string`               | `string`                                           | —            | Build a custom fingerprint from a JA3 string instead. Only used when `clientIdentifier` is **not** set. See [Custom fingerprints](/guides/custom-fingerprints). |
+| `randomTlsExtensionOrder` | `boolean`                                          | `false`      | Randomise the order of TLS extensions in the ClientHello, as current Chrome does.                                                                               |
+
+### Custom fingerprint (ja3string only)
+
+These only apply when the session has a `ja3string` and **no** `clientIdentifier`. With a `clientIdentifier`, they're ignored. See [Custom fingerprints](/guides/custom-fingerprints) for how to read them off a capture.
+
+**TLS ClientHello**
+
+| Option                                    | Type                                                                                                    | Default    | What it does                                                                                                               |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `supportedSignatureAlgorithms`            | [`SupportedSignatureAlgorithms[]`](/reference/types#supportedsignaturealgorithms)                       | —          | Signature algorithms offered, in order.                                                                                    |
+| `supportedDelegatedCredentialsAlgorithms` | [`SupportedDelegatedCredentialsAlgorithms[]`](/reference/types#supporteddelegatedcredentialsalgorithms) | —          | Algorithms for the delegated credentials extension (Firefox sends it).                                                     |
+| `supportedVersions`                       | [`SupportedVersions[]`](/reference/types#supportedversions)                                             | —          | TLS versions offered, e.g. `["GREASE", "1.3", "1.2"]`.                                                                     |
+| `keyShareCurves`                          | [`KeyShareCurves[]`](/reference/types#keysharecurves)                                                   | —          | Curves to send key shares for, e.g. `["GREASE", "X25519MLKEM768", "X25519"]`.                                              |
+| `certCompressionAlgos`                    | [`CertCompressionAlgo[]`](/reference/types#certcompressionalgo)                                         | `["zlib"]` | Certificate compression algorithms offered.                                                                                |
+| `certCompressionAlgo`                     | [`CertCompressionAlgo`](/reference/types#certcompressionalgo)                                           | —          | **Deprecated:** a single value, wrapped into `certCompressionAlgos`. Use `certCompressionAlgos`.                           |
+| `alpnProtocols`                           | `string[]`                                                                                              | —          | ALPN protocols offered, e.g. `["h2", "http/1.1"]`.                                                                         |
+| `alpsProtocols`                           | `string[]`                                                                                              | —          | ALPS (application settings) protocols, e.g. `["h2"]` for Chrome.                                                           |
+| `recordSizeLimit`                         | `number`                                                                                                | —          | Value of the TLS `record_size_limit` extension (Firefox sends it).                                                         |
+| `echCandidatePayloads`                    | `number[]`                                                                                              | —          | Candidate payload lengths for the Encrypted Client Hello extension.                                                        |
+| `echCandidateCipherSuites`                | [`CandidateCipherSuite[]`](#candidateciphersuite)                                                       | —          | Candidate cipher suites for Encrypted Client Hello.                                                                        |
+| `trustAnchorsPayload`                     | `string`                                                                                                | —          | Trust-anchors extension payload. Required when the JA3 string lists extension 51764. Ignored by the 1.16.0 native release. |
+
+**HTTP/2**
+
+| Option              | Type                                                        | Default         | What it does                                                                             |
+| ------------------- | ----------------------------------------------------------- | --------------- | ---------------------------------------------------------------------------------------- |
+| `h2Settings`        | [`H2Settings`](#h2settings)                                 | —               | Values of the HTTP/2 SETTINGS frame.                                                     |
+| `h2SettingsOrder`   | `(keyof H2Settings)[]`                                      | —               | Order of the SETTINGS entries.                                                           |
+| `connectionFlow`    | `number`                                                    | —               | Connection-level WINDOW_UPDATE increment, e.g. `15663105` for Chrome.                    |
+| `priorityFrames`    | [`PriorityFrames[]`](#priorityframes)                       | —               | PRIORITY frames sent after the connection opens.                                         |
+| `headerPriority`    | [`PriorityParam`](#priorityparam) \| `null`                 | zeroed priority | Priority attached to each request's HEADERS frame. `null` sends none. `weight` is 0–255. |
+| `pseudoHeaderOrder` | [`PseudoHeaderOrder[]`](/reference/types#pseudoheaderorder) | —               | Order of `:method`, `:authority`, `:scheme`, `:path`.                                    |
+| `streamId`          | `number`                                                    | —               | HTTP/2 stream ID used by the custom client.                                              |
+| `allowHttp`         | `boolean`                                                   | `false`         | Allow plain HTTP with the custom client.                                                 |
+
+**HTTP/3**
+
+| Option                | Type                                                        | Default | What it does                                                            |
+| --------------------- | ----------------------------------------------------------- | ------- | ----------------------------------------------------------------------- |
+| `h3Settings`          | [`H3Settings`](#h3settings)                                 | —       | Values of the HTTP/3 SETTINGS frame.                                    |
+| `h3SettingsOrder`     | `(keyof H3Settings)[]`                                      | —       | Order of the HTTP/3 SETTINGS entries.                                   |
+| `h3PseudoHeaderOrder` | [`PseudoHeaderOrder[]`](/reference/types#pseudoheaderorder) | —       | Pseudo-header order on HTTP/3 requests.                                 |
+| `h3PriorityParam`     | `number`                                                    | —       | HTTP/3 priority parameter.                                              |
+| `h3SendGreaseFrames`  | `boolean`                                                   | `false` | Send HTTP/3 GREASE frames, as Chrome does. See [HTTP/3](/guides/http3). |
+
+### Headers
+
+| Option           | Type                                          | Default            | What it does                                                                                                                                                        |
+| ---------------- | --------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `headers`        | [`HeaderInput`](/reference/types#headerinput) | small built-in set | Headers sent with every request. Request headers are merged over them. Without any headers, `User-Agent: tls-client/2.2.0` is sent. See [Headers](/guides/headers). |
+| `headerOrder`    | `string[]`                                    | —                  | Header names, lower-case, in the order to send them. Unlisted headers come after. A request's `headerOrder` replaces it.                                            |
+| `connectHeaders` | `Record<string, string[]>`                    | —                  | Headers for the proxy `CONNECT` request. A request's `connectHeaders` replace them. See [Proxies](/guides/proxies#connect-headers).                                 |
+
+### Proxy
+
+| Option            | Type      | Default | What it does                                                                                                                                 |
+| ----------------- | --------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `proxy`           | `string`  | —       | `http://`, `http://user:pass@` or `socks5://` proxy URL for every request. A request's `proxy` overrides it. See [Proxies](/guides/proxies). |
+| `isRotatingProxy` | `boolean` | `false` | Re-apply the proxy before every request instead of reusing pooled connections, for providers that rotate the exit IP per connection.         |
+
+### Timeouts
+
+| Option           | Type     | Default | What it does                                                                                                     |
+| ---------------- | -------- | ------- | ---------------------------------------------------------------------------------------------------------------- |
+| `timeout`        | `number` | 30 s    | Per-request timeout in **milliseconds**. A request that runs out resolves with `status: 0`. `0` means unset.     |
+| `timeoutSeconds` | `number` | —       | The same in seconds. Only used when `timeout` is unset; if both are set, `timeout` wins and a warning is logged. |
+
+### Cookies
+
+| Option                | Type      | Default | What it does                                                                                                                          |
+| --------------------- | --------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `withoutCookieJar`    | `boolean` | `false` | Turn the cookie jar off: response cookies aren't sent on later requests, only the `cookies` you pass. See [Cookies](/guides/cookies). |
+| `withCustomCookieJar` | `boolean` | `false` | Use tls-client's own cookie jar instead of Go's standard one.                                                                         |
+
+### TLS and certificates
+
+| Option                    | Type                       | Default  | What it does                                                                                                                   |
+| ------------------------- | -------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `insecureSkipVerify`      | `boolean`                  | `false`  | Accept any certificate (self-signed, expired, wrong host). For testing only. See [TLS verification](/guides/tls-verification). |
+| `certificatePinningHosts` | `Record<string, string[]>` | —        | `{ host: [pins] }`: only accept certificates whose public-key hash matches a pin. Once set, unlisted hosts fail too.           |
+| `serverNameOverwrite`     | `string`                   | URL host | TLS server name (SNI) to send instead of the URL's host.                                                                       |
+| `disableSessionTickets`   | `boolean`                  | `false`  | Turn off TLS session tickets and resumption. Ignored by the 1.16.0 native release.                                             |
+
+### Protocols
+
+| Option               | Type      | Default | What it does                                                                                                           |
+| -------------------- | --------- | ------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `forceHttp1`         | `boolean` | `false` | Use HTTP/1.1 even when the server supports HTTP/2.                                                                     |
+| `withProtocolRacing` | `boolean` | `false` | Race HTTP/2 against HTTP/3 like a browser. Needs a SOCKS5 proxy or none. See [HTTP/3](/guides/http3) for known issues. |
+| `disableHttp3`       | `boolean` | `false` | Never use HTTP/3 (QUIC).                                                                                               |
+
+### Connections and network
+
+| Option             | Type                                    | Default    | What it does                                                                                          |
+| ------------------ | --------------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------- |
+| `transportOptions` | [`TransportOptions`](#transportoptions) | —          | Keep-alive pool, connection limits, buffer sizes. See [Connection tuning](/guides/connection-tuning). |
+| `localAddress`     | `string`                                | OS chooses | Source address for outgoing connections, as `host:port` (port `0` lets the OS pick).                  |
+| `disableIPV4`      | `boolean`                               | `false`    | Only connect over IPv6.                                                                               |
+| `disableIPV6`      | `boolean`                               | `false`    | Only connect over IPv4.                                                                               |
+
+### Session and debugging
+
+| Option                  | Type      | Default     | What it does                                                                                                                                                                 |
+| ----------------------- | --------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sessionId`             | `string`  | random UUID | Name of the native session. Sessions with the same id share one cookie jar, connections and fingerprint. See [Sessions](/guides/sessions#sharing-a-session-between-objects). |
+| `debug`                 | `boolean` | `false`     | Print each raw request and response (headers, cookies, status, bytes) to stdout. See [Errors and debugging](/guides/errors#debug-output).                                    |
+| `streamOutputPath`      | `string`  | —           | Write each response body to this file (appending) **instead of** returning it: `res.body` is empty.                                                                          |
+| `streamOutputBlockSize` | `number`  | 1024        | Block size in bytes for `streamOutputPath`.                                                                                                                                  |
+| `streamOutputEOFSymbol` | `string`  | —           | Text appended to the file when a body ends.                                                                                                                                  |
+
+## TransportOptions
+
+Passed as `transportOptions`. Every field is optional; fields you leave out keep their defaults. See [Connection tuning](/guides/connection-tuning).
+
+<PropTable path="../src/types/session.ts" name="TransportOptions" />
+
+## H2Settings
+
+Passed as `h2Settings` (ja3string only). Their order comes from `h2SettingsOrder`.
+
+<PropTable path="../src/types/fingerprint.ts" name="H2Settings" />
+
+## H3Settings
+
+Passed as `h3Settings` (ja3string only). Their order comes from `h3SettingsOrder`. See [HTTP/3](/guides/http3).
+
+<PropTable path="../src/types/fingerprint.ts" name="H3Settings" />
+
+## PriorityFrames
+
+One entry of `priorityFrames` (ja3string only).
+
+<PropTable path="../src/types/fingerprint.ts" name="PriorityFrames" />
+
+## PriorityParam
+
+Used by `PriorityFrames.priorityParam` and `headerPriority`. `weight` is 0–255.
+
+<PropTable path="../src/types/fingerprint.ts" name="PriorityParam" />
+
+## CandidateCipherSuite
+
+One entry of `echCandidateCipherSuites` (ja3string only). `kdfId` and `aeadId` take the [`KdfId`](/reference/types#kdfid) and [`AeadId`](/reference/types#aeadid) values.
+
+<PropTable path="../src/types/fingerprint.ts" name="CandidateCipherSuite" />

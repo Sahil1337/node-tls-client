@@ -1,0 +1,31 @@
+@import "tailwindcss";
+@import "fumadocs-ui/css/neutral.css";
+@import "fumadocs-ui/css/preset.css";
+
+html {
+  scrollbar-gutter: stable;
+}
+
+html > body[data-scroll-locked] {
+  margin-right: 0px !important;
+  --removed-body-scroll-bar-size: 0px !important;
+}
+
+/* Benchmark charts (components/benchmarks.tsx): one color per client, the
+   same on every chart. Validated as a categorical set against the page
+   background in each mode (CVD and normal-vision separation, all pairs). */
+.bench-viz {
+  --viz-1: #2a78d6;
+  --viz-2: #eb6834;
+  --viz-3: #1baf7a;
+  --viz-grid: #e1e0d9;
+  --viz-axis: #c3c2b7;
+}
+
+.dark .bench-viz {
+  --viz-1: #3987e5;
+  --viz-2: #d95926;
+  --viz-3: #199e70;
+  --viz-grid: #2c2c2a;
+  --viz-axis: #383835;
+}

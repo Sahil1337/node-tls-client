@@ -1,15 +1,16 @@
 {
   "compilerOptions": {
     "target": "es2022",
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
     "declaration": true,
+    "rootDir": "./src",
     "outDir": "./dist",
     "declarationDir": "./typings",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
-    "module": "commonjs"
-  }
+    "module": "commonjs",
+    "types": ["node"]
+  },
+  "include": ["src"]
 }

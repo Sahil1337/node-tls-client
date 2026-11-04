@@ -1,0 +1,73 @@
+---
+title: Types
+description: The string unions used by fingerprint options and headers.
+---
+
+These are TypeScript string unions. In JavaScript, pass the strings as shown.
+
+## SupportedSignatureAlgorithms
+
+Used by `supportedSignatureAlgorithms` (ja3string path).
+
+`"PKCS1WithSHA256"` `"PKCS1WithSHA384"` `"PKCS1WithSHA512"` `"PSSWithSHA256"` `"PSSWithSHA384"` `"PSSWithSHA512"` `"ECDSAWithP256AndSHA256"` `"ECDSAWithP384AndSHA384"` `"ECDSAWithP521AndSHA512"` `"SHA224_RSA"` `"SHA224_ECDSA"` `"PKCS1WithSHA1"` `"ECDSAWithSHA1"` `"Ed25519"` `"MLDSA44"` `"MLDSA65"` `"MLDSA87"` `"GREASE"`
+
+## SupportedDelegatedCredentialsAlgorithms
+
+Used by `supportedDelegatedCredentialsAlgorithms` (ja3string path).
+
+`"PKCS1WithSHA256"` `"PKCS1WithSHA384"` `"PKCS1WithSHA512"` `"PSSWithSHA256"` `"PSSWithSHA384"` `"PSSWithSHA512"` `"ECDSAWithP256AndSHA256"` `"ECDSAWithP384AndSHA384"` `"ECDSAWithP521AndSHA512"` `"SHA224_RSA"` `"SHA224_ECDSA"` `"PKCS1WithSHA1"` `"ECDSAWithSHA1"` `"Ed25519"`
+
+## SupportedVersions
+
+Used by `supportedVersions` (ja3string path).
+
+`"GREASE"` `"1.3"` `"1.2"` `"1.1"` `"1.0"`
+
+## KeyShareCurves
+
+Used by `keyShareCurves` (ja3string path).
+
+`"GREASE"` `"P256"` `"P384"` `"P521"` `"X25519"` `"P256Kyber768"` `"X25519Kyber512D"` `"X25519Kyber768"` `"X25519Kyber768Old"` `"X25519MLKEM768"`
+
+## CertCompressionAlgo
+
+Used by `certCompressionAlgos` (ja3string path). Defaults to `["zlib"]`.
+
+`"zlib"` `"brotli"` `"zstd"`
+
+## PseudoHeaderOrder
+
+Used by `pseudoHeaderOrder` and `h3PseudoHeaderOrder` (ja3string path).
+
+`":method"` `":authority"` `":scheme"` `":path"`
+
+## KdfId
+
+Used by `CandidateCipherSuite.kdfId` (ECH, ja3string path).
+
+`"HKDF_SHA256"` `"HKDF_SHA384"` `"HKDF_SHA512"`
+
+## AeadId
+
+Used by `CandidateCipherSuite.aeadId` (ECH, ja3string path).
+
+`"AEAD_AES_128_GCM"` `"AEAD_AES_256_GCM"` `"AEAD_CHACHA20_POLY1305"`
+
+## Methods
+
+Used by `fetch()`'s `method`.
+
+`"GET"` `"POST"` `"PUT"` `"DELETE"` `"PATCH"` `"OPTIONS"` `"HEAD"`
+
+## HeaderInput
+
+The type of every `headers` option.
+
+```ts
+type HeaderInput = Record<
+  string,
+  string | number | readonly string[] | null | undefined
+>;
+```
+
+Numbers are sent as strings, arrays are joined with `", "`, and `null` or `undefined` removes the header. That's useful in request options to drop one session header. See [Headers](/guides/headers).

@@ -1,0 +1,566 @@
+{
+  "meta": {
+    "date": "2026-11-04",
+    "machine": "Apple M5, 10 cores, 16 GB, macOS 26.6",
+    "node": "v26.7.0",
+    "runsPerCell": 3
+  },
+  "clients": [
+    {
+      "id": "v210",
+      "label": "2.1.0"
+    },
+    {
+      "id": "v220",
+      "label": "2.2.0"
+    },
+    {
+      "id": "v220q",
+      "label": "2.2.0 + node-tls-client binary"
+    }
+  ],
+  "scale": [
+    {
+      "name": "scale-c1",
+      "conc": 1
+    },
+    {
+      "name": "scale-c16",
+      "conc": 16
+    },
+    {
+      "name": "scale-c64",
+      "conc": 64
+    },
+    {
+      "name": "scale-c256",
+      "conc": 256
+    },
+    {
+      "name": "scale-c1024",
+      "conc": 1024
+    }
+  ],
+  "scaleCaption": "Requests per second (higher is better) at each number of requests in flight, against a server that answers in 50 ms. Hover or focus the chart for values; all of them are in the table below.",
+  "stats": [
+    {
+      "label": "5,000 requests at once",
+      "scenario": "burst-5000",
+      "metric": "wallMs",
+      "unit": "s",
+      "from": "v210",
+      "to": "v220q",
+      "better": "lower",
+      "phrase": "faster",
+      "note": "with the node-tls-client binary"
+    },
+    {
+      "label": "CPU per request",
+      "scenario": "scale-c64",
+      "metric": "cpuUsPerReq",
+      "unit": "µs",
+      "from": "v210",
+      "to": "v220",
+      "better": "lower",
+      "phrase": "less CPU",
+      "note": "64 in flight, default binary"
+    },
+    {
+      "label": "Memory, 64 in flight",
+      "scenario": "scale-c64",
+      "metric": "peakRssMB",
+      "unit": "MB",
+      "from": "v210",
+      "to": "v220",
+      "better": "lower",
+      "phrase": "less memory",
+      "note": "peak, default binary"
+    }
+  ],
+  "scenarios": {
+    "scale-c1": {
+      "v210": {
+        "rps": 19,
+        "wallMs": 5202,
+        "p50": 51.96,
+        "p99": 54.69,
+        "cpuUsPerReq": 1976,
+        "peakRssMB": 142,
+        "bad": 0,
+        "runs": 3
+      },
+      "v220": {
+        "rps": 19,
+        "wallMs": 5202,
+        "p50": 52,
+        "p99": 55.75,
+        "cpuUsPerReq": 1319,
+        "peakRssMB": 76,
+        "bad": 0,
+        "runs": 3
+      },
+      "v220q": {
+        "rps": 19,
+        "wallMs": 5197,
+        "p50": 52,
+        "p99": 56.04,
+        "cpuUsPerReq": 1531,
+        "peakRssMB": 76,
+        "bad": 0,
+        "runs": 3
+      },
+      "nodefetch": {
+        "rps": 19,
+        "wallMs": 5206,
+        "p50": 52.01,
+        "p99": 53.29,
+        "cpuUsPerReq": 1343,
+        "peakRssMB": 60,
+        "bad": 0,
+        "runs": 3
+      }
+    },
+    "scale-c16": {
+      "v210": {
+        "rps": 305,
+        "wallMs": 1576,
+        "p50": 51.44,
+        "p99": 88.35,
+        "cpuUsPerReq": 9833,
+        "peakRssMB": 361,
+        "bad": 0,
+        "runs": 3
+      },
+      "v220": {
+        "rps": 309,
+        "wallMs": 1554,
+        "p50": 51.73,
+        "p99": 53.87,
+        "cpuUsPerReq": 564,
+        "peakRssMB": 82,
+        "bad": 0,
+        "runs": 3
+      },
+      "v220q": {
+        "rps": 306,
+        "wallMs": 1567,
+        "p50": 52.11,
+        "p99": 53.98,
+        "cpuUsPerReq": 496,
+        "peakRssMB": 82,
+        "bad": 0,
+        "runs": 3
+      },
+      "nodefetch": {
+        "rps": 309,
+        "wallMs": 1554,
+        "p50": 51.66,
+        "p99": 54.02,
+        "cpuUsPerReq": 418,
+        "peakRssMB": 68,
+        "bad": 0,
+        "runs": 3
+      }
+    },
+    "scale-c64": {
+      "v210": {
+        "rps": 377,
+        "wallMs": 3394,
+        "p50": 151.86,
+        "p99": 467.36,
+        "cpuUsPerReq": 1327,
+        "peakRssMB": 372,
+        "bad": 0,
+        "runs": 3
+      },
+      "v220": {
+        "rps": 385,
+        "wallMs": 3322,
+        "p50": 156.31,
+        "p99": 208.09,
+        "cpuUsPerReq": 494,
+        "peakRssMB": 86,
+        "bad": 0,
+        "runs": 3
+      },
+      "v220q": {
+        "rps": 1207,
+        "wallMs": 1061,
+        "p50": 52.7,
+        "p99": 55.92,
+        "cpuUsPerReq": 314,
+        "peakRssMB": 89,
+        "bad": 0,
+        "runs": 3
+      },
+      "nodefetch": {
+        "rps": 1228,
+        "wallMs": 1042,
+        "p50": 51.65,
+        "p99": 57.27,
+        "cpuUsPerReq": 235,
+        "peakRssMB": 84,
+        "bad": 0,
+        "runs": 3
+      }
+    },
+    "scale-c256": {
+      "v210": {
+        "rps": 383,
+        "wallMs": 6686,
+        "p50": 571.09,
+        "p99": 2177.54,
+        "cpuUsPerReq": 1175,
+        "peakRssMB": 400,
+        "bad": 0,
+        "runs": 3
+      },
+      "v220": {
+        "rps": 385,
+        "wallMs": 6653,
+        "p50": 673.74,
+        "p99": 680.58,
+        "cpuUsPerReq": 562,
+        "peakRssMB": 98,
+        "bad": 0,
+        "runs": 3
+      },
+      "v220q": {
+        "rps": 4735,
+        "wallMs": 541,
+        "p50": 52.21,
+        "p99": 58.42,
+        "cpuUsPerReq": 181,
+        "peakRssMB": 115,
+        "bad": 0,
+        "runs": 3
+      },
+      "nodefetch": {
+        "rps": 4597,
+        "wallMs": 557,
+        "p50": 51.03,
+        "p99": 72.57,
+        "cpuUsPerReq": 101,
+        "peakRssMB": 107,
+        "bad": 0,
+        "runs": 3
+      }
+    },
+    "scale-c1024": {
+      "v210": {
+        "rps": 383,
+        "wallMs": 13370,
+        "p50": 1653.94,
+        "p99": 7955.99,
+        "cpuUsPerReq": 956,
+        "peakRssMB": 433,
+        "bad": 0,
+        "runs": 3
+      },
+      "v220": {
+        "rps": 384,
+        "wallMs": 13319,
+        "p50": 2652.91,
+        "p99": 2709.41,
+        "cpuUsPerReq": 561,
+        "peakRssMB": 117,
+        "bad": 0,
+        "runs": 3
+      },
+      "v220q": {
+        "rps": 15432,
+        "wallMs": 332,
+        "p50": 53.27,
+        "p99": 116.61,
+        "cpuUsPerReq": 133,
+        "peakRssMB": 194,
+        "bad": 0,
+        "runs": 3
+      },
+      "nodefetch": {
+        "rps": 14339,
+        "wallMs": 357,
+        "p50": 51.09,
+        "p99": 131.12,
+        "cpuUsPerReq": 77,
+        "peakRssMB": 184,
+        "bad": 0,
+        "runs": 3
+      }
+    },
+    "burst-5000": {
+      "v210": {
+        "rps": 381,
+        "wallMs": 13112,
+        "p50": 6577.71,
+        "p99": 13000.26,
+        "cpuUsPerReq": 1091,
+        "peakRssMB": 468,
+        "bad": 0,
+        "runs": 3
+      },
+      "v220": {
+        "rps": 385,
+        "wallMs": 13004,
+        "p50": 6556.81,
+        "p99": 12876.15,
+        "cpuUsPerReq": 453,
+        "peakRssMB": 131,
+        "bad": 0,
+        "runs": 3
+      },
+      "v220q": {
+        "rps": 19630,
+        "wallMs": 255,
+        "p50": 162.41,
+        "p99": 236.84,
+        "cpuUsPerReq": 198,
+        "peakRssMB": 349,
+        "bad": 0,
+        "runs": 3
+      },
+      "nodefetch": {
+        "rps": 11684,
+        "wallMs": 428,
+        "p50": 251.19,
+        "p99": 410.64,
+        "cpuUsPerReq": 115,
+        "peakRssMB": 278,
+        "bad": 0,
+        "runs": 3
+      }
+    },
+    "sequential": {
+      "v210": {
+        "rps": 647,
+        "wallMs": 3093,
+        "p50": 1.53,
+        "p99": 1.99,
+        "cpuUsPerReq": 608,
+        "peakRssMB": 175,
+        "bad": 0,
+        "runs": 3
+      },
+      "v220": {
+        "rps": 742,
+        "wallMs": 2697,
+        "p50": 1.36,
+        "p99": 1.69,
+        "cpuUsPerReq": 249,
+        "peakRssMB": 85,
+        "bad": 0,
+        "runs": 3
+      },
+      "v220q": {
+        "rps": 683,
+        "wallMs": 2928,
+        "p50": 1.46,
+        "p99": 1.93,
+        "cpuUsPerReq": 385,
+        "peakRssMB": 85,
+        "bad": 0,
+        "runs": 3
+      },
+      "nodefetch": {
+        "rps": 693,
+        "wallMs": 2886,
+        "p50": 1.44,
+        "p99": 1.82,
+        "cpuUsPerReq": 302,
+        "peakRssMB": 89,
+        "bad": 0,
+        "runs": 3
+      }
+    },
+    "cpu-c64": {
+      "v210": {
+        "rps": 10068,
+        "wallMs": 993,
+        "p50": 5.03,
+        "p99": 21.84,
+        "cpuUsPerReq": 364,
+        "peakRssMB": 457,
+        "bad": 0,
+        "runs": 3
+      },
+      "v220": {
+        "rps": 10302,
+        "wallMs": 971,
+        "p50": 5.96,
+        "p99": 19.39,
+        "cpuUsPerReq": 240,
+        "peakRssMB": 98,
+        "bad": 0,
+        "runs": 3
+      },
+      "v220q": {
+        "rps": 31343,
+        "wallMs": 319,
+        "p50": 2.01,
+        "p99": 3.66,
+        "cpuUsPerReq": 125,
+        "peakRssMB": 103,
+        "bad": 0,
+        "runs": 3
+      },
+      "nodefetch": {
+        "rps": 29790,
+        "wallMs": 336,
+        "p50": 2,
+        "p99": 5.32,
+        "cpuUsPerReq": 47,
+        "peakRssMB": 148,
+        "bad": 0,
+        "runs": 3
+      }
+    },
+    "https-c64": {
+      "v210": {
+        "rps": 383,
+        "wallMs": 3343,
+        "p50": 150.79,
+        "p99": 458.54,
+        "cpuUsPerReq": 1377,
+        "peakRssMB": 381,
+        "bad": 0,
+        "runs": 3
+      },
+      "v220": {
+        "rps": 382,
+        "wallMs": 3349,
+        "p50": 157.59,
+        "p99": 210.54,
+        "cpuUsPerReq": 564,
+        "peakRssMB": 83,
+        "bad": 0,
+        "runs": 3
+      },
+      "v220q": {
+        "rps": 1219,
+        "wallMs": 1050,
+        "p50": 52.19,
+        "p99": 55.72,
+        "cpuUsPerReq": 262,
+        "peakRssMB": 89,
+        "bad": 0,
+        "runs": 3
+      },
+      "nodefetch": {
+        "rps": 1226,
+        "wallMs": 1044,
+        "p50": 51.58,
+        "p99": 57.13,
+        "cpuUsPerReq": 234,
+        "peakRssMB": 97,
+        "bad": 0,
+        "runs": 3
+      }
+    },
+    "https-burst-2000": {
+      "v210": {
+        "rps": 384,
+        "wallMs": 5205,
+        "p50": 2630.68,
+        "p99": 5154.29,
+        "cpuUsPerReq": 1276,
+        "peakRssMB": 390,
+        "bad": 0,
+        "runs": 3
+      },
+      "v220": {
+        "rps": 385,
+        "wallMs": 5200,
+        "p50": 2642.4,
+        "p99": 5189.54,
+        "cpuUsPerReq": 545,
+        "peakRssMB": 96,
+        "bad": 0,
+        "runs": 3
+      },
+      "v220q": {
+        "rps": 4222,
+        "wallMs": 474,
+        "p50": 336.68,
+        "p99": 463.97,
+        "cpuUsPerReq": 249,
+        "peakRssMB": 172,
+        "bad": 0,
+        "runs": 3
+      },
+      "nodefetch": {
+        "rps": 247,
+        "wallMs": 8082,
+        "p50": 801.16,
+        "p99": 7912.05,
+        "cpuUsPerReq": 539,
+        "peakRssMB": 321,
+        "bad": 401,
+        "runs": 3
+      }
+    },
+    "h2-c64": {
+      "v210": {
+        "rps": 378,
+        "wallMs": 3388,
+        "p50": 152.69,
+        "p99": 477.06,
+        "cpuUsPerReq": 1172,
+        "peakRssMB": 377,
+        "bad": 0,
+        "runs": 3
+      },
+      "v220": {
+        "rps": 382,
+        "wallMs": 3349,
+        "p50": 157.46,
+        "p99": 212.07,
+        "cpuUsPerReq": 464,
+        "peakRssMB": 83,
+        "bad": 0,
+        "runs": 3
+      },
+      "v220q": {
+        "rps": 1202,
+        "wallMs": 1065,
+        "p50": 52.96,
+        "p99": 55.64,
+        "cpuUsPerReq": 232,
+        "peakRssMB": 85,
+        "bad": 0,
+        "runs": 3
+      }
+    },
+    "h2-burst-2000": {
+      "v210": {
+        "rps": 380,
+        "wallMs": 5264,
+        "p50": 2658.65,
+        "p99": 5212.07,
+        "cpuUsPerReq": 911,
+        "peakRssMB": 394,
+        "bad": 0,
+        "runs": 3
+      },
+      "v220": {
+        "rps": 383,
+        "wallMs": 5215,
+        "p50": 2668.79,
+        "p99": 5206.3,
+        "cpuUsPerReq": 401,
+        "peakRssMB": 96,
+        "bad": 0,
+        "runs": 3
+      },
+      "v220q": {
+        "rps": 20274,
+        "wallMs": 99,
+        "p50": 80.71,
+        "p99": 93.91,
+        "cpuUsPerReq": 119,
+        "peakRssMB": 150,
+        "bad": 0,
+        "runs": 3
+      }
+    }
+  }
+}

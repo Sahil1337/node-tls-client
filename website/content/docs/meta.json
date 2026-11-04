@@ -1,0 +1,32 @@
+{
+  "pages": [
+    "---Getting started---",
+    "index",
+    "installation",
+    "quick-start",
+    "---Basics---",
+    "guides/sessions",
+    "guides/requests",
+    "guides/responses",
+    "guides/headers",
+    "guides/cookies",
+    "---Fingerprinting---",
+    "guides/browser-profiles",
+    "guides/custom-fingerprints",
+    "---Networking---",
+    "guides/proxies",
+    "guides/http3",
+    "guides/tls-verification",
+    "guides/connection-tuning",
+    "---Production---",
+    "guides/concurrency",
+    "performance",
+    "guides/node-tls-client-binary",
+    "guides/errors",
+    "guides/bundling",
+    "---Reference---",
+    "...reference",
+    "---Releases---",
+    "changelog"
+  ]
+}

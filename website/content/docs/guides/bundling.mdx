@@ -1,0 +1,62 @@
+---
+title: Bundling
+description: Using the package with bundlers and single-file executables.
+---
+
+node-tls-client loads two native pieces at runtime: [koffi](https://koffi.dev/), a Node addon (`.node` file), and the tls-client shared library that `initTLS()` downloads. Neither can be inlined into a JavaScript bundle.
+
+## Bundlers
+
+Mark the package as external so it's `require`d from `node_modules` at runtime:
+
+<Tabs items={["esbuild", "webpack", "Vite (SSR)"]}>
+<Tab value="esbuild">
+
+```sh
+esbuild app.js --bundle --platform=node --external:node-tls-client
+```
+
+</Tab>
+<Tab value="webpack">
+
+```js title="webpack.config.js"
+module.exports = {
+  target: "node",
+  externals: { "node-tls-client": "commonjs node-tls-client" },
+};
+```
+
+</Tab>
+<Tab value="Vite (SSR)">
+
+```js title="vite.config.js"
+export default {
+  ssr: { external: ["node-tls-client"] },
+};
+```
+
+</Tab>
+</Tabs>
+
+Deploy `node_modules/node-tls-client` and its dependencies (`koffi`, `tough-cookie`) alongside the bundle.
+
+## Single-file executables with nexe
+
+<Callout type="warn">
+  Prebuilt binaries for Node.js 20 and later aren't available in `nexe` or
+  `pkg`. Build Node from source with `--build`.
+</Callout>
+
+```sh
+nexe app.js -t linux-x64-20.0.0 --build
+```
+
+| Flag                  | Meaning                                                     |
+| --------------------- | ----------------------------------------------------------- |
+| `app.js`              | Your entry script.                                          |
+| `-t linux-x64-20.0.0` | Target platform, architecture and Node.js version.          |
+| `--build`             | Build Node.js from source (required for 20+, no prebuilts). |
+
+Replace the target for other platforms, e.g. `windows-x64-20.0.0` or `macos-x64-20.0.0`.
+
+The executable still downloads the tls-client library on first run. To ship it with the executable instead, [install it ahead of time](/installation#installing-ahead-of-time) and point `libraryDir` at the shipped copy.

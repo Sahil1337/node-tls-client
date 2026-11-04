@@ -1,0 +1,70 @@
+---
+title: Connection tuning
+description: Connection pools, HTTP/1.1, IP families and the local address.
+---
+
+The defaults suit most uses. These options matter when you send many requests to the same hosts or need to control how connections are opened.
+
+## Connection pool
+
+`transportOptions` controls the session's keep-alive pool:
+
+<include cwd lang="js">
+  ../examples/advanced/connection-tuning.mjs#transport
+</include>
+
+| Option                               | Effect                                                                          |
+| ------------------------------------ | ------------------------------------------------------------------------------- |
+| `maxIdleConns`                       | Idle keep-alive connections kept across all hosts.                              |
+| `maxIdleConnsPerHost`                | Idle keep-alive connections kept per host.                                      |
+| `maxConnsPerHost`                    | Total connections (idle + active) per host; extra requests wait for a free one. |
+| `idleConnTimeout`                    | How long an idle connection stays open, **in nanoseconds** (`90 * 1e9` = 90 s). |
+| `disableKeepAlives`                  | Open a new connection for every request.                                        |
+| `disableCompression`                 | Don't request or decode gzip/deflate automatically.                             |
+| `maxResponseHeaderBytes`             | Limit on response header size. `0` uses the default.                            |
+| `readBufferSize` / `writeBufferSize` | Socket buffer sizes in bytes. `0` uses the default (about 4 KB).                |
+
+Fields you leave out keep their defaults. See [TransportOptions](/reference/session-options#transportoptions).
+
+## Forcing HTTP/1.1
+
+`forceHttp1: true` skips HTTP/2, e.g. for servers or proxies with broken HTTP/2 support:
+
+<include cwd lang="js">
+  ../examples/advanced/connection-tuning.mjs#http1
+</include>
+
+A browser profile normally negotiates HTTP/2, so forcing HTTP/1.1 makes the connection look less like that browser.
+
+## IPv4 or IPv6 only
+
+<include cwd lang="js">
+  ../examples/advanced/connection-tuning.mjs#ip-family
+</include>
+
+`disableIPV4: true` does the opposite.
+
+## Local address
+
+On a machine with several network interfaces or IPs, `localAddress` picks the source address for outgoing connections:
+
+```js
+const session = new Session({ localAddress: "192.0.2.10:0" });
+```
+
+It takes `host:port`; port `0` lets the OS choose.
+
+## Writing the body to a file
+
+`streamOutputPath` writes each response body to a file, in blocks of `streamOutputBlockSize` bytes (default 1024), followed by `streamOutputEOFSymbol` if you set one. The file is appended to, not overwritten.
+
+The body then goes **only** to the file: `res.body` is an empty string. Status, headers and cookies are returned as usual.
+
+```js
+const session = new Session({
+  streamOutputPath: "./download.bin",
+  streamOutputEOFSymbol: "<EOF>",
+});
+const res = await session.get("https://httpbin.org/base64/aGVsbG8gd29ybGQ=");
+// res.body === "", download.bin contains "hello world<EOF>"
+```

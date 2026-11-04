@@ -1,0 +1,55 @@
+---
+title: Custom fingerprints
+description: Build a fingerprint from a JA3 string, HTTP/2 settings and TLS extensions.
+---
+
+When no [built-in profile](/guides/browser-profiles) matches, describe the fingerprint yourself. Start from a capture of the client you want to copy, e.g. what [tls.peet.ws](https://tls.peet.ws/api/all) reports for it, and fill in the matching options:
+
+<include cwd lang="js">
+  ../examples/advanced/custom-fingerprint.mjs#custom
+</include>
+
+<Callout type="warn" title="clientIdentifier wins">
+  The custom options only apply when the session has a `ja3string` and **no**
+  `clientIdentifier`. If both are set, `clientIdentifier` is used and all of the
+  options below are silently ignored.
+</Callout>
+
+## The pieces
+
+| Part of the fingerprint | Options                                                                                                                                                                                       |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TLS ClientHello         | `ja3string` (TLS version, cipher suites, extensions, curves, point formats)                                                                                                                   |
+| TLS extension contents  | `supportedSignatureAlgorithms`, `supportedVersions`, `keyShareCurves`, `certCompressionAlgos`, `alpnProtocols`, `alpsProtocols`, `supportedDelegatedCredentialsAlgorithms`, `recordSizeLimit` |
+| Extension order         | `randomTlsExtensionOrder: true` shuffles it per connection, as Chrome does                                                                                                                    |
+| HTTP/2 connection       | `h2Settings` + `h2SettingsOrder` (SETTINGS frame), `connectionFlow` (WINDOW_UPDATE), `priorityFrames`                                                                                         |
+| HTTP/2 requests         | `pseudoHeaderOrder`, `headerPriority`                                                                                                                                                         |
+| HTTP/3                  | `h3Settings`, `h3SettingsOrder`, `h3PseudoHeaderOrder`, `h3PriorityParam`, `h3SendGreaseFrames`. See [HTTP/3](/guides/http3)                                                                  |
+| Encrypted Client Hello  | `echCandidatePayloads`, `echCandidateCipherSuites`                                                                                                                                            |
+
+Every option is listed with its type in [SessionOptions](/reference/session-options); allowed string values are in [Types](/reference/types).
+
+## Reading a capture
+
+tls.peet.ws shows the values in the same shape:
+
+- **`tls.ja3`** is the `ja3string`.
+- **`http2.akamai_fingerprint`** is `SETTINGS|WINDOW_UPDATE|PRIORITY|pseudo-header order`. For `1:65536;2:0;4:6291456;6:262144|15663105|0|m,a,s,p`:
+  - `1:65536;2:0;…` gives `h2Settings` and `h2SettingsOrder`. Ids: 1 `HEADER_TABLE_SIZE`, 2 `ENABLE_PUSH`, 3 `MAX_CONCURRENT_STREAMS`, 4 `INITIAL_WINDOW_SIZE`, 5 `MAX_FRAME_SIZE`, 6 `MAX_HEADER_LIST_SIZE`.
+  - `15663105` gives `connectionFlow`.
+  - `0` means no `priorityFrames`.
+  - `m,a,s,p` gives `pseudoHeaderOrder` (`:method`, `:authority`, `:scheme`, `:path`).
+- **The `extensions` list** gives the signature algorithms, versions, key shares and ALPN/ALPS values.
+
+The example above reproduces exactly that Akamai fingerprint.
+
+## Gotchas
+
+- **`GREASE`.** JA3 strings from Chrome contain GREASE values (e.g. `2570`). List `"GREASE"` in `supportedVersions` and `keyShareCurves` where the browser sends it.
+- **Weights are 0–255.** A `weight` of 256 or more in `headerPriority` or `priorityFrames` fails every request (`status: 0`, "cannot unmarshal number 256").
+- **`headerPriority`.** When unset, a zeroed priority is sent, as in earlier versions. Pass `null` to send none.
+- **`ENABLE_PUSH`.** Use `0`/`1`; booleans are converted.
+- **`certCompressionAlgos`** defaults to `["zlib"]`. The singular `certCompressionAlgo` is deprecated.
+- **Extension 51764** (trust anchors) requires `trustAnchorsPayload`, which the 1.16.0 native binaries ignore.
+
+Check every change against a fingerprint echo service: a typo produces a valid-looking but different fingerprint.

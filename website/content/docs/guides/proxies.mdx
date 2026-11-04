@@ -1,0 +1,67 @@
+---
+title: Proxies
+description: HTTP and SOCKS5 proxies, per session or per request, including rotating proxies.
+---
+
+Pass a proxy URL as `proxy`. The TLS handshake still happens between the native client and the target site, through the proxy's tunnel, so the fingerprint is the same as without a proxy.
+
+<include cwd lang="js">
+  ../examples/advanced/proxies.mjs#session
+</include>
+
+## URL format
+
+```
+http://host:port
+http://user:pass@host:port
+socks5://user:pass@host:port
+```
+
+URL-encode special characters in the username or password (`encodeURIComponent`).
+
+<include cwd lang="js">
+  ../examples/advanced/proxies.mjs#socks5
+</include>
+
+## A different proxy for one request
+
+`proxy` in the request options overrides the session's proxy for that request:
+
+<include cwd lang="js">
+  ../examples/advanced/proxies.mjs#per-request
+</include>
+
+The session switches its native client to the request's proxy and back again on the next request without one. Each switch drops the pooled connections. If you alternate proxies on every request, use one session per proxy instead.
+
+## Rotating proxies
+
+Some providers give each connection a new exit IP. Set `isRotatingProxy: true` so the session re-applies the proxy before every request, instead of sending later requests over an existing connection (and so the same IP):
+
+<include cwd lang="js">
+  ../examples/advanced/proxies.mjs#rotating
+</include>
+
+It can be set on the session or per request.
+
+## CONNECT headers
+
+For HTTP proxies, `connectHeaders` adds headers to the `CONNECT` request that opens the tunnel. Some providers read session or country settings from them:
+
+```js
+const session = new Session({
+  proxy: "http://proxy.example.com:8080",
+  connectHeaders: { "Proxy-Session": ["abc123"] },
+});
+```
+
+Values are arrays of strings. A request's `connectHeaders` replace the session's.
+
+<Callout type="warn" title="HTTP/3 needs SOCKS5">
+  [`withProtocolRacing`](/guides/http3) can't go through an HTTP proxy, because
+  only SOCKS5 can tunnel UDP. Since native 1.16.0, combining it with a
+  non-SOCKS5 proxy fails every request with `status: 0`.
+</Callout>
+
+## Checking the exit IP
+
+Request `https://httpbin.org/ip` through the session; the reply shows the IP the target sees.

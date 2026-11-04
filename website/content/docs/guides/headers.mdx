@@ -1,0 +1,58 @@
+---
+title: Headers
+description: Session defaults, per-request headers, removing a header, and header order.
+---
+
+A browser profile copies the TLS and HTTP/2 handshake, **not** the headers. You decide which headers are sent, and anti-bot checks compare them with the fingerprint, so a Chrome handshake should carry Chrome's `User-Agent`.
+
+## Session headers and request headers
+
+Put the headers every request needs on the session. Add or override headers per request:
+
+<include cwd lang="js">
+  ../examples/basic/headers.mjs#merge
+</include>
+
+The rules:
+
+- Request headers are layered over session headers **per key**, and names match **case-insensitively**: `User-Agent` in the request replaces `user-agent` from the session.
+- On a clash, the request's value **and its casing** win. The header keeps the session's position in the order.
+- A `null` (or `undefined`) value removes that session header for this request.
+- Numbers are sent as strings; arrays are joined with `", "`.
+
+<Callout title="Changed in 2.2.0">
+  Before 2.2.0, a request `headers` object replaced the session headers
+  entirely, which silently dropped the session's `User-Agent`. See the
+  [changelog](/changelog).
+</Callout>
+
+## When no headers are given
+
+If neither the session nor the request has a `headers` object, a small default set is sent:
+
+```http
+User-Agent: tls-client/2.2.0
+Accept-Encoding: gzip, deflate, br
+Accept: */*
+Connection: keep-alive
+```
+
+That `User-Agent` matches no browser. Always set your own.
+
+The defaults only apply when `headers` is missing on both sides. An explicit `headers: {}` sends none of them, and Go's transport then adds `User-Agent: Go-http-client/2.0` and `Accept-Encoding` itself. Whenever you leave out `user-agent`, you get one of these non-browser values.
+
+## Header order
+
+Browsers send headers in a fixed order, and some fingerprinting looks at it. `headerOrder` lists header names, lower-case, in the order to send them:
+
+<include cwd lang="js">
+  ../examples/basic/headers.mjs#order
+</include>
+
+`headerOrder` can be set on the session or per request; a request's order replaces the session's. Headers not in the list are sent after the listed ones.
+
+HTTP/2 pseudo-headers (`:method`, `:authority`, `:scheme`, `:path`) have their own order, `pseudoHeaderOrder`. It only applies to [custom fingerprints](/guides/custom-fingerprints); browser profiles already use the browser's order.
+
+## Proxy CONNECT headers
+
+`connectHeaders` are sent to an HTTP proxy on the `CONNECT` request that opens the tunnel, not to the target site. See [Proxies](/guides/proxies).

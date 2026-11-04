@@ -1,6 +1,6 @@
 {
   "name": "node-tls-client",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Advanced library based on node-fetch and tls-client.",
   "main": "dist/index.js",
   "typings": "typings/index.d.ts",
@@ -9,8 +9,16 @@
   "license": "GPL-3.0",
   "private": false,
   "scripts": {
-    "build": "tsc",
-    "docs": "typedoc --out docs src/index.ts"
+    "clean": "node -e \"for (const d of ['dist', 'typings']) require('fs').rmSync(d, { recursive: true, force: true })\"",
+    "build": "npm run clean && tsc",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run build",
+    "pretest": "npm run build",
+    "test": "node --test test/download.test.js test/ffi.test.js test/headers.test.js test/library-dir.test.js test/misc.test.js test/payload.test.js test/queue-native.test.js test/queue.test.js test/semaphore.test.js",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "docs:dev": "npm --prefix website run dev"
   },
   "keywords": [
     "tls-client",
@@ -22,20 +30,25 @@
     "cloudflare"
   ],
   "devDependencies": {
-    "@types/node": "^20.12.12",
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24.13.2",
     "@types/tough-cookie": "^4.0.5",
-    "@types/cookie-parser": "^1.4.9",
-    "typedoc": "^0.25.13",
-    "typescript": "^5.4.5"
+    "eslint": "^10.10.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.12.0",
+    "prettier": "^3.9.6",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.69.0"
   },
   "dependencies": {
-    "cookie-parser": "^1.4.7",
-    "koffi": "^2.8.9",
-    "piscina": "^5.1.1",
+    "koffi": "^2.15.2",
     "tough-cookie": "^4.1.4"
   },
   "files": [
     "dist",
     "typings"
-  ]
+  ],
+  "engines": {
+    "node": ">=20"
+  }
 }

@@ -1,0 +1,46 @@
+---
+title: initTLS() / destroyTLS()
+description: Load the native library before the first request, and release it when you're done.
+---
+
+```js
+import { initTLS, destroyTLS } from "node-tls-client";
+
+await initTLS();
+// ... requests ...
+await destroyTLS();
+```
+
+## `initTLS(options?)`
+
+```ts
+initTLS(options?: InitTLSOptions): Promise<void>
+```
+
+Finds the native [tls-client](https://github.com/bogdanfinn/tls-client) shared library for your platform, downloading it on first use, and loads it. Await it once before any request.
+
+- **Download location:** `os.tmpdir()`, or `libraryDir`. The file is named after this package's version (e.g. `tls-client-2.2.0-linux-amd64.so`), so upgrading the package downloads it once more.
+- **Failure:** if the download fails but an older cached binary exists, that binary is used with a warning. Otherwise it rejects with a `TlsClientError`; the process keeps running and you can call `initTLS()` again.
+- **Calling it again** while initialized does nothing and warns that the new options are ignored. To change options, call `destroyTLS()` first.
+
+See [Installation](/installation) for platform support and installing the binary ahead of time.
+
+### InitTLSOptions
+
+<PropTable path="../src/types/native.ts" name="InitTLSOptions" />
+
+`concurrency` caps how many requests are in flight. Real parallelism comes from `UV_THREADPOOL_SIZE`; see [Concurrency](/guides/concurrency).
+
+## `destroyTLS()`
+
+```ts
+destroyTLS(): Promise<void>
+```
+
+Stops accepting new requests, waits for in-flight ones to finish (each bounded by its own timeout), then clears every native session. Requests made afterwards reject with `Client not initialized. Call initTLS() first.` You can call `initTLS()` again afterwards.
+
+Call it at shutdown so the process can exit cleanly. It rejects if the library was never initialized.
+
+## Native bindings
+
+`TlsNativeLibrary` is the type of the promise-returning native bindings. You don't need it to use the library; it's exported for code that stubs the native layer in tests. `IClient` is its deprecated alias from 2.1.0.

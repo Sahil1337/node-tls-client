@@ -1,0 +1,87 @@
+---
+title: Quick start
+description: Your first request, and the four calls every program makes.
+---
+
+import { Box, Globe, Layers, Network } from "lucide-react";
+
+Every program follows the same shape:
+
+1. **`initTLS()`** once, before any request. It loads the native library.
+2. **`new Session(options)`** with the browser profile to impersonate.
+3. **`session.get()`** / `post()` / … as many times as you like.
+4. **`session.close()`**, then **`destroyTLS()`** at shutdown.
+
+<Tabs items={["ESM", "CommonJS"]}>
+<Tab value="ESM">
+
+<include cwd lang="js" meta='title="app.mjs"'>
+  ../examples/basic/quick-start.mjs#session
+</include>
+
+</Tab>
+<Tab value="CommonJS">
+
+<include cwd lang="js" meta='title="app.cjs"'>
+  ../examples/basic/quick-start.cjs#session
+</include>
+
+</Tab>
+</Tabs>
+
+[tls.peet.ws](https://tls.peet.ws/api/all) replies with the fingerprint it saw. Swap in your own URL once you've seen it work.
+
+`clientIdentifier`, `headers` and `timeout` are only a few of the session's settings. Every option `new Session()` accepts is listed in [SessionOptions](/reference/session-options#all-options); per-request options are in [Request options](/guides/requests#options).
+
+<Callout type="warn" title="Set the User-Agent yourself">
+  A profile copies the browser's TLS and HTTP/2 handshake, not its headers.
+  Without a `headers` option, every request is sent with `User-Agent:
+  tls-client/2.2.0`, which no browser sends. Set a `user-agent` that matches the
+  profile, as above. See [Headers](/guides/headers).
+</Callout>
+
+## One-off requests
+
+[`fetch()`](/reference/fetch) sends a single request in a throwaway session. It's handy when every request needs different settings:
+
+<include cwd lang="js">
+  ../examples/basic/fetch.mjs#fetch
+</include>
+
+For several requests to the same site, prefer a `Session`. It keeps cookies and reuses connections; `fetch()` starts from scratch every time.
+
+## Things that surprise people
+
+- **Redirects aren't followed** unless you pass `followRedirects: true`. You get the `3xx` response instead.
+- **A failed request doesn't throw.** DNS errors, TLS errors, proxy errors and timeouts resolve with `status: 0`, and `body` holds the reason. Check `res.ok` or `res.status`. See [Errors and debugging](/guides/errors).
+- **Header values are arrays:** `res.headers["Content-Type"]` is `["application/json"]`.
+- **The timeout is per session** (`timeout`, in milliseconds), not per request.
+
+## Next steps
+
+<Cards>
+  <Card
+    icon={<Layers />}
+    title="Sessions"
+    href="/guides/sessions"
+    description="Cookies, connections and the session lifecycle."
+  />
+  <Card
+    icon={<Globe />}
+    title="Browser profiles"
+    href="/guides/browser-profiles"
+    description="Pick the right ClientIdentifier."
+  />
+  <Card
+    icon={<Network />}
+    title="Proxies"
+    href="/guides/proxies"
+    description="HTTP and SOCKS5 proxies, per session or per request."
+  />
+  <Card
+    icon={<Box />}
+    title="All options"
+    href="/reference/session-options"
+    description="Every option a session accepts, grouped."
+  />
+</Cards>

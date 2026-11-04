@@ -1,0 +1,35 @@
+---
+title: Browser profiles
+description: Choose which browser or app to impersonate with ClientIdentifier.
+---
+
+A profile is a complete, captured fingerprint of one browser or app version: TLS ClientHello, HTTP/2 settings and frame priorities, pseudo-header order, and for a few profiles HTTP/3 settings. Pick one with `clientIdentifier`:
+
+<include cwd lang="js">
+  ../examples/advanced/browser-profiles.mjs#profiles
+</include>
+
+Each profile produces its own JA4 and HTTP/2 fingerprint, as a real browser would.
+
+## Choosing a profile
+
+- **Match the `User-Agent`.** The profile doesn't set headers. A `firefox_148` handshake with a Chrome `User-Agent` is an easy giveaway.
+- **Prefer recent versions.** Sites see few visitors on years-old browsers. Recent profiles are `chrome_150`/`chrome_152`, `firefox_148`, `safari_ios_26_0` and `brave_146`.
+- **Match the platform you claim.** Desktop Safari and iOS Safari have different profiles; so do the mobile apps (`okhttp4_android_*`, `nike_*`, `zalando_*`).
+- **Keep it stable.** Use one profile per session. Switching profiles between requests to the same site looks nothing like a real user.
+
+Without `clientIdentifier` (and without `ja3string`), a session uses **`chrome_150`**.
+
+## `_psk` variants
+
+Profiles ending in `_psk` / `_PSK` (e.g. `chrome_150_psk`) add the TLS `pre_shared_key` extension, so reconnections resume the earlier TLS session the way a browser returning to a site does.
+
+## All profiles
+
+[ClientIdentifier reference](/reference/client-identifier): every profile, grouped by browser.
+
+Profiles come from the native [tls-client](https://github.com/bogdanfinn/tls-client) library. New ones arrive with new native releases and are added to the enum in later versions of this package.
+
+## Beyond the built-in profiles
+
+To match a fingerprint that has no profile, build one from a JA3 string and HTTP/2 settings: see [Custom fingerprints](/guides/custom-fingerprints).
