@@ -39,17 +39,34 @@ export interface LoadedLibrary {
   maxAsyncCalls: number;
 }
 
-/** Bindings are created once per library path and reused across re-inits. */
+/**
+ * The library this process loaded, if any. There is no unloading, and a second
+ * copy would start a second Go runtime in the same process, which Go does not
+ * support — so the first copy stays in use for the life of the process and is
+ * reused across destroyTLS()/initTLS() cycles, whatever directory they name.
+ */
 let loaded: { path: string; bindings: TlsNativeLibrary } | null = null;
 
 /**
  * Ensure a shared library is available and return its path: this version's
  * cached file, else the newest upstream release (downloaded), else — with a
  * warning — any previously cached binary, so an offline upgrade keeps
- * working. Throws `TlsClientError` when none of that is possible.
+ * working. Throws `TlsClientError` when none of that is possible. Once a
+ * library is loaded, returns its path without looking at disk or the network.
  */
 export async function locateLibrary(opts: LocateOptions = {}): Promise<string> {
   const dir = path.resolve(opts.dir ?? os.tmpdir());
+  if (loaded) {
+    // Only an explicit `dir` is worth a warning: with none given, the user
+    // asked for no particular directory, so the loaded copy is not a surprise.
+    if (opts.dir !== undefined && dir !== path.dirname(loaded.path)) {
+      logger.warnOnce(
+        "library-dir",
+        `libraryDir ${dir} takes effect only after the process restarts: this process already loaded the tls-client library from ${path.dirname(loaded.path)} and keeps using it.`,
+      );
+    }
+    return loaded.path;
+  }
   const asset = platformAsset();
   // The package version is part of the name, so an upgrade downloads once and
   // never replaces a file another process may have loaded.
@@ -83,9 +100,8 @@ export function loadLibrary(
 ): LoadedLibrary {
   // Must run before load(): koffi's config is frozen once a library is loaded.
   const maxAsyncCalls = raiseAsyncLimit(expectedInFlight);
-  if (loaded?.path !== libPath) {
-    loaded = { path: libPath, bindings: bind(libPath) };
-  }
+  // Keep the loaded copy even if `libPath` names another file; see `loaded`.
+  if (!loaded) loaded = { path: libPath, bindings: bind(libPath) };
   return { bindings: loaded.bindings, maxAsyncCalls };
 }
 
@@ -127,6 +143,10 @@ function bind(libPath: string): TlsNativeLibrary {
 function raiseAsyncLimit(expectedInFlight: number): number {
   const current = koffiConfig();
   const max = current.max_async_calls ?? 256;
+  // Our own library is loaded, so the config is frozen and was already tuned by
+  // the first init (or already warned about): `max` is final, and only the
+  // resident-pool count could differ, which is a perf nicety, not worth a warning.
+  if (loaded) return max;
   const resident = current.resident_async_pools ?? 4;
   const residentTarget = Math.min(
     KOFFI_MAX_RESIDENT_POOLS,
@@ -140,10 +160,14 @@ function raiseAsyncLimit(expectedInFlight: number): number {
     });
     return KOFFI_MAX_ASYNC_CALLS;
   } catch (e) {
-    logger.warnOnce(
-      "koffi-config",
-      `could not raise koffi max_async_calls to ${KOFFI_MAX_ASYNC_CALLS} (${errorMessage(e)}); in-flight native calls are capped at ${max}.`,
-    );
+    // A host app loaded a koffi library before us. Only a call limit actually
+    // below the ceiling is worth reporting; the resident pools are a nicety.
+    if (max < KOFFI_MAX_ASYNC_CALLS) {
+      logger.warnOnce(
+        "koffi-config",
+        `could not raise koffi max_async_calls to ${KOFFI_MAX_ASYNC_CALLS} (${errorMessage(e)}); in-flight native calls are capped at ${max}.`,
+      );
+    }
     return max;
   }
 }

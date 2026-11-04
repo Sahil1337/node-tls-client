@@ -31,7 +31,9 @@ export interface InitTLSOptions {
    * relative paths resolve against the current working directory, and the
    * directory is created when missing. Default: `os.tmpdir()`. The file is
    * named after this package's version, so an upgrade downloads once and a
-   * directory can be shared by several versions or processes.
+   * directory can be shared by several versions or processes. The library is
+   * loaded once per process: after `destroyTLS()`, a different `libraryDir`
+   * takes effect only when the process restarts.
    */
   libraryDir?: string;
 }
