@@ -166,6 +166,24 @@ test("responses are freed right away; close() frees its id and is idempotent", a
   }
 });
 
+test("a request after close() re-arms close(); back-to-back close() calls stay idempotent", async () => {
+  const stub = install();
+  try {
+    const destroys = () =>
+      stub.calls.filter((c) => c[0] === "destroySession").length;
+    const s = new Session({});
+    await s.get("https://example.test/x");
+    await s.close();
+    await s.get("https://example.test/x"); // native recreates the session
+    await s.close();
+    assert.equal(destroys(), 2);
+    await Promise.all([s.close(), s.close()]);
+    assert.equal(destroys(), 2);
+  } finally {
+    uninstall();
+  }
+});
+
 test("sessionId option is honored; request cookie values are sent verbatim", async () => {
   let p = await payloadFor({ sessionId: "user-42" });
   assert.equal(p.sessionId, "user-42");

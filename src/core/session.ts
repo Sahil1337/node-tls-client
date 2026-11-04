@@ -118,7 +118,8 @@ export class Session {
 
   /**
    * The 'close' method closes the current session (frees native session
-   * state). Idempotent: repeated calls return the first result.
+   * state). Repeated calls return the first result until the session sends
+   * another request, which recreates the native session for the next call.
    *
    * @returns Native's JSON reply (`{ id, success }`).
    */
@@ -135,6 +136,8 @@ export class Session {
     url: string | URL,
     options: RequestOptions = {},
   ) {
+    // A request recreates the native session; the next close() must free it.
+    this.closePromise = null;
     const requestUrl = url.toString();
     const payload = buildPayload({
       sessionId: this.sessionId,
