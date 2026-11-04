@@ -1,6 +1,10 @@
 dist/
 typings/
-docs/
+website/.next/
+website/.source/
+website/out/
+website/.preview/
+website/next-env.d.ts
 plans/
 node_modules/
 package-lock.json

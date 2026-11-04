@@ -1,0 +1,47 @@
+---
+title: Concurrency
+description: How many requests run in parallel, and how to raise it.
+---
+
+Requests are asynchronous: start as many as you like with `Promise.all`. How many actually run **at the same time** is decided by Node's libuv threadpool.
+
+<include cwd lang="js">
+  ../examples/advanced/concurrency.mjs#parallel
+</include>
+
+## How it works
+
+Each request runs inside the native library on a libuv threadpool thread and holds that thread for its whole round-trip, from connecting to the last byte of the body. So:
+
+- **Parallelism = `UV_THREADPOOL_SIZE`.** Node's default is 4. When it's unset, this package sets it to **CPU cores × 2** at import time. libuv caps it at 1024.
+- Requests beyond that wait in a queue and start as threads free up. Nothing is dropped.
+- Native calls share the threadpool with Node's own `fs`, DNS, `zlib` and `crypto` work. Under sustained load with a small pool, those wait behind in-flight requests, so size the pool for both.
+
+## Raising the limit
+
+Set `UV_THREADPOOL_SIZE` **before Node starts**:
+
+```sh
+UV_THREADPOOL_SIZE=64 node app.js
+```
+
+The import-time default only works if nothing used the threadpool before this package was imported (an `fs.promises` call, a DNS lookup, …). Set it in the real environment for a guaranteed effect. Set `UV_THREADPOOL_SIZE=4` to keep Node's default.
+
+## `initTLS({ concurrency })`
+
+`concurrency` caps how many requests are **admitted** to the native layer at once. It defaults to the threadpool size.
+
+- Values above `UV_THREADPOOL_SIZE` only queue and add no parallelism; a warning says so.
+- Each in-flight request reserves about **256 KiB** of memory, so very high values cost RAM.
+- The maximum is 4096.
+- It's read once: calling `initTLS()` again with a different value has no effect until `destroyTLS()`.
+
+Lower it to limit memory or the load you put on a site; raise `UV_THREADPOOL_SIZE` to go faster.
+
+## Slow servers
+
+Because a slow response keeps its thread busy until it finishes, slow endpoints use up the pool quickly. If throughput drops when a site gets slow, raise `UV_THREADPOOL_SIZE` and set a session `timeout` so stuck requests give their thread back.
+
+## Shutdown
+
+`destroyTLS()` stops admitting requests, waits for the in-flight ones (each bounded by its own timeout), then frees native state.

@@ -1,0 +1,68 @@
+---
+title: Errors and debugging
+description: What throws, what resolves with status 0, and how to see what was sent.
+---
+
+There are two kinds of failure, and they surface differently.
+
+| Failure                                                                                          | How you see it                                                      |
+| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
+| **Usage errors:** no `initTLS()`, invalid body, unknown `fetch()` method, failed native download | The promise **rejects** with a `TlsClientError`.                    |
+| **Network errors:** DNS, refused connection, TLS, proxy, timeout, bad certificate pin            | The promise **resolves** with `status: 0`; `body` holds the reason. |
+
+## `TlsClientError`
+
+The library's own errors are `TlsClientError`, exported from the package root:
+
+<include cwd lang="js">
+  ../examples/basic/errors.mjs#rejects
+</include>
+
+When it wraps another error, the original is available as `error.cause`.
+
+<include cwd lang="js">
+  ../examples/basic/errors.mjs#invalid-body
+</include>
+
+## `status: 0`
+
+A request that never got an HTTP response still resolves, so check the status before reading the body. A small helper makes that hard to forget:
+
+<include cwd lang="js">
+  ../examples/basic/errors.mjs#status-zero
+</include>
+
+Common `body` messages:
+
+| Message contains                          | Cause                                                                         |
+| ----------------------------------------- | ----------------------------------------------------------------------------- |
+| `no such host`                            | DNS lookup failed.                                                            |
+| `Client.Timeout exceeded`                 | The session `timeout` ran out.                                                |
+| `certificate signed by unknown authority` | Untrusted certificate. See [TLS verification](/guides/tls-verification).      |
+| `bad ssl pin detected`                    | Certificate pinning rejected the server.                                      |
+| `cannot unmarshal …`                      | An option has the wrong type for native (e.g. a priority `weight` above 255). |
+| `HTTP/3 request failed`                   | QUIC failed during [protocol racing](/guides/http3).                          |
+
+## Debug output
+
+`debug: true` on a session makes native print the raw request and response for every request: headers, cookies, status and bytes on the wire.
+
+```js
+const session = new Session({ debug: true });
+```
+
+```text
+headers on request:
+map[Accept:[*/*] Accept-Encoding:[gzip, deflate, br] Connection:[keep-alive] User-Agent:[tls-client/2.2.0]]
+requested https://httpbin.org/status/204 : status 204
+```
+
+Native writes this to stdout, outside Node's `console`.
+
+## Common problems
+
+- **The server sees `User-Agent: tls-client/2.2.0` or `Go-http-client/2.0`.** No `user-agent` header was sent. See [Headers](/guides/headers).
+- **A site still blocks you.** Check what it sees at [tls.peet.ws](https://tls.peet.ws/api/all): fingerprint, headers and header order should all match one browser. A mismatched `User-Agent` and profile is the most common cause.
+- **`initTLS()` fails on Alpine.** musl isn't supported yet. See [Installation](/installation#supported-platforms).
+- **Every request is `status: 0` with racing on.** `withProtocolRacing` needs a SOCKS5 proxy or none. See [HTTP/3](/guides/http3).
+- **Requests hang at high volume.** The threadpool is saturated. See [Concurrency](/guides/concurrency).

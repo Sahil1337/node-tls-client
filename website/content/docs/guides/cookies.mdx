@@ -1,0 +1,49 @@
+---
+title: Cookies
+description: The session cookie jar, sending your own cookies, and reading what was set.
+---
+
+Each session has a cookie jar in the native library. Cookies set by a response are stored there and sent on later requests to the same site, just like a browser. You don't have to do anything:
+
+<include cwd lang="js">
+  ../examples/basic/cookies.mjs#jar
+</include>
+
+## Sending your own cookies
+
+`cookies` in the request options sends extra cookies, as `name → value`:
+
+<include cwd lang="js">
+  ../examples/basic/cookies.mjs#per-request
+</include>
+
+These cookies are **added to the jar**. Later requests to the same host send them too, without passing them again. Values are sent verbatim, so a value may contain `;` or `=`.
+
+## Reading cookies
+
+Two ways, with different scopes:
+
+<include cwd lang="js">
+  ../examples/basic/cookies.mjs#inspect
+</include>
+
+| API                 | Returns                                                                                                                                                                 |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `response.cookies`  | `{ name: value }` for every cookie the jar holds for **this host**, after this response.                                                                                |
+| `session.cookies()` | Every cookie the session has sent or received, as [tough-cookie](https://github.com/salesforce/tough-cookie) objects (`key`, `value`, `domain`, `path`, `creation`, …). |
+
+Domain and path in `session.cookies()` come from the URL each cookie was seen on, so the same cookie can appear once per path (the example dedupes by `key`). Expiry and `HttpOnly`/`Secure` flags aren't available.
+
+## Turning the jar off
+
+`withoutCookieJar: true` disables the native jar. Response cookies are no longer sent on later requests; only the `cookies` you pass are. `session.cookies()` still records what it saw.
+
+<include cwd lang="js">
+  ../examples/basic/cookies.mjs#no-jar
+</include>
+
+`withCustomCookieJar: true` swaps Go's standard cookie jar for tls-client's own implementation. Cookies still persist between requests either way.
+
+## Clearing cookies
+
+There's no API to delete cookies from a session. Close it and start a new one.

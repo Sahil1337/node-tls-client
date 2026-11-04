@@ -1,0 +1,60 @@
+---
+title: HTTP/3
+description: Protocol racing, turning QUIC off, and the known issues in native 1.16.0.
+---
+
+By default a session speaks HTTP/1.1 or HTTP/2, whichever the server negotiates over TLS. Browsers also try **HTTP/3** (QUIC over UDP) and use whichever protocol answers first. `withProtocolRacing: true` does the same:
+
+<include cwd lang="js">
+  ../examples/advanced/http3.mjs#racing
+</include>
+
+`res.usedProtocol` tells you which protocol won. Many servers, Cloudflare included, still answer over HTTP/2 most of the time.
+
+## Turning QUIC off
+
+`disableHttp3: true` keeps a session on TCP regardless of other settings:
+
+<include cwd lang="js">
+  ../examples/advanced/http3.mjs#disable
+</include>
+
+## Known issues (native 1.16.0)
+
+These only affect sessions that actually use HTTP/3, i.e. ones with `withProtocolRacing`. Sessions without it are unaffected.
+
+<Callout type="warn" title="Most profiles have no real HTTP/3 fingerprint">
+  Only `chrome_144`, `chrome_144_psk`, `firefox_147`, `firefox_147_psk` and
+  `firefox_148` carry HTTP/3 settings. Every other profile sends a minimal
+  HTTP/3 SETTINGS frame that doesn't match the browser it imitates. Its TLS and
+  HTTP/2 fingerprints are unaffected. If the HTTP/3 fingerprint matters, use one
+  of those five profiles or set `disableHttp3: true`.
+</Callout>
+
+<Callout
+  type="error"
+  title="Racing under heavy concurrency can crash the process"
+>
+  With many racing requests in flight at the same time, native 1.16.0 can crash
+  the process. Use `disableHttp3: true` for high request volume.
+</Callout>
+
+- **Proxies:** racing needs a SOCKS5 proxy or none. With an HTTP proxy every request fails with `status: 0`, because HTTP proxies can't tunnel UDP. See [Proxies](/guides/proxies).
+
+## Custom HTTP/3 fingerprints
+
+On the [custom fingerprint](/guides/custom-fingerprints) path (`ja3string`, no `clientIdentifier`), these options describe the HTTP/3 connection:
+
+<include cwd lang="js">
+  ../examples/advanced/http3.mjs#custom
+</include>
+
+| Option                | Sets                                                                                          |
+| --------------------- | --------------------------------------------------------------------------------------------- |
+| `h3Settings`          | The HTTP/3 SETTINGS frame, by name (see [H3Settings](/reference/session-options#h3settings)). |
+| `h3SettingsOrder`     | The order of those settings.                                                                  |
+| `h3PseudoHeaderOrder` | Pseudo-header order on HTTP/3 requests.                                                       |
+| `h3PriorityParam`     | The HTTP/3 priority parameter.                                                                |
+| `h3SendGreaseFrames`  | Whether to send GREASE frames, as Chrome does.                                                |
+
+A working custom HTTP/3 fingerprint also needs a ClientHello that QUIC accepts. With the JA3 string above, native 1.16.0 timed out over QUIC (`HTTP/3 request failed: timeout: no recent network activity`). Prefer one of the profiles listed under the first known issue when you need HTTP/3.

@@ -5,7 +5,7 @@ import prettier from "eslint-config-prettier";
 import globals from "globals";
 
 export default defineConfig([
-  globalIgnores(["dist/", "typings/", "docs/", "plans/"]),
+  globalIgnores(["dist/", "typings/", "website/", "plans/"]),
   js.configs.recommended,
   {
     files: ["**/*.ts"],
@@ -28,6 +28,10 @@ export default defineConfig([
   {
     files: ["**/*.js", "**/*.cjs"],
     languageOptions: { sourceType: "commonjs", globals: globals.node },
+  },
+  {
+    files: ["**/*.mjs"],
+    languageOptions: { globals: globals.node },
   },
   prettier, // must be last: turns off rules that conflict with Prettier
 ]);

@@ -1,0 +1,57 @@
+---
+title: TLS verification
+description: Skipping certificate checks, pinning certificates, and overriding the server name.
+---
+
+Certificates are verified against the system's trusted roots, like any HTTPS client. A certificate that fails verification makes the request resolve with `status: 0` and an `x509` error in `body`.
+
+## Skipping verification
+
+`insecureSkipVerify: true` accepts any certificate: self-signed, expired or for the wrong host. Use it for local testing and intercepting proxies, never against servers you don't control:
+
+<include cwd lang="js">
+  ../examples/advanced/tls-verification.mjs#skip-verify
+</include>
+
+## Certificate pinning
+
+`certificatePinningHosts` only accepts specific certificates for a host. It maps a host name to a list of **pins**. A pin is the base64 SHA-256 hash of a certificate's public key (SPKI). The connection is accepted if any certificate in the server's chain matches any pin.
+
+```js
+const session = new Session({
+  certificatePinningHosts: {
+    "httpbin.org": ["xVo7DFWLcuY2a0N/1xtOpTtrutF4Lr+7iR+oEciS3hI="],
+  },
+});
+```
+
+To get the pin of a server's leaf certificate with OpenSSL:
+
+```sh
+echo | openssl s_client -connect httpbin.org:443 -servername httpbin.org 2>/dev/null \
+  | openssl x509 -pubkey -noout \
+  | openssl pkey -pubin -outform der \
+  | openssl dgst -sha256 -binary | openssl enc -base64
+```
+
+Or let the library tell you. A wrong pin fails with an error that lists every pin the server presented:
+
+<include cwd lang="js">
+  ../examples/advanced/tls-verification.mjs#find-pins
+</include>
+
+<Callout type="warn" title="Pinning applies to every host">
+  Once `certificatePinningHosts` is set, requests to hosts that aren't in it
+  fail with `bad ssl pin detected` too (native 1.16.0). Use a separate session
+  for pinned hosts.
+</Callout>
+
+Leaf certificates change when they're renewed. Pinning an intermediate or root from the list is more durable; listing a backup pin avoids an outage on rotation.
+
+## Overriding the server name (SNI)
+
+`serverNameOverwrite` sets the TLS server name sent in the ClientHello, independently of the URL's host. It's mostly useful together with [`hostOverride`](/guides/requests#host-override) when connecting to an IP address or a CDN edge directly. Certificate verification then checks the certificate against that name.
+
+## Session tickets
+
+`disableSessionTickets: true` turns off TLS session ticket caching and resumption. It needs a tls-client build newer than the 1.16.0 release binaries; those silently ignore the option.

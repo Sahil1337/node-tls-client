@@ -1,7 +1,5 @@
 # 2.2.0 (unreleased)
 
-Tested against the native shared library **v1.16.0**.
-
 > [!IMPORTANT]
 > **Behavior changes** (no API removals):
 >
@@ -12,7 +10,7 @@ Tested against the native shared library **v1.16.0**.
 
 ### Transport rewrite
 
-- **Piscina worker pool removed.** Native calls now use koffi's asynchronous calls on the libuv threadpool, throttled by an in-process semaphore, with an unbounded FIFO queue for bursts. This avoids the `max_async_calls` limit that broke the first attempt: koffi ≥ 2.15.2 is required and its limit is raised to 4096.
+- **Piscina worker pool removed** ([#11](https://github.com/Sahil1337/node-tls-client/issues/11)). Native calls now use koffi's asynchronous calls on the libuv threadpool, throttled by an in-process semaphore, with an unbounded FIFO queue for bursts. This avoids the `max_async_calls` limit that broke the first attempt: koffi ≥ 2.15.2 is required and its limit is raised to 4096.
 - **Dependencies:** `piscina` and `cookie-parser` are no longer installed; the runtime dependencies are `koffi` (≥ 2.15.2) and `tough-cookie`.
 - **`initTLS({ concurrency })`** caps in-flight native calls (admission depth). Real parallelism is the libuv threadpool: the library sets `UV_THREADPOOL_SIZE` to cores×2 at import when unset (libuv caps it at 1024; set `UV_THREADPOOL_SIZE=4` to keep Node's default). Each in-flight call reserves ~256 KiB in koffi.
 - `destroyTLS()` rejects new requests, waits for in-flight ones (each bounded by its own timeout), then clears native state.
@@ -28,7 +26,8 @@ Tested against the native shared library **v1.16.0**.
 - **`TlsClientError` is exported from the package root**, so the library's own errors (e.g. from `initTLS()`, or anything `fetch()` rejects with) can be checked with `instanceof`. The deep import `node-tls-client/dist/utils/tlsError` keeps working.
 - `HeaderInput` type for all `headers` options (numbers, arrays and `null` accepted).
 - Linux ppc64le, s390x and riscv64 are supported.
-- **HTTP/3 example:** [examples/http3.js](https://github.com/Sahil1337/node-tls-client/tree/main/examples/http3.js)
+- **HTTP/3 guide:** [HTTP/3](https://sahil1337.github.io/node-tls-client/guides/http3) (example: [examples/advanced/http3.mjs](https://github.com/Sahil1337/node-tls-client/tree/main/examples/advanced/http3.mjs))
+- **New documentation site:** [sahil1337.github.io/node-tls-client](https://sahil1337.github.io/node-tls-client/), with a guide per feature and runnable examples in `examples/`. Old API reference URLs redirect to the new pages; the readme is now a short intro.
 
 ### Deprecations
 
@@ -37,7 +36,7 @@ Tested against the native shared library **v1.16.0**.
 
 ### Fixes
 
-- **A failed native download no longer exits the process.** `initTLS()` now throws a `TlsClientError` instead of calling `process.exit(1)`, and a stalled download fails after 30 s instead of hanging.
+- **A failed native download no longer exits or crashes the process** ([#16](https://github.com/Sahil1337/node-tls-client/issues/16)). `initTLS()` now throws a `TlsClientError` instead of calling `process.exit(1)`, a TLS error during the download (e.g. `ERR_SSL_PACKET_LENGTH_TOO_LONG`) rejects `initTLS()` instead of surfacing as an uncaught exception, and a stalled download fails after 30 s instead of hanging.
 - **The native download handles both upstream asset naming schemes.** tls-client 1.16.0 was briefly published with only renamed assets (`tls-client-xgo-<version>-<os>-<arch>`, September 2–7, 2026), which made fresh 2.1.0 installs exit during `initTLS()`.
 - **The cached native binary refreshes on upgrade**, so new profiles and options work right after updating. If that download fails, a previously cached binary is used with a warning.
 - **Memory leak on `session.close()` / `fetch()`:** native memory for each closed session was never freed.
@@ -74,7 +73,7 @@ Tested against the native shared library **v1.16.0**.
 - **Refactor Cookies API**  
   `<session>.cookies` is no longer a synchronous getter.  
   It now returns a `Promise` that resolves to a cookie object.  
-  Usage: [session-cookies.md](https://github.com/Sahil1337/node-tls-client/tree/main/examples/samples/cookie-example.md)
+  Usage: [Cookies](https://sahil1337.github.io/node-tls-client/guides/cookies)
 - **Redirect Handling Change**  
   The `redirect` option in `requestOptions` is no longer supported. Use `followRedirects` instead.
 
@@ -103,7 +102,7 @@ Tested against the native shared library **v1.16.0**.
     [Docs → SessionOptions](https://sahil1337.github.io/node-tls-client/interfaces/SessionOptions)
 
 - **Enhanced Documentation**  
-  Executable compatibility instructions and examples have been added to the documentation. [Instructions](https://github.com/Sahil1337/node-tls-client/tree/main/examples/samples/executable.md)
+  Executable compatibility instructions and examples have been added to the documentation. [Instructions](https://sahil1337.github.io/node-tls-client/guides/bundling)
 
 - **Refactor byteRequest handling**
   Taking into account the `Content-Encoding` and `Content-Transfer-Encoding` headers to determine if the response is a byte response. [Accounting for pull request #8](https://github.com/Sahil1337/node-tls-client/pull/8)
@@ -129,8 +128,8 @@ Tested against the native shared library **v1.16.0**.
 
 ### Additional updates
 
-- Added `session.cookies` property to retrieve all session cookies. For detailed information, see [examples/session-cookies.md](https://github.com/Sahil1337/node-tls-client/tree/main/examples/samples/cookie-example.md).
-- Added `byteResponse` option in requestOptions. Setting this to true ensures that the response is treated as a byte response. For detailed information, see [examples/images.js](https://github.com/Sahil1337/node-tls-client/tree/main/examples/images.js)
+- Added `session.cookies` property to retrieve all session cookies. For detailed information, see [Cookies](https://sahil1337.github.io/node-tls-client/guides/cookies).
+- Added `byteResponse` option in requestOptions. Setting this to true ensures that the response is treated as a byte response. For detailed information, see [Responses → Binary downloads](https://sahil1337.github.io/node-tls-client/guides/responses#binary-downloads)
 - Added functionality to send binary data. Note: Ensure that the appropriate headers are set before sending binary data in the body.
 - Added `disableIPV6` and `disableIPV4` options in `SessionOptions`. For detailed information, see [SessionOptions](https://sahil1337.github.io/node-tls-client/interfaces/SessionOptions.html#disableIPV4)
 - Added `hostOverride` property in requestOptions. Used to override the Host header, typically needed when making requests directly to an IP address.
@@ -151,7 +150,7 @@ Tested against the native shared library **v1.16.0**.
 
 ### Additions
 
-- `fetch(fetchOptions)` method have been added to use different timeouts & rejectUnauthorized values in each request. [examples/timeout.js] for more information.
+- `fetch(fetchOptions)` method have been added to use different timeouts & rejectUnauthorized values in each request. See [fetch()](https://sahil1337.github.io/node-tls-client/reference/fetch) for more information.
 
 ### Fixes
 

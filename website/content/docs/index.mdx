@@ -1,0 +1,46 @@
+---
+title: Introduction
+description: A Node.js HTTP client that looks like a real browser at the TLS and HTTP/2 level.
+---
+
+import { Download, Rocket } from "lucide-react";
+
+Changing the `User-Agent` header doesn't make a request look like it came from Chrome. Before any header is sent, the TLS handshake already tells the server which client it's talking to: the cipher suites, extensions and curves it offers, in what order, and how it sets up HTTP/2. Node's built-in `fetch`, axios and got all have their own handshake, and anti-bot services ([JA3](https://github.com/salesforce/ja3), JA4, Akamai's HTTP/2 fingerprint) recognise it. This is **TLS fingerprinting**.
+
+node-tls-client sends requests through [bogdanfinn/tls-client](https://github.com/bogdanfinn/tls-client), a Go library that reproduces the handshake of real browsers and apps. Its API looks like `fetch`.
+
+```js
+import { initTLS, Session, ClientIdentifier } from "node-tls-client";
+
+await initTLS();
+const session = new Session({ clientIdentifier: ClientIdentifier.chrome_150 });
+const res = await session.get("https://example.com");
+```
+
+## What you get
+
+- **80+ browser and app profiles:** Chrome, Firefox, Safari (desktop and iOS), Brave, Opera, OkHttp and more. See [Browser profiles](/guides/browser-profiles).
+- **Custom fingerprints** from a JA3 string plus HTTP/2, HTTP/3 and ECH settings. See [Custom fingerprints](/guides/custom-fingerprints).
+- **Sessions** with their own cookie jar and keep-alive connections. See [Sessions](/guides/sessions).
+- **Proxies** (HTTP and SOCKS5), per session or per request. See [Proxies](/guides/proxies).
+- **HTTP/1.1, HTTP/2 and HTTP/3.** See [HTTP/3](/guides/http3).
+- **TypeScript types** for every option.
+
+## When not to use it
+
+If the server doesn't fingerprint clients, Node's built-in `fetch` is simpler: no native library to download, streaming bodies, standard `Response` objects. node-tls-client buffers each response in full.
+
+<Cards>
+  <Card
+    icon={<Download />}
+    title="Installation"
+    href="/installation"
+    description="Install, supported platforms, and where the native library goes."
+  />
+  <Card
+    icon={<Rocket />}
+    title="Quick start"
+    href="/quick-start"
+    description="Your first request in about ten lines."
+  />
+</Cards>

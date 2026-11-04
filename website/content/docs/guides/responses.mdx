@@ -1,0 +1,75 @@
+---
+title: Responses
+description: Status, headers, bodies, binary downloads and failed requests.
+---
+
+Every request resolves with a `Response`. The whole body has already arrived by then. There's no stream to consume, so you can read it as often as you like.
+
+<include cwd lang="js">
+  ../examples/basic/responses.mjs#read
+</include>
+
+## Properties
+
+| Property       | Type                     | Description                                                                                                                      |
+| -------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| `status`       | `number`                 | HTTP status code. `0` means the request never got a response (DNS, TLS, proxy or timeout failure); `body` then holds the reason. |
+| `ok`           | `boolean`                | `true` when `status` is 200–299.                                                                                                 |
+| `url`          | `string`                 | The final URL, after redirects when `followRedirects` is on.                                                                     |
+| `headers`      | `IncomingHttpHeaders`    | Response headers. Every value is a **`string[]`**, keyed in canonical case (`Content-Type`, `Set-Cookie`). See below.            |
+| `body`         | `string`                 | The raw body. With `byteResponse: true` it's a `data:<mime>;base64,…` URL; with the session's `streamOutputPath` it's empty.     |
+| `cookies`      | `Record<string, string>` | Every cookie the session's jar holds for this host after the response, as `name → value`, not only the ones this response set.   |
+| `usedProtocol` | `string`                 | The negotiated protocol: `"HTTP/1.1"`, `"HTTP/2.0"` or `"HTTP/3.0"`.                                                             |
+
+## Methods
+
+### `text()`
+
+```ts
+res.text(): Promise<string>
+```
+
+The body as a string (same as `res.body`).
+
+### `json<T>()`
+
+```ts
+res.json<T>(): Promise<T>
+```
+
+The body parsed with `JSON.parse`. Rejects with a `SyntaxError` if the body isn't JSON, including the error text of a `status: 0` response.
+
+## Headers are arrays
+
+`res.headers` maps each header name to a **`string[]`**, because a header can appear more than once (`Set-Cookie` usually does). Names come back in canonical case: `Content-Type`, not `content-type`.
+
+```js
+const type = res.headers["Content-Type"]?.[0]; // "application/json"
+const setCookies = res.headers["Set-Cookie"] ?? [];
+```
+
+The TypeScript type is Node's `IncomingHttpHeaders`, which says `string`. Treat every value as an array regardless.
+
+## Binary downloads
+
+The body is a string. For images, PDFs and other binary files, pass `byteResponse: true`. The body then comes back as a `data:` URL that you can decode:
+
+<include cwd lang="js">
+  ../examples/basic/responses.mjs#binary
+</include>
+
+The MIME type in the data URL is sniffed from the content, not taken from the `Content-Type` header.
+
+## Failed requests
+
+When a request doesn't get an HTTP response at all (DNS failure, refused connection, TLS error, proxy error, timeout), the promise still **resolves**. `status` is `0`, `ok` is `false`, and `body` holds the error message:
+
+<include cwd lang="js">
+  ../examples/basic/responses.mjs#failed
+</include>
+
+`res.json()` on such a response rejects with a `SyntaxError`, so check `status` first. See [Errors and debugging](/guides/errors) for a helper.
+
+## Which protocol was used
+
+`res.usedProtocol` is `"HTTP/1.1"`, `"HTTP/2.0"` or `"HTTP/3.0"`. HTTP/2 is normal for browser profiles. See [HTTP/3](/guides/http3) and [Connection tuning](/guides/connection-tuning) to change it.

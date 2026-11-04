@@ -1,0 +1,28 @@
+---
+title: fetch()
+description: Send one request in a throwaway session.
+---
+
+```js
+import { fetch, ClientIdentifier } from "node-tls-client";
+
+const res = await fetch("https://httpbin.org/get", {
+  options: { clientIdentifier: ClientIdentifier.firefox_148, timeout: 5000 },
+});
+```
+
+```ts
+fetch(url: string, options?: fetchOptions): Promise<Response>
+```
+
+Creates a [`Session`](/guides/sessions) from `options.options`, sends one request, closes the session and resolves with the [`Response`](/guides/responses). [`initTLS()`](/reference/init-tls) must have been called first.
+
+Use it when each request needs different session settings (a different timeout, profile or `insecureSkipVerify`). For several requests to the same site, use a `Session`: it keeps cookies and connections between requests, and `fetch()` doesn't.
+
+- `method` defaults to `"GET"` and is case-insensitive. Anything other than `GET`, `POST`, `PUT`, `DELETE`, `PATCH`, `OPTIONS` or `HEAD` rejects with a `TlsClientError`.
+- Errors are rethrown as [`TlsClientError`](/guides/errors).
+- The session is closed even when the request fails.
+
+## fetchOptions
+
+<PropTable path="../src/types/request.ts" name="fetchOptions" />

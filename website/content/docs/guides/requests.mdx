@@ -1,0 +1,105 @@
+---
+title: Requests
+description: Methods, request bodies, redirects, timeouts, and every per-request option.
+---
+
+Each HTTP method has a session method: `get`, `post`, `put`, `patch`, `delete`, `head` and `options`. They all take a URL and an optional [options object](#options), and resolve with a [`Response`](/guides/responses).
+
+```js
+await session.post("https://httpbin.org/post", {
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify({ hello: "world" }),
+  followRedirects: true,
+});
+```
+
+## Sending a body
+
+`body` accepts a **string** or a **`Buffer`/`Uint8Array`**. Set the `content-type` header yourself; the library doesn't guess it.
+
+### JSON
+
+<include cwd lang="js">
+  ../examples/basic/requests.mjs#json
+</include>
+
+Passing an object as `body` throws a `TlsClientError`: stringify it first.
+
+### Form data
+
+<include cwd lang="js">
+  ../examples/basic/requests.mjs#form
+</include>
+
+### Binary data
+
+<include cwd lang="js">
+  ../examples/basic/requests.mjs#binary
+</include>
+
+<Callout type="warn" title="String bodies with a binary content-type">
+  When the `content-type` looks binary (`image/*`, `audio/*`, `video/*`,
+  `application/octet-stream`, `application/pdf`, `application/zip`, …) or any
+  `content-encoding` header is set, a **string** body is treated as base64 and
+  decoded before sending: `"aGVsbG8="` arrives as `hello`. Pass a `Buffer` for
+  binary data, and only use a string with those headers if it's base64.
+</Callout>
+
+## Redirects
+
+Redirects are **not** followed by default. You get the `3xx` response and its `Location` header, which lets you inspect cookies or headers set along the way. Pass `followRedirects: true` to follow them:
+
+<include cwd lang="js">
+  ../examples/basic/requests.mjs#redirects
+</include>
+
+After following redirects, `res.url` is the final URL.
+
+## Other methods
+
+<include cwd lang="js">
+  ../examples/basic/requests.mjs#methods
+</include>
+
+## Timeouts
+
+The timeout is a **session** option, in milliseconds, and applies to each request:
+
+```js
+const session = new Session({ timeout: 10_000 });
+```
+
+A request that runs out of time resolves with `status: 0` and a `Client.Timeout exceeded` message in `body`; it doesn't throw. Without a `timeout`, requests give up after 30 seconds.
+
+There's no per-request timeout. For one request with a different timeout, use [`fetch()`](/reference/fetch) with `options: { timeout }`, or a second session.
+
+`timeoutSeconds` exists for compatibility. If both are set, `timeout` wins and a warning is logged once.
+
+## Host override
+
+`hostOverride` sets the `Host` header separately from the URL. It's typically used when connecting to an IP address directly:
+
+```js
+await session.get("https://203.0.113.7/", { hostOverride: "example.com" });
+```
+
+To change the TLS server name (SNI) as well, see `serverNameOverwrite` in [TLS verification](/guides/tls-verification).
+
+## Options
+
+Every option a single request takes. Methods that can send a body (`post`, `put`, `patch`) take `RequestOptions`; the others (`get`, `head`, `options`, `delete`) take `BaseRequestOptions`, the same minus `body`. The per-method names (`GetRequestOptions`, `PostRequestOptions`, …) are aliases of these two, exported for typing.
+
+| Option            | Type                                          | Default           | What it does                                                                                                                                                   |
+| ----------------- | --------------------------------------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `body`            | `string` \| `Buffer` \| `Uint8Array`          | —                 | Request body. Objects are rejected: `JSON.stringify` them. Not on `get`/`head`/`options`/`delete`. See [Sending a body](#sending-a-body).                      |
+| `headers`         | [`HeaderInput`](/reference/types#headerinput) | session `headers` | Merged over the session's headers per key, case-insensitively; `null` removes a session header for this request. See [Headers](/guides/headers).               |
+| `headerOrder`     | `string[]`                                    | session's order   | Header names in the order to send them. Replaces the session's `headerOrder` for this request.                                                                 |
+| `connectHeaders`  | `Record<string, string[]>`                    | session's         | Headers for the proxy `CONNECT` request. Replaces the session's for this request.                                                                              |
+| `followRedirects` | `boolean`                                     | `false`           | Follow `3xx` redirects. Off by default: you get the redirect response and its `Location` header. See [Redirects](#redirects).                                  |
+| `proxy`           | `string`                                      | session `proxy`   | A different proxy for this request. The next request without one goes back to the session's. See [Proxies](/guides/proxies#a-different-proxy-for-one-request). |
+| `isRotatingProxy` | `boolean`                                     | session's         | Re-apply the proxy before this request instead of reusing a pooled connection.                                                                                 |
+| `cookies`         | `Record<string, string \| number>`            | —                 | Cookies sent with this request on top of the jar's, and stored in the jar, so later requests to the host send them too. See [Cookies](/guides/cookies).        |
+| `byteResponse`    | `boolean`                                     | `false`           | Return a binary body as a `data:<mime>;base64,…` URL. See [Responses](/guides/responses#binary-downloads).                                                     |
+| `hostOverride`    | `string`                                      | URL host          | `Host` header to send, e.g. when the URL is an IP address. See [Host override](#host-override).                                                                |
+
+The timeout and the fingerprint are session-only. Every session-wide option is listed in [SessionOptions](/reference/session-options#all-options).

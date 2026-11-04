@@ -12,13 +12,13 @@
     "clean": "node -e \"for (const d of ['dist', 'typings']) require('fs').rmSync(d, { recursive: true, force: true })\"",
     "build": "npm run clean && tsc",
     "prepare": "npm run build",
-    "prepublishOnly": "npm run build && npm run docs",
+    "prepublishOnly": "npm run build",
     "pretest": "npm run build",
     "test": "node --test test/download.test.js test/ffi.test.js test/headers.test.js test/library-dir.test.js test/misc.test.js test/payload.test.js test/semaphore.test.js",
-    "docs": "typedoc --out docs src/index.ts",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "docs:dev": "npm --prefix website run dev"
   },
   "keywords": [
     "tls-client",
@@ -37,7 +37,6 @@
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.12.0",
     "prettier": "^3.9.6",
-    "typedoc": "^0.28.20",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.69.0"
   },

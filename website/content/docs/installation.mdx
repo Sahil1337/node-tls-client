@@ -1,0 +1,68 @@
+---
+title: Installation
+description: Install the package, check your platform, and control where the native library is stored.
+---
+
+```npm
+npm install node-tls-client
+```
+
+Requires **Node.js 20 or newer**. The package ships its own TypeScript types.
+
+## The native library
+
+The requests themselves are made by [tls-client](https://github.com/bogdanfinn/tls-client), a Go shared library (`.so`, `.dylib` or `.dll`). It isn't bundled in the npm package. [`initTLS()`](/reference/init-tls) downloads the newest release for your platform the first time it runs, then loads it from disk on later runs.
+
+- It's stored in `os.tmpdir()` by default, named after this package's version, e.g. `tls-client-2.2.0-linux-amd64.so`. Upgrading the package downloads it once more.
+- If a download fails but an older copy is cached, that copy is used with a warning. Otherwise `initTLS()` rejects with a `TlsClientError` and you can retry.
+
+### Choosing the directory
+
+Pass `libraryDir` to store the library somewhere else. Relative paths resolve against the current working directory, and the directory is created if it's missing.
+
+<include cwd lang="js">
+  ../examples/advanced/library-dir.mjs#library-dir
+</include>
+
+### Installing ahead of time
+
+For Docker images, CI caches or machines without internet access, download the library once at build time:
+
+<Steps>
+<Step>
+
+Run `initTLS({ libraryDir })` once on a machine with network access, e.g. as a Docker build step:
+
+```dockerfile
+RUN node -e "require('node-tls-client').initTLS({ libraryDir: '/opt/tls' })"
+```
+
+</Step>
+<Step>
+
+Ship that directory with your app, or copy the downloaded file into the same `libraryDir` on the offline machine.
+
+</Step>
+<Step>
+
+Call `initTLS({ libraryDir: '/opt/tls' })` at startup. It finds the file and skips the download.
+
+</Step>
+</Steps>
+
+## Supported platforms
+
+| Platform                                                             | Supported                                         |
+| -------------------------------------------------------------------- | ------------------------------------------------- |
+| macOS x64 / arm64                                                    | Yes                                               |
+| Windows x64 / ia32                                                   | Yes                                               |
+| Linux (glibc) x64 / arm64 / armv7 / ia32 / ppc64le / s390x / riscv64 | Yes                                               |
+| Linux (musl, e.g. Alpine)                                            | **No.** Use a glibc image such as `node:24-slim`. |
+
+<Callout type="warn" title="Alpine and other musl-based images">
+  Upstream publishes an amd64 Alpine build, but this version doesn't download it yet. On musl, `initTLS()` fails to load the library and the error says so. Use a Debian-based image (`node:<version>-slim`) instead.
+</Callout>
+
+## Bundlers and single-file executables
+
+The package loads a native library at runtime, so it must stay external to bundlers such as esbuild, webpack or Vite (`external: ["node-tls-client"]`). For `nexe`/`pkg` executables, see [Bundling](/guides/bundling).

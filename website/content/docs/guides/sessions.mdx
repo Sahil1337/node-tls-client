@@ -1,0 +1,110 @@
+---
+title: Sessions
+description: Reuse one fingerprint, cookie jar and set of connections across requests.
+---
+
+A `Session` is what a browser tab is to a website: requests share cookies and keep-alive connections, and every one of them carries the same fingerprint. Create one session per identity you want to present, and reuse it. Call [`initTLS()`](/reference/init-tls) once before the first request.
+
+<include cwd lang="js">
+  ../examples/basic/sessions.mjs#lifecycle
+</include>
+
+## What a session holds
+
+| Part        | Shared by every request of the session                                                                                                                                                                |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Fingerprint | The `clientIdentifier` or custom `ja3string` settings, fixed when the session is created.                                                                                                             |
+| Settings    | Every option passed to `new Session()`: headers, proxy, timeout, TLS, protocol and connection settings. All of them are listed, grouped, in [SessionOptions](/reference/session-options#all-options). |
+| Cookie jar  | Cookies set by responses are sent on later requests. See [Cookies](/guides/cookies).                                                                                                                  |
+| Connections | Keep-alive connections are reused, so later requests skip the TCP and TLS handshake.                                                                                                                  |
+
+The native session is created on the first request, not by `new Session()`. From then on its fingerprint and timeout are fixed: create another session to change them. The proxy can still change per request; see [Proxies](/guides/proxies).
+
+## Creating a session
+
+```ts
+new Session(options?: SessionOptions)
+```
+
+`options` is optional and defaults to `{}`. Every option is listed in [SessionOptions](/reference/session-options#all-options).
+
+With no `clientIdentifier` and no `ja3string`, the session uses `ClientIdentifier.chrome_150`. If both are set, `clientIdentifier` wins and `ja3string` is ignored.
+
+## Sending requests
+
+Each method sends one request and resolves with a [`Response`](/guides/responses). Methods that can send a body take [request options](/guides/requests#options) with `body`; the others take the same options without it.
+
+| Method                           | Options type                      |
+| -------------------------------- | --------------------------------- |
+| `session.get(url, options?)`     | `GetRequestOptions` (no body)     |
+| `session.head(url, options?)`    | `HeadRequestOptions` (no body)    |
+| `session.options(url, options?)` | `OptionsRequestOptions` (no body) |
+| `session.delete(url, options?)`  | `DeleteRequestOptions` (no body)  |
+| `session.post(url, options?)`    | `PostRequestOptions`              |
+| `session.put(url, options?)`     | `PutRequestOptions`               |
+| `session.patch(url, options?)`   | `PatchRequestOptions`             |
+
+```ts
+session.get(url: string, options?: GetRequestOptions): Promise<Response>
+session.post(url: string, options?: PostRequestOptions): Promise<Response>
+```
+
+A request **rejects** with a `TlsClientError` when the library hasn't been initialized or `destroyTLS()` is in progress, or when the body isn't a string, `Buffer` or `Uint8Array`. Network failures (DNS, TLS, proxy, timeout) **don't reject**: they resolve with `status: 0` and the error text in `body`. See [Errors and debugging](/guides/errors).
+
+## Reading the cookies
+
+```ts
+session.cookies(): Promise<Cookie[]>
+```
+
+Every cookie this session has sent or received, as [tough-cookie](https://github.com/salesforce/tough-cookie) serialized objects:
+
+```json
+[
+  {
+    "key": "session",
+    "value": "abc123",
+    "domain": "httpbin.org",
+    "path": "/",
+    "hostOnly": true,
+    "pathIsDefault": true,
+    "creation": "2026-11-04T10:00:00.000Z",
+    "lastAccessed": "2026-11-04T10:00:00.000Z"
+  }
+]
+```
+
+It's read-only: changing the returned objects doesn't change what's sent. Domain and path come from the URL each cookie was seen on, so the same cookie can appear once per path. See [Cookies](/guides/cookies).
+
+## Closing
+
+```ts
+session.close(): Promise<string>
+```
+
+Frees the session's cookie jar and connections. Call it when you're done with a session, usually in a `finally` block. It's safe to call more than once.
+
+At shutdown, call [`destroyTLS()`](/reference/init-tls#destroytls) as well. It waits for in-flight requests and frees every native session, including ones you forgot to close.
+
+## Sharing a session between objects
+
+`sessionId` names the native session. Two `Session` objects with the same id share one cookie jar and connection pool, which is useful when different parts of your code need to act as the same visitor:
+
+<include cwd lang="js">
+  ../examples/basic/sessions.mjs#shared-id
+</include>
+
+<Callout type="warn">
+  The native session keeps the settings of the request that created it. A second
+  `Session` with the same `sessionId` but a different `clientIdentifier` still
+  uses the first one's fingerprint.
+</Callout>
+
+Closing either object frees the native session for both. Without `sessionId`, each session gets a random UUID.
+
+## Session or `fetch()`?
+
+| Use                           | When                                                                                                         |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `Session`                     | Several requests to the same site: cookies and connections carry over, and the fingerprint stays consistent. |
+| [`fetch()`](/reference/fetch) | A single request, or each request needs its own settings. A new session is created and closed every time.    |
