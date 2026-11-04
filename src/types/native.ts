@@ -18,8 +18,10 @@ export interface InitTLSOptions {
   /**
    * Maximum number of native calls in flight at once (admission depth) — NOT
    * parallelism. Real parallelism is the libuv threadpool, `UV_THREADPOOL_SIZE`
-   * (this library sets it to cores×2 at import time when unset; libuv caps it
-   * at 1024; set `UV_THREADPOOL_SIZE=4` to keep Node's default). Default: that
+   * (this library sets it to cores×2 at import time when unset, except for an
+   * ES module entry file on Node 20, 22.0–22.17 and 24.0–24.2, where you must
+   * set it in the environment; libuv caps it at 1024; set
+   * `UV_THREADPOOL_SIZE=4` to keep Node's default). Default: that
    * threadpool size. Values above it only queue, and every in-flight call
    * reserves ~256 KiB in koffi (committed memory on Windows). Clamped to koffi's
    * reported `max_async_calls` (4096 on koffi ≥ 2.15).

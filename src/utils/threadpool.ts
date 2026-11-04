@@ -17,3 +17,29 @@ export function threadpoolSize(): number {
     LIBUV_MAX_THREADPOOL,
   );
 }
+
+/**
+ * Node versions whose ES module entry runs file reads on the libuv threadpool
+ * before any user code, which starts the pool at 4 threads (fixed in 22.18.0,
+ * 24.3.0 and 25.0.0; the 20.x line never got the fix).
+ */
+function startsPoolBeforeUserCode(nodeVersion: string): boolean {
+  const [major, minor] = nodeVersion.split(".").map(Number);
+  if (major === 22) return minor < 18;
+  if (major === 24) return minor < 3;
+  return major < 25;
+}
+
+/**
+ * Whether the default `UV_THREADPOOL_SIZE` set at import was too late to apply:
+ * this package set it (`setByUs`), the app's entry file is an ES module
+ * (`esmEntry`), and `nodeVersion` (e.g. `process.versions.node`) starts the pool
+ * before user code runs.
+ */
+export function threadpoolDefaultIgnored(
+  nodeVersion: string,
+  setByUs: boolean,
+  esmEntry: boolean,
+): boolean {
+  return setByUs && esmEntry && startsPoolBeforeUserCode(nodeVersion);
+}

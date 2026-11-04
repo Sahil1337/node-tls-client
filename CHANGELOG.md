@@ -13,6 +13,7 @@
 - **Piscina worker pool removed** ([#11](https://github.com/Sahil1337/node-tls-client/issues/11)). Native calls now use koffi's asynchronous calls on the libuv threadpool, throttled by an in-process semaphore, with an unbounded FIFO queue for bursts. This avoids the `max_async_calls` limit that broke the first attempt: koffi ≥ 2.15.2 is required and its limit is raised to 4096.
 - **Dependencies:** `piscina` and `cookie-parser` are no longer installed; the runtime dependencies are `koffi` (≥ 2.15.2) and `tough-cookie`.
 - **`initTLS({ concurrency })`** caps in-flight native calls (admission depth). Real parallelism is the libuv threadpool: the library sets `UV_THREADPOOL_SIZE` to cores×2 at import when unset (libuv caps it at 1024; set `UV_THREADPOOL_SIZE=4` to keep Node's default). Each in-flight call reserves ~256 KiB in koffi.
+- **The `UV_THREADPOOL_SIZE` default does not apply to an ES module entry file on Node 20, Node 22 before 22.18 and Node 24 before 24.3**: Node starts its threadpool before this package loads, so at most 4 requests run in parallel. A one-time warning says so; set `UV_THREADPOOL_SIZE` in the environment (`UV_THREADPOOL_SIZE=20 node app.mjs`) there. CommonJS entry files and newer Node versions are unaffected.
 - `destroyTLS()` rejects new requests, waits for in-flight ones (each bounded by its own timeout), then clears native state.
 - koffi keeps as many async memory pools resident as requests are expected in flight (up to its maximum of 16), so steady-state requests reuse pools instead of mapping 256 KiB each.
 
