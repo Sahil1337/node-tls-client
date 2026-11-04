@@ -61,11 +61,17 @@ Some people think it is enough to change the user-agent header of a request to l
 <td><code>UV_THREADPOOL_SIZE</code> (cores×2 when unset)</td>
 <td>Maximum in-flight native calls. Clamped to koffi's <code>max_async_calls</code> (4096).</td>
 </tr>
+<tr>
+<td><code>libraryDir</code></td>
+<td><code>string</code></td>
+<td><code>os.tmpdir()</code></td>
+<td>Directory the native library is downloaded to and loaded from. Relative paths resolve against the cwd; created when missing.</td>
+</tr>
 </tbody>
 </table>
 <p><code>initTLS()</code> with no arguments behaves exactly as before.</p>
 <h3 id="native-library" class="tsd-anchor-link">Native library<a href="#native-library" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
-<p><code>initTLS()</code> downloads the newest <a href="https://github.com/bogdanfinn/tls-client">tls-client</a> release for your platform into <code>os.tmpdir()</code> (named after this package's version, so an upgrade downloads once) on first use. No GitHub API calls are made (no anonymous rate limit). If the download fails but an older cached binary exists, that binary is used with a warning; otherwise a <code>TlsClientError</code> is thrown, the process stays alive and <code>initTLS()</code> can be retried.</p>
+<p><code>initTLS()</code> downloads the newest <a href="https://github.com/bogdanfinn/tls-client">tls-client</a> release for your platform into <code>os.tmpdir()</code>, or the <code>libraryDir</code> you pass, on first use. The file is named after this package's version, so an upgrade downloads once. To install it ahead of time (e.g. in a Docker build step), call <code>initTLS({ libraryDir })</code> once with network access; for an offline machine, copy the downloaded file (e.g. <code>tls-client-2.2.0-linux-amd64.so</code>) into its <code>libraryDir</code>. No GitHub API calls are made (no anonymous rate limit). If the download fails but an older cached binary exists, that binary is used with a warning; otherwise a <code>TlsClientError</code> (exported from the package root) is thrown, the process stays alive and <code>initTLS()</code> can be retried.</p>
 <table>
 <thead>
 <tr>
