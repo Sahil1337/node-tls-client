@@ -1,5 +1,5 @@
 import { InitTLSOptions } from "../types";
-import { NativeClient } from "../native/client";
+import { destroyClient, initClient } from "../native/runtime";
 
 /**
  * Locates (downloading on first use) and loads the native tls-client
@@ -7,7 +7,7 @@ import { NativeClient } from "../native/client";
  * initialized is a no-op.
  */
 export async function initTLS(options?: InitTLSOptions): Promise<void> {
-  return NativeClient.init(options);
+  return initClient(options);
 }
 
 /**
@@ -15,5 +15,5 @@ export async function initTLS(options?: InitTLSOptions): Promise<void> {
  * session state. `initTLS()` can be called again afterwards.
  */
 export async function destroyTLS(): Promise<void> {
-  return NativeClient.destroy();
+  return destroyClient();
 }

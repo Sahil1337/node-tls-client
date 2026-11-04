@@ -1,4 +1,4 @@
-import { TlsClientError } from "../utils/tlsError";
+import { TlsClientError } from "../../utils/tlsError";
 
 /** One platform's shared library: cache filename and upstream release asset names. */
 export interface LibraryAsset {

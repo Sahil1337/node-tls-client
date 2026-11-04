@@ -1,7 +1,8 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { TlsClientError } = require("../dist");
-const { NativeClient } = require("../dist/native/client");
+const { getClient, setClient } = require("../dist/native/runtime");
+const { ThreadpoolClient } = require("../dist/native/client");
 const { Session, fetch, destroyTLS } = require("../dist");
 const { threadpoolDefaultIgnored } = require("../dist/utils/threadpool");
 const { spawnSync } = require("node:child_process");
@@ -22,7 +23,7 @@ test("TlsClientError keeps the wrapped error as cause and its stack", () => {
 
 test("Response exposes usedProtocol; fetch() surfaces the request error, not close()'s", async () => {
   const calls = [];
-  NativeClient.instance = new NativeClient(
+  const client = new ThreadpoolClient(
     {
       async request(json) {
         const p = JSON.parse(json);
@@ -47,6 +48,7 @@ test("Response exposes usedProtocol; fetch() surfaces the request error, not clo
     },
     8,
   );
+  setClient(client);
   try {
     const r = await new Session({}).get("https://example.test/ok");
     assert.equal(r.usedProtocol, "HTTP/2.0");
@@ -60,13 +62,13 @@ test("Response exposes usedProtocol; fetch() surfaces the request error, not clo
     });
     assert.deepEqual(calls, ["request", "request", "destroySession"]);
   } finally {
-    NativeClient.instance = null;
+    setClient(null);
   }
 });
 
 test("concurrent destroyTLS() calls share one close()", async () => {
   let destroyAllCalls = 0;
-  NativeClient.instance = new NativeClient(
+  const client = new ThreadpoolClient(
     {
       async request() {},
       async destroySession() {},
@@ -77,12 +79,13 @@ test("concurrent destroyTLS() calls share one close()", async () => {
     },
     8,
   );
+  setClient(client);
   try {
     await Promise.all([destroyTLS(), destroyTLS()]);
     assert.equal(destroyAllCalls, 1);
-    assert.equal(NativeClient.instance, null);
+    assert.throws(() => getClient(), { name: "TlsClientError" });
   } finally {
-    NativeClient.instance = null;
+    setClient(null);
   }
 });
 
@@ -133,7 +136,7 @@ test("threadpoolDefaultIgnored: only when we set it, the entry is ESM and Node s
 });
 
 test(
-  "importing from an ES module entry warns that the threadpool default did not apply, unless the user set it",
+  "initTLS() from an ES module entry warns that the threadpool default did not apply, unless the user set it",
   {
     skip:
       !threadpoolDefaultIgnored(process.versions.node, true, true) &&
@@ -144,7 +147,11 @@ test(
     try {
       const entry = path.join(dir, "entry.mjs");
       const dist = pathToFileURL(path.join(__dirname, "../dist/index.js"));
-      fs.writeFileSync(entry, `import ${JSON.stringify(dist.href)};\n`);
+      // The warning waits for initTLS(): only upstream's binary needs the threadpool.
+      fs.writeFileSync(
+        entry,
+        `import { initTLS, destroyTLS } from ${JSON.stringify(dist.href)};\nawait initTLS();\nawait destroyTLS();\n`,
+      );
       const run = (env) =>
         spawnSync(process.execPath, [entry], { env, encoding: "utf8" });
 

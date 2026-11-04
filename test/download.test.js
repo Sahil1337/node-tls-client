@@ -5,9 +5,9 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 const { EventEmitter, PassThrough } = require("stream");
-const { ReleaseDownloader } = require("../dist/native/downloader");
+const { ReleaseDownloader } = require("../dist/native/library/downloader");
 const { locateLibrary } = require("../dist/native/library");
-const { platformAsset } = require("../dist/native/assets");
+const { platformAsset } = require("../dist/native/library/assets");
 
 /** routes: url → { status, headers?, body? } (or a function of (method) → route). */
 function fakeRequest(routes) {
@@ -219,4 +219,128 @@ test("locateLibrary: a missing libraryDir is created (relative paths resolve aga
   const located = await locateLibrary({ request: good.request, dir: relative });
   assert.equal(path.dirname(located), path.join(parent, "a", "b"));
   assert.equal(fs.readFileSync(located, "utf8"), "Y");
+});
+
+/** Runs `fn` and returns its result and what it wrote to stderr (the logger's WARN lines). */
+async function captureStderr(fn) {
+  const realWrite = process.stderr.write;
+  let stderr = "";
+  process.stderr.write = (chunk) => ((stderr += chunk), true);
+  try {
+    return { result: await fn(), stderr };
+  } finally {
+    process.stderr.write = realWrite;
+  }
+}
+
+const OURS = "https://github.com/Sahil1337/tls-client";
+const UPSTREAM = "https://github.com/bogdanfinn/tls-client";
+/** Routes for a repo whose latest release `tag` has this platform's first asset name. */
+function releaseRoutes(repo, tag, body) {
+  const first = platformAsset().downloadNames[0].replace(
+    "{version}",
+    tag.replace(/^v/, ""),
+  );
+  return {
+    [`${repo}/releases/latest`]: {
+      status: 302,
+      headers: { location: `${repo}/releases/tag/${tag}` },
+    },
+    [`${repo}/releases/download/${tag}/${first}`]: { status: 200, body },
+  };
+}
+
+test('locateLibrary({ binary: "node-tls-client" }) downloads our release under its own cache name', async () => {
+  const dir = scratch();
+  const asset = platformAsset();
+  const fake = fakeRequest(releaseRoutes(OURS, "v1.18.0-nodetls.1", "OURS"));
+  const ours = path.join(dir, `tls-client-${pkgVersion}-nodetls-${asset.name}`);
+  assert.equal(
+    await locateLibrary({
+      request: fake.request,
+      dir,
+      binary: "node-tls-client",
+    }),
+    ours,
+  );
+  assert.equal(fs.readFileSync(ours, "utf8"), "OURS");
+  assert.ok(fake.seen.every((r) => r.includes("/Sahil1337/tls-client/")));
+
+  // Cached now: no request. And upstream's cache name is still free.
+  const none = fakeRequest({});
+  assert.equal(
+    await locateLibrary({
+      request: none.request,
+      dir,
+      binary: "node-tls-client",
+    }),
+    ours,
+  );
+  assert.equal(none.seen.length, 0);
+  const upstream = fakeRequest(releaseRoutes(UPSTREAM, "v1.18.0", "UP"));
+  assert.equal(
+    await locateLibrary({ request: upstream.request, dir }),
+    path.join(dir, `tls-client-${pkgVersion}-${asset.name}`),
+    "the default ignores our cached file",
+  );
+});
+
+test('locateLibrary({ binary: "node-tls-client" }) falls back to upstream, with a warning, when our release has no binary', async () => {
+  const dir = scratch();
+  const fake = fakeRequest({
+    ...releaseRoutes(UPSTREAM, "v1.18.0", "UP"),
+    [`${OURS}/releases/latest`]: {
+      status: 302,
+      headers: { location: `${OURS}/releases/tag/v1.18.0-nodetls.1` },
+    }, // every asset 404s
+  });
+  const { result, stderr } = await captureStderr(() =>
+    locateLibrary({ request: fake.request, dir, binary: "node-tls-client" }),
+  );
+  assert.equal(
+    result,
+    path.join(dir, `tls-client-${pkgVersion}-${platformAsset().name}`),
+  );
+  assert.equal(fs.readFileSync(result, "utf8"), "UP");
+  assert.match(
+    stderr,
+    /Sahil1337\/tls-client.*using upstream's tls-client library instead/s,
+  );
+});
+
+test("locateLibrary: offline, each binary falls back only to its own earlier cached copies", async () => {
+  const dir = scratch();
+  const asset = platformAsset();
+  const oldOurs = `tls-client-2.1.9-nodetls-${asset.name}`;
+  fs.writeFileSync(path.join(dir, asset.legacyName), "OLD-UP");
+  fs.writeFileSync(path.join(dir, oldOurs), "OLD-OURS");
+  // Make our copy the newest file, so mtime alone would pick it.
+  const later = new Date(Date.now() + 60_000);
+  fs.utimesSync(path.join(dir, oldOurs), later, later);
+
+  const offline = fakeRequest({});
+  const { result: up } = await captureStderr(() =>
+    locateLibrary({ request: offline.request, dir }),
+  );
+  assert.equal(up, path.join(dir, asset.legacyName));
+  const { result: ours } = await captureStderr(() =>
+    locateLibrary({ request: offline.request, dir, binary: "node-tls-client" }),
+  );
+  assert.equal(ours, path.join(dir, oldOurs));
+});
+
+test("locateLibrary: an unknown binary warns and uses upstream", async () => {
+  const dir = scratch();
+  const fake = fakeRequest(releaseRoutes(UPSTREAM, "v1.18.0", "UP"));
+  const { result, stderr } = await captureStderr(() =>
+    locateLibrary({ request: fake.request, dir, binary: "ours" }),
+  );
+  assert.equal(
+    result,
+    path.join(dir, `tls-client-${pkgVersion}-${platformAsset().name}`),
+  );
+  assert.match(
+    stderr,
+    /binary must be "upstream" or "node-tls-client", got "ours"/,
+  );
 });

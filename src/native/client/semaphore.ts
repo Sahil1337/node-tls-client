@@ -1,4 +1,4 @@
-import { TlsClientError } from "../utils/tlsError";
+import { TlsClientError } from "../../utils/tlsError";
 
 /**
  * Counting semaphore with an unbounded FIFO wait queue (Piscina

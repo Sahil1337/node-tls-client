@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { Semaphore } = require("../dist/native/semaphore");
+const { Semaphore } = require("../dist/native/client/semaphore");
 
 const tick = () => new Promise((r) => setImmediate(r));
 

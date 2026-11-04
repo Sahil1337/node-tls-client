@@ -12,7 +12,7 @@ import {
   RequestOptions,
   SessionOptions,
 } from "../types";
-import { NativeClient } from "../native/client";
+import { getClient } from "../native/runtime";
 import { CookieMirror } from "./cookie-mirror";
 import { buildPayload } from "./payload";
 import { Response } from "./response";
@@ -147,13 +147,13 @@ export class Session {
       request: options,
     });
     this.jar.recordRequest(payload.requestCookies, requestUrl);
-    const response = await NativeClient.get().request(payload);
+    const response = await getClient().request(payload);
     response.cookies = this.jar.recordResponse(response.cookies, requestUrl);
     return new Response(response);
   }
 
   /** Async so a missing initTLS() rejects instead of throwing synchronously. */
   private async destroyNativeSession(): Promise<string> {
-    return NativeClient.get().destroySession(this.sessionId);
+    return getClient().destroySession(this.sessionId);
   }
 }

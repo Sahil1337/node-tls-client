@@ -43,3 +43,20 @@ export function threadpoolDefaultIgnored(
 ): boolean {
   return setByUs && esmEntry && startsPoolBeforeUserCode(nodeVersion);
 }
+
+/** The default this package set at import, when it came too late to apply. */
+let lateDefault: number | null = null;
+
+/**
+ * Called at import (index.ts), where the entry file can still be told apart.
+ * Reported by initTLS(), and only with upstream's binary: the completion
+ * queue doesn't need the threadpool.
+ */
+export function noteLateThreadpoolDefault(size: number): void {
+  lateDefault = size;
+}
+
+/** The ignored default noted at import, or `null` when the default applied. */
+export function lateThreadpoolDefault(): number | null {
+  return lateDefault;
+}

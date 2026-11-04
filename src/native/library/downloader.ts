@@ -3,7 +3,7 @@ import http, { IncomingMessage } from "http";
 import { createWriteStream } from "fs";
 import fs from "fs/promises";
 import { pipeline } from "stream/promises";
-import { TlsClientError, errorMessage, exists, logger } from "../utils";
+import { TlsClientError, errorMessage, exists, logger } from "../../utils";
 
 /** `https.request`-shaped function; injectable for tests. */
 export type HttpRequest = (

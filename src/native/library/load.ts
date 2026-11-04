@@ -1,22 +1,31 @@
 /**
- * Locates, downloads and loads the tls-client shared library. The only module
- * that imports koffi; native/client.ts imports it lazily from initTLS().
+ * Loads the tls-client shared library with koffi and binds its exports. The
+ * only module that imports koffi; ../runtime.ts imports it lazily from
+ * initTLS().
  */
 
-import path from "path";
-import fs from "fs/promises";
-import os from "os";
-import { KoffiFunction, config as koffiConfig, load } from "koffi";
-import { TlsNativeLibrary } from "../types/native";
+import {
+  IKoffiRegisteredCallback,
+  KoffiFunction,
+  config as koffiConfig,
+  load,
+  pointer,
+  proto,
+  register,
+} from "koffi";
+import {
+  TlsCompletion,
+  TlsNativeLibrary,
+  TlsNativeQueue,
+} from "../../types/native";
 import {
   TlsClientError,
   errorMessage,
-  exists,
+  hasGlibc,
   logger,
-  packageVersion,
-} from "../utils";
-import { LibraryAsset, platformAsset } from "./assets";
-import { HttpRequest, ReleaseDownloader } from "./downloader";
+  promisify,
+  promisifySync,
+} from "../../utils";
 
 /**
  * koffi's hard `max_async_calls` ceiling (ffi.hh:20). koffi's running+queued
@@ -25,13 +34,6 @@ import { HttpRequest, ReleaseDownloader } from "./downloader";
 const KOFFI_MAX_ASYNC_CALLS = 4096;
 /** koffi keeps at most this many async memory pools resident (misc.md "Default settings"). */
 const KOFFI_MAX_RESIDENT_POOLS = 16;
-
-export interface LocateOptions {
-  /** Directory holding the cached library. Default: `os.tmpdir()`. */
-  dir?: string;
-  /** Injectable `https.request` (tests). */
-  request?: HttpRequest;
-}
 
 export interface LoadedLibrary {
   bindings: TlsNativeLibrary;
@@ -47,47 +49,9 @@ export interface LoadedLibrary {
  */
 let loaded: { path: string; bindings: TlsNativeLibrary } | null = null;
 
-/**
- * Ensure a shared library is available and return its path: this version's
- * cached file, else the newest upstream release (downloaded), else — with a
- * warning — any previously cached binary, so an offline upgrade keeps
- * working. Throws `TlsClientError` when none of that is possible. Once a
- * library is loaded, returns its path without looking at disk or the network.
- */
-export async function locateLibrary(opts: LocateOptions = {}): Promise<string> {
-  const dir = path.resolve(opts.dir ?? os.tmpdir());
-  if (loaded) {
-    // Only an explicit `dir` is worth a warning: with none given, the user
-    // asked for no particular directory, so the loaded copy is not a surprise.
-    if (opts.dir !== undefined && dir !== path.dirname(loaded.path)) {
-      logger.warnOnce(
-        "library-dir",
-        `libraryDir ${dir} takes effect only after the process restarts: this process already loaded the tls-client library from ${path.dirname(loaded.path)} and keeps using it.`,
-      );
-    }
-    return loaded.path;
-  }
-  const asset = platformAsset();
-  // The package version is part of the name, so an upgrade downloads once and
-  // never replaces a file another process may have loaded.
-  const libPath = path.join(dir, `tls-client-${packageVersion}-${asset.name}`);
-  if (await exists(libPath)) return libPath;
-
-  try {
-    await fs.mkdir(dir, { recursive: true });
-    await new ReleaseDownloader({ request: opts.request }).download(
-      asset.downloadNames,
-      libPath,
-    );
-    return libPath;
-  } catch (e) {
-    const fallback = await findCached(dir, asset);
-    if (!fallback) throw TlsClientError.from(e);
-    logger.warn(
-      `${errorMessage(e)} — using previously cached ${path.basename(fallback)} instead.`,
-    );
-    return fallback;
-  }
+/** The library this process loaded, or `null` before the first initTLS(). */
+export function loadedLibrary(): typeof loaded {
+  return loaded;
 }
 
 /**
@@ -118,16 +82,76 @@ function bind(libPath: string): TlsNativeLibrary {
     throw new TlsClientError(message);
   }
 
+  const queue = bindQueue(library);
+  // With the completion queue, requests don't need the threadpool, so the
+  // session calls don't either: natively they only close idle connections
+  // under a lock and never wait on the network.
+  const session = queue ? promisifySync : promisify;
   return {
     request: promisify(library.func("request", "string", ["string"])),
     // Sync on purpose: natively a mutex-guarded map delete + C.free.
     freeMemory: library.func("freeMemory", "void", ["string"]) as (
       id: string,
     ) => void,
-    destroyAll: promisify(library.func("destroyAll", "string", [])),
-    destroySession: promisify(
+    destroyAll: session(library.func("destroyAll", "string", [])),
+    destroySession: session(
       library.func("destroySession", "string", ["string"]),
     ),
+    queue,
+  };
+}
+
+/**
+ * The completion-queue exports, or `undefined` when the binary has none
+ * (upstream's builds): koffi throws for a function the library lacks.
+ */
+function bindQueue(
+  library: ReturnType<typeof load>,
+): TlsNativeQueue | undefined {
+  let requestAsync: KoffiFunction;
+  let waitNext: KoffiFunction;
+  let setNotify: KoffiFunction;
+  // `void (*)(void)`. Anonymous: koffi type names are process-wide, so a
+  // named one could clash with a host app's.
+  const notifyFn = pointer(proto("void", []));
+  try {
+    requestAsync = library.func(
+      "uint64_t requestAsync(const char *requestParams)",
+    );
+    waitNext = library.func(
+      "const char *waitNext(int timeoutMs, _Out_ uint64_t *ticket)",
+    );
+    setNotify = library.func("setNotify", "void", [notifyFn]);
+  } catch {
+    return undefined;
+  }
+  // koffi writes the ticket into box[0], as a BigInt only past 2^53.
+  const completion = (
+    response: string | null,
+    box: [number | bigint],
+  ): TlsCompletion | null =>
+    response === null ? null : { ticket: Number(box[0]), response };
+
+  // One koffi callback for the life of the process, pointing at whichever
+  // handler is current. Never unregistered: native may already be calling
+  // it when setNotify() swaps it out (that call waits for this thread, so
+  // setNotify can't wait for it). koffi fails a call to a callback
+  // unregistered in between with an exception Node swallows by default and
+  // dies of under --force-node-api-uncaught-exceptions-policy, and would
+  // run whatever callback reuses the slot.
+  let handler: (() => void) | null = null;
+  let notify: IKoffiRegisteredCallback | null = null;
+  return {
+    requestAsync: (payload) => Number(requestAsync(payload)),
+    waitNext: (timeoutMs) => {
+      const box: [number | bigint] = [0];
+      return completion(waitNext(timeoutMs, box), box);
+    },
+    onReady: (next) => {
+      handler = next;
+      if (next) notify ??= register(() => handler?.(), notifyFn);
+      setNotify(next ? notify : null);
+    },
   };
 }
 
@@ -169,48 +193,5 @@ function raiseAsyncLimit(expectedInFlight: number): number {
       );
     }
     return max;
-  }
-}
-
-/** Newest previously cached binary for this platform: older package versions or the ≤ 2.1.0 name. */
-async function findCached(
-  dir: string,
-  asset: LibraryAsset,
-): Promise<string | null> {
-  const entries = await fs.readdir(dir).catch(() => [] as string[]);
-  let best: { file: string; mtime: number } | null = null;
-  for (const file of entries) {
-    const candidate =
-      file === asset.legacyName ||
-      (file.startsWith("tls-client-") && file.endsWith(`-${asset.name}`));
-    if (!candidate) continue;
-    const stat = await fs.stat(path.join(dir, file)).catch(() => null);
-    if (stat?.isFile() && (!best || stat.mtimeMs > best.mtime)) {
-      best = { file, mtime: stat.mtimeMs };
-    }
-  }
-  return best ? path.join(dir, best.file) : null;
-}
-
-/**
- * Promisify a koffi `.async` function: runs the (blocking cgo) call on a
- * libuv threadpool thread and resolves/rejects the Node-style callback.
- */
-function promisify(f: KoffiFunction): (...args: string[]) => Promise<string> {
-  return (...args) =>
-    new Promise((resolve, reject) =>
-      f.async(...args, (err: Error | null, result: string) =>
-        err ? reject(err) : resolve(result),
-      ),
-    );
-}
-
-function hasGlibc(): boolean {
-  try {
-    const report = process.report?.getReport() as
-      { header?: { glibcVersionRuntime?: string } } | undefined;
-    return report?.header?.glibcVersionRuntime !== undefined;
-  } catch {
-    return true;
   }
 }

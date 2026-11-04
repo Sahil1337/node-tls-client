@@ -1,7 +1,7 @@
 import { isMainThread } from "worker_threads";
-import { logger } from "./utils/logger";
 import {
   defaultThreadpoolSize,
+  noteLateThreadpoolDefault,
   threadpoolDefaultIgnored,
 } from "./utils/threadpool";
 
@@ -20,11 +20,9 @@ if (!process.env.UV_THREADPOOL_SIZE) {
     typeof require === "function" &&
     require.main === undefined &&
     !!process.argv[1];
+  // initTLS() warns, once it knows the binary needs the threadpool.
   if (threadpoolDefaultIgnored(process.versions.node, true, esmEntry)) {
-    logger.warnOnce(
-      "threadpool-default-ignored",
-      `On Node ${process.version} with an ES module entry file, Node starts its threadpool before node-tls-client loads, so the default UV_THREADPOOL_SIZE of ${size} did not apply and at most 4 requests run in parallel. Set it in the environment instead: UV_THREADPOOL_SIZE=${size} node app.mjs`,
-    );
+    noteLateThreadpoolDefault(size);
   }
 }
 

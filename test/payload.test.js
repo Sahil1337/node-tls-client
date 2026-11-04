@@ -1,7 +1,8 @@
 // Payload construction against stubbed native bindings (no native code involved).
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { NativeClient } = require("../dist/native/client");
+const { setClient } = require("../dist/native/runtime");
+const { ThreadpoolClient } = require("../dist/native/client");
 const { Session, ClientIdentifier } = require("../dist");
 
 function stubLibrary() {
@@ -36,11 +37,11 @@ function stubLibrary() {
 
 function install() {
   const stub = stubLibrary();
-  NativeClient.instance = new NativeClient(stub, 8); // TS privacy is erased at runtime
+  setClient(new ThreadpoolClient(stub, 8));
   return stub;
 }
 function uninstall() {
-  NativeClient.instance = null;
+  setClient(null);
 }
 
 async function payloadFor(sessionOpts, method = "get", reqOpts = {}) {
