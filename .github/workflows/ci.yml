@@ -23,3 +23,40 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run lint
       - run: npm test
+
+  # Every code sample on the docs site is cut from examples/. Running them
+  # against the live network catches a library change that breaks one.
+  examples:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
+        with:
+          node-version: 24
+      - run: npm ci --ignore-scripts
+      - run: npm run build
+      # The examples import "node-tls-client" like user code does.
+      - run: ln -s .. node_modules/node-tls-client
+      - name: Run examples
+        # library-dir and responses write (and clean up) files relative to here.
+        working-directory: examples
+        run: |
+          shopt -s nullglob
+          failed=0
+          for file in */*.mjs */*.cjs; do
+            if grep -q "docs:no-run" "$file"; then
+              echo "skip  $file"
+              continue
+            fi
+            # Live test servers reset connections now and then: retry once.
+            if timeout 60 node "$file" > /dev/null ||
+              { sleep 5 && timeout 60 node "$file" > /dev/null; }; then
+              echo "ok    $file"
+            else
+              echo "::error file=examples/$file::$file failed"
+              failed=1
+            fi
+          done
+          exit "$failed"
