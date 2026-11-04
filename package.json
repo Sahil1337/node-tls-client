@@ -5,6 +5,7 @@
   "main": "dist/index.js",
   "typings": "typings/index.d.ts",
   "repository": "https://github.com/Sahil1337/node-tls-client",
+  "homepage": "https://sahil1337.github.io/node-tls-client/",
   "author": "Sahil1337",
   "license": "GPL-3.0",
   "private": false,
