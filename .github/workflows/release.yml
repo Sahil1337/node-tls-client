@@ -10,6 +10,14 @@ jobs:
       contents: write # tag + GitHub release
       id-token: write # npm trusted publishing (OIDC)
     steps:
+      # The "Run workflow" dropdown offers every branch and tag; only main may
+      # publish to npm and tag a release. Fail loudly so the person who clicked
+      # sees why, and do it first so nothing else runs.
+      - if: github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::Releases are published from main only (got $GITHUB_REF)"
+          exit 1
+
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
         with:
