@@ -1,7 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { TlsClientError } = require("../dist/utils");
-const { Client } = require("../dist/core/client");
+const { TlsClientError } = require("../dist");
+const { NativeClient } = require("../dist/native/client");
 const { Session, fetch } = require("../dist");
 
 test("TlsClientError keeps the wrapped error as cause and its stack", () => {
@@ -16,38 +16,52 @@ test("TlsClientError keeps the wrapped error as cause and its stack", () => {
 
 test("Response exposes usedProtocol; fetch() surfaces the request error, not close()'s", async () => {
   const calls = [];
-  Client.instance = new Client({
-    async request(p) {
-      calls.push("request");
-      if (p.requestUrl.endsWith("/fail")) throw new Error("native down");
-      return JSON.stringify({
-        id: "r",
-        status: 200,
-        body: "{}",
-        headers: {},
-        cookies: {},
-        target: p.requestUrl,
-        usedProtocol: "HTTP/2.0",
-      });
+  NativeClient.instance = new NativeClient(
+    {
+      async request(json) {
+        const p = JSON.parse(json);
+        calls.push("request");
+        if (p.requestUrl.endsWith("/fail")) throw new Error("native down");
+        return JSON.stringify({
+          id: "r",
+          status: 200,
+          body: "{}",
+          headers: {},
+          cookies: {},
+          target: p.requestUrl,
+          usedProtocol: "HTTP/2.0",
+        });
+      },
+      async destroySession() {
+        calls.push("destroySession");
+        throw new Error("close exploded");
+      },
+      freeMemory() {},
+      async destroyAll() {},
     },
-    async destroySession() {
-      calls.push("destroySession");
-      throw new Error("close exploded");
-    },
-    freeMemory() {},
-    async destroy() {},
-  });
-  Client.ready = true;
+    8,
+  );
   try {
     const r = await new Session({}).get("https://example.test/ok");
     assert.equal(r.usedProtocol, "HTTP/2.0");
-    await assert.rejects(fetch("https://example.test/fail"), {
-      name: "TlsClientError",
-      message: "native down",
+    await assert.rejects(fetch("https://example.test/fail"), (e) => {
+      assert.ok(
+        e instanceof TlsClientError,
+        "root export matches what is thrown",
+      );
+      assert.equal(e.message, "native down");
+      return true;
     });
     assert.deepEqual(calls, ["request", "request", "destroySession"]);
   } finally {
-    Client.instance = null;
-    Client.ready = false;
+    NativeClient.instance = null;
   }
+});
+
+test("deep import paths kept from 2.1.0 still resolve to the same class", () => {
+  assert.equal(
+    require("../dist/utils/tlsError").TlsClientError,
+    TlsClientError,
+  );
+  assert.equal(require("../dist/utils").TlsClientError, TlsClientError);
 });

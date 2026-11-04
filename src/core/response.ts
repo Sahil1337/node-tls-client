@@ -1,26 +1,26 @@
-import { TlsResponse } from "../interface";
 import { IncomingHttpHeaders } from "http";
+import { TlsResponse } from "../types";
 
 export class Response {
-  // Indicates whether the response was successful (status in the range 200-299) or not.
+  /** Whether the response was successful (status in the range 200-299). */
   public ok: boolean;
 
-  // Represents the response headers.
+  /** The response headers (every value is a `string[]` at runtime). */
   public headers: IncomingHttpHeaders;
 
-  // Represents the HTTP status code of the response.
+  /** The HTTP status code of the response. */
   public status: number;
 
-  // Represents the URL of the response.
+  /** The URL of the response. */
   public url: string;
 
-  // The response body
+  /** The response body. */
   public body: string;
 
-  // The cookies from the response
+  /** The cookies from the response. */
   public cookies: Record<string, string>;
 
-  // Protocol negotiated for this response, e.g. "HTTP/1.1", "HTTP/2.0", "HTTP/3.0"
+  /** Protocol negotiated for this response, e.g. "HTTP/1.1", "HTTP/2.0", "HTTP/3.0". */
   public usedProtocol: string;
 
   constructor(response: TlsResponse) {

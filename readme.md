@@ -78,15 +78,16 @@ Requests run through the native library with koffi's asynchronous calls. Each in
 
 ### `initTLS(options?)`
 
-| Option        | Type     | Default                                   | Description                                                                  |
-| ------------- | -------- | ----------------------------------------- | ---------------------------------------------------------------------------- |
-| `concurrency` | `number` | `UV_THREADPOOL_SIZE` (cores×2 when unset) | Maximum in-flight native calls. Clamped to koffi's `max_async_calls` (4096). |
+| Option        | Type     | Default                                   | Description                                                                                                                  |
+| ------------- | -------- | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `concurrency` | `number` | `UV_THREADPOOL_SIZE` (cores×2 when unset) | Maximum in-flight native calls. Clamped to koffi's `max_async_calls` (4096).                                                 |
+| `libraryDir`  | `string` | `os.tmpdir()`                             | Directory the native library is downloaded to and loaded from. Relative paths resolve against the cwd; created when missing. |
 
 `initTLS()` with no arguments behaves exactly as before.
 
 ### Native library
 
-`initTLS()` downloads the newest [tls-client](https://github.com/bogdanfinn/tls-client) release for your platform into `os.tmpdir()` (named after this package's version, so an upgrade downloads once) on first use. No GitHub API calls are made (no anonymous rate limit). If the download fails but an older cached binary exists, that binary is used with a warning; otherwise a `TlsClientError` is thrown, the process stays alive and `initTLS()` can be retried.
+`initTLS()` downloads the newest [tls-client](https://github.com/bogdanfinn/tls-client) release for your platform into `os.tmpdir()`, or the `libraryDir` you pass, on first use. The file is named after this package's version, so an upgrade downloads once. To install it ahead of time (e.g. in a Docker build step), call `initTLS({ libraryDir })` once with network access; for an offline machine, copy the downloaded file (e.g. `tls-client-2.2.0-linux-amd64.so`) into its `libraryDir`. No GitHub API calls are made (no anonymous rate limit). If the download fails but an older cached binary exists, that binary is used with a warning; otherwise a `TlsClientError` (exported from the package root) is thrown, the process stays alive and `initTLS()` can be retried.
 
 | Platform                          | Supported                                                                                                               |
 | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |

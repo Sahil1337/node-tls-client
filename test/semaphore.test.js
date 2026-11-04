@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { Semaphore } = require("../dist/transport/ffi/semaphore");
+const { Semaphore } = require("../dist/native/semaphore");
 
 const tick = () => new Promise((r) => setImmediate(r));
 
@@ -48,4 +48,23 @@ test("close rejects new acquires but lets queued ones run", async () => {
   await queued;
   sem.release();
   await closed;
+});
+
+test("a large burst is admitted strictly FIFO (queue compaction keeps order)", async () => {
+  const sem = new Semaphore(1);
+  await sem.acquire();
+  const order = [];
+  const all = Array.from({ length: 5000 }, (_, i) =>
+    sem.acquire().then(() => {
+      order.push(i);
+      sem.release();
+    }),
+  );
+  sem.release();
+  await Promise.all(all);
+  assert.deepEqual(
+    order,
+    Array.from({ length: 5000 }, (_, i) => i),
+  );
+  await sem.drain();
 });

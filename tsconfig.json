@@ -1,8 +1,6 @@
 {
   "compilerOptions": {
     "target": "es2022",
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
     "declaration": true,
     "rootDir": "./src",
     "outDir": "./dist",

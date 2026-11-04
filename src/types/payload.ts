@@ -5,15 +5,21 @@ import {
   H2Settings,
   H3Settings,
   KeyShareCurves,
-  Methods,
   PriorityFrames,
   PriorityParam,
   PseudoHeaderOrder,
   SupportedDelegatedCredentialsAlgorithms,
   SupportedSignatureAlgorithms,
   SupportedVersions,
-  TransportOptions,
-} from "./session";
+} from "./fingerprint";
+import { Methods } from "./request";
+import { TransportOptions } from "./session";
+
+/** One per-request cookie as native expects it (`[]CookieInput`). */
+export interface RequestCookie {
+  name: string;
+  value: string;
+}
 
 /** Mirrors native `RequestInput` (cffi_src/types.go). */
 export interface Payload {
@@ -32,7 +38,7 @@ export interface Payload {
   isRotatingProxy: boolean;
   proxyUrl: string;
   requestBody: string | null;
-  requestCookies: { name: string; value: string }[];
+  requestCookies: RequestCookie[];
   requestHostOverride: string | null;
   requestMethod: Methods;
   requestUrl: string;
@@ -58,7 +64,8 @@ export interface Payload {
 
 export interface CustomTlsClient {
   ja3String: string;
-  h2Settings: H2Settings;
+  /** Native's settings map is numeric (`map[string]uint32`). */
+  h2Settings: { [K in keyof H2Settings]?: number };
   h2SettingsOrder: (keyof H2Settings)[];
   pseudoHeaderOrder: PseudoHeaderOrder[];
   connectionFlow: number;

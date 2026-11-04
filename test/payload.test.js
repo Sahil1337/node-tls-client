@@ -1,14 +1,15 @@
-// Payload construction against a stubbed backend (no native code involved).
+// Payload construction against stubbed native bindings (no native code involved).
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { Client } = require("../dist/core/client");
+const { NativeClient } = require("../dist/native/client");
 const { Session, ClientIdentifier } = require("../dist");
 
-function stubBackend() {
+function stubLibrary() {
   const calls = [];
   return {
     calls,
-    async request(p) {
+    async request(json) {
+      const p = JSON.parse(json); // what native receives
       calls.push(["request", p]);
       return JSON.stringify({
         id: "r1",
@@ -20,8 +21,8 @@ function stubBackend() {
         usedProtocol: "h2",
       });
     },
-    async destroySession(sid) {
-      calls.push(["destroySession", sid]);
+    async destroySession(json) {
+      calls.push(["destroySession", JSON.parse(json).sessionId]);
       return JSON.stringify({ id: "d1", success: true });
     },
     freeMemory(id) {
@@ -30,19 +31,16 @@ function stubBackend() {
     async destroyAll() {
       return JSON.stringify({ id: "a1", success: true });
     },
-    async destroy() {},
   };
 }
 
 function install() {
-  const stub = stubBackend();
-  Client.instance = new Client(stub); // TS privacy is erased at runtime
-  Client.ready = true;
+  const stub = stubLibrary();
+  NativeClient.instance = new NativeClient(stub, 8); // TS privacy is erased at runtime
   return stub;
 }
 function uninstall() {
-  Client.instance = null;
-  Client.ready = false;
+  NativeClient.instance = null;
 }
 
 async function payloadFor(sessionOpts, method = "get", reqOpts = {}) {
@@ -122,6 +120,11 @@ test("body: string as-is, Buffer → base64 + isByteRequest, object → TlsClien
   p = await payloadFor({}, "post", { body: Buffer.from("hi") });
   assert.equal(p.requestBody, Buffer.from("hi").toString("base64"));
   assert.equal(p.isByteRequest, true);
+  // a Uint8Array view at an offset encodes only its own bytes
+  const view = new Uint8Array([9, 9, 0, 1, 255, 9]).subarray(2, 5);
+  p = await payloadFor({}, "post", { body: view });
+  assert.equal(p.requestBody, Buffer.from([0, 1, 255]).toString("base64"));
+  assert.equal(p.isByteRequest, true);
   install();
   try {
     await assert.rejects(
@@ -192,4 +195,21 @@ test("transportOptions: a partial object is sent unchanged", async () => {
     transportOptions: { idleConnTimeout: 30_000_000_000 },
   });
   assert.deepEqual(p.transportOptions, { idleConnTimeout: 30_000_000_000 });
+});
+
+test("h2Settings: a boolean ENABLE_PUSH (2.1.0 type) is sent as 1/0", async () => {
+  for (const [push, wire] of [
+    [false, 0],
+    [true, 1],
+    [0, 0],
+  ]) {
+    const p = await payloadFor({
+      ja3string: "771,4865,0,29,0",
+      h2Settings: { HEADER_TABLE_SIZE: 65536, ENABLE_PUSH: push },
+    });
+    assert.deepEqual(p.customTlsClient.h2Settings, {
+      HEADER_TABLE_SIZE: 65536,
+      ENABLE_PUSH: wire,
+    });
+  }
 });

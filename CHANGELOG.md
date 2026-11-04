@@ -13,6 +13,7 @@ Tested against the native shared library **v1.16.0**.
 ### Transport rewrite
 
 - **Piscina worker pool removed.** Native calls now use koffi's asynchronous calls on the libuv threadpool, throttled by an in-process semaphore, with an unbounded FIFO queue for bursts. This avoids the `max_async_calls` limit that broke the first attempt: koffi ≥ 2.15.2 is required and its limit is raised to 4096.
+- **Dependencies:** `piscina` and `cookie-parser` are no longer installed; the runtime dependencies are `koffi` (≥ 2.15.2) and `tough-cookie`.
 - **`initTLS({ concurrency })`** caps in-flight native calls (admission depth). Real parallelism is the libuv threadpool: the library sets `UV_THREADPOOL_SIZE` to cores×2 at import when unset (libuv caps it at 1024; set `UV_THREADPOOL_SIZE=4` to keep Node's default). Each in-flight call reserves ~256 KiB in koffi.
 - `destroyTLS()` rejects new requests, waits for in-flight ones (each bounded by its own timeout), then clears native state.
 - koffi keeps as many async memory pools resident as requests are expected in flight (up to its maximum of 16), so steady-state requests reuse pools instead of mapping 256 KiB each.
@@ -23,6 +24,8 @@ Tested against the native shared library **v1.16.0**.
 - **New SessionOptions:** `disableHttp3`, `withProtocolRacing`, `withoutCookieJar`, `withCustomCookieJar`, `certificatePinningHosts`, `timeoutSeconds`, `disableSessionTickets`.
 - **New custom-client (ja3string) options:** `h3Settings`, `h3SettingsOrder`, `h3PseudoHeaderOrder`, `h3PriorityParam`, `h3SendGreaseFrames`, `echCandidatePayloads`, `echCandidateCipherSuites`, `recordSizeLimit`, `streamId`, `allowHttp`, `supportedDelegatedCredentialsAlgorithms`, `trustAnchorsPayload` (required when the ja3 string lists extension 51764).
 - **New enum values:** `KeyShareCurves` gains `X25519Kyber768Old`, `X25519MLKEM768`; `SupportedSignatureAlgorithms` gains `SHA224_RSA`, `SHA224_ECDSA`, `MLDSA44`, `MLDSA65`, `MLDSA87`, `GREASE`.
+- **Custom install directory for the native library:** `initTLS({ libraryDir: "./vendor/tls" })` downloads the shared library to, and loads it from, that directory instead of `os.tmpdir()`. The directory is created when missing and relative paths resolve against the current working directory. Use it to install the binary ahead of time (e.g. in a Docker build step) or to copy it onto an offline machine. Leaving it out keeps the `os.tmpdir()` default used since 1.1.1.
+- **`TlsClientError` is exported from the package root**, so the library's own errors (e.g. from `initTLS()`, or anything `fetch()` rejects with) can be checked with `instanceof`. The deep import `node-tls-client/dist/utils/tlsError` keeps working.
 - `HeaderInput` type for all `headers` options (numbers, arrays and `null` accepted).
 - Linux ppc64le, s390x and riscv64 are supported.
 - **HTTP/3 example:** [examples/http3.js](https://github.com/Sahil1337/node-tls-client/tree/main/examples/http3.js)
@@ -40,7 +43,7 @@ Tested against the native shared library **v1.16.0**.
 - **Memory leak on `session.close()` / `fetch()`:** native memory for each closed session was never freed.
 - `timeout` and `timeoutSeconds` together were a hard native error; the wrapper now sends only `timeout` (ms) and warns once. `timeout: 0` means unset.
 - `headerPriority: null` omits the field on the ja3 path (native then applies no priority); leaving it unset still sends the zeroed priority earlier versions sent.
-- `H2Settings.ENABLE_PUSH` is typed `number` (native rejects booleans); `headerOrder` accepts `string[]`.
+- `H2Settings.ENABLE_PUSH` set to a boolean, as 2.1.0 typed it, failed every request natively (`status: 0`, "cannot unmarshal bool"); booleans are now sent as `1`/`0`, and numbers are accepted too. `headerOrder` accepts `string[]`.
 - `SessionOptions.sessionId` is honored (it was documented but always replaced by a random UUID); two `Session` objects with the same id share one native session.
 - Per-request `cookies` values are sent verbatim; a value containing `;` was previously cut at the semicolon.
 - A response cookie that cannot be parsed no longer fails an otherwise successful request.
@@ -55,7 +58,8 @@ Tested against the native shared library **v1.16.0**.
 - HTTP/3 known issues (native 1.16.0, protocol racing only): only `chrome_144(_psk)`, `firefox_147(_psk)` and `firefox_148` carry real HTTP/3 settings, and heavy concurrent racing can crash the process. Use `disableHttp3: true` for volume.
 - Native calls share the libuv threadpool with Node's `fs`/DNS/zlib/crypto work; size `UV_THREADPOOL_SIZE` for both.
 - Requires Node.js ≥ 20.
-- `initTLS()` downloads the newest upstream release on first use and after a wrapper upgrade. Response `headers` values are `string[]` at runtime.
+- `initTLS()` downloads the newest upstream release into `os.tmpdir()` (or `libraryDir`) on first use and after a wrapper upgrade. Response `headers` values are `string[]` at runtime.
+- The internal file layout changed (`dist/lib`, `dist/interface` and `dist/workers` are gone). Import from the package root, which exports the whole public API. Deep imports into `dist/` were never part of the API; `dist/utils/tlsError` is kept for existing `instanceof` checks.
 
 # 2.1.0 (June 21, 2025)
 

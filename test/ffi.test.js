@@ -85,6 +85,19 @@ test("fetch() helper works and closes its session", async () => {
   assert.ok(pairs((await r.json()).rawHeaders).some(([k]) => k === "x-f"));
 });
 
+test("ja3 session with a boolean ENABLE_PUSH (2.1.0 type) succeeds natively", async () => {
+  const s = new Session({
+    ...opts,
+    ja3string:
+      "771,4865-4866-4867-49195-49199-49196-49200-52393-52392-49171-49172-156-157-47-53,0-23-65281-10-11-35-16-5-13-18-51-45-43-27-17513,29-23-24,0",
+    h2Settings: { HEADER_TABLE_SIZE: 65536, ENABLE_PUSH: false },
+    h2SettingsOrder: ["HEADER_TABLE_SIZE", "ENABLE_PUSH"],
+  });
+  const r = await s.get(`${server.base}/push`);
+  assert.equal(r.status, 200, r.body);
+  await s.close();
+});
+
 test("destroyTLS then initTLS again works (koffi config already applied)", async () => {
   await destroyTLS();
   await initTLS({ concurrency: 4 });
