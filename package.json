@@ -1,6 +1,6 @@
 {
   "name": "node-tls-client",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "Advanced library based on node-fetch and tls-client.",
   "main": "dist/index.js",
   "typings": "typings/index.d.ts",
