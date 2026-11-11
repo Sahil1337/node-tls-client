@@ -1,4 +1,4 @@
-# 2.2.1 (unreleased)
+# 2.2.1 (November 12, 2026)
 
 > [!IMPORTANT]
 > **Behavior changes:** upgrading downloads the native library again (the cached copy is named after the package version), and the newest is now tls-client 1.18.1, for both binaries. Previously the default binary was 1.16.0 and `binary: "node-tls-client"` was 1.18.0. What you'll notice:
