@@ -14,6 +14,7 @@ const session = new Session({ clientIdentifier: ClientIdentifier.firefox_148 });
 - **Default:** `chrome_150`, used when a session has neither `clientIdentifier` nor `ja3string`.
 - **`_psk` / `_PSK` variants** add the TLS `pre_shared_key` extension, so repeat connections resume the TLS session the way a returning browser does.
 - **HTTP/3:** only `chrome_144`, `chrome_144_psk`, `firefox_147`, `firefox_147_psk` and `firefox_148` carry real HTTP/3 settings (native 1.16.0). See [HTTP/3](/guides/http3).
+- **Unknown names fall back to `chrome_150`** without an error. `chrome_154`, `chrome_154_psk` and `safari_27_2` need native 1.18.1 or newer: `initTLS()` downloads that, but a previously cached library it falls back to (with a warning) may be older.
 
 In code, use the enum key (`ClientIdentifier.chrome_131_psk`). In plain JavaScript you can also pass the value string (`"chrome_131_PSK"`); for some profiles the two differ in case.
 
@@ -49,6 +50,8 @@ In code, use the enum key (`ClientIdentifier.chrome_131_psk`). In plain JavaScri
 | `chrome_150_psk`    | `chrome_150_PSK`     |
 | `chrome_152`        | `chrome_152`         |
 | `chrome_152_psk`    | `chrome_152_PSK`     |
+| `chrome_154`        | `chrome_154`         |
+| `chrome_154_psk`    | `chrome_154_PSK`     |
 
 ## Brave
 
@@ -63,6 +66,7 @@ In code, use the enum key (`ClientIdentifier.chrome_131_psk`). In plain JavaScri
 | ------------------ | -------------------- |
 | `safari_15_6_1`    | `safari_15_6_1`      |
 | `safari_16_0`      | `safari_16_0`        |
+| `safari_27_2`      | `safari_27_2`        |
 | `safari_ipad_15_6` | `safari_ipad_15_6`   |
 | `safari_ios_15_5`  | `safari_ios_15_5`    |
 | `safari_ios_15_6`  | `safari_ios_15_6`    |
