@@ -9,7 +9,7 @@
 
 ### Additions
 
-- **New client profiles:** `chrome_154`, `chrome_154_psk` and `safari_27_2` (desktop Safari 27.2). `chrome_154(_psk)` is `chrome_152(_psk)` with the trust-anchors extension sorted, as Chrome 154 and later send it, so its bytes no longer change from one process to the next; pair it with a current Chrome `User-Agent`. A native library older than 1.18.1 doesn't know these names and uses `chrome_150` instead, without an error. This can happen when `initTLS()` warns that it's using a previously cached library.
+- **New client profiles:** `chrome_154`, `chrome_154_psk` and `safari_27_2` (desktop Safari 27.2). `chrome_154(_psk)` is `chrome_152(_psk)` with the trust-anchors extension sorted, as Chrome 154 and later send it, so its bytes no longer change from one process to the next; pair it with a current Chrome `User-Agent`. A native library older than 1.18.1 doesn't know these names and uses its default profile instead, without an error (`chrome_150` since native 1.16.0, `chrome_146` in 1.15). This can happen when `initTLS()` warns that it's using a previously cached library.
 
 # 2.2.0 (November 5, 2026)
 
