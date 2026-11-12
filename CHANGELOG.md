@@ -1,3 +1,16 @@
+# 2.2.1 (November 12, 2026)
+
+> [!IMPORTANT]
+> **Behavior changes:** upgrading downloads the native library again (the cached copy is named after the package version), and the newest is now tls-client 1.18.1, for both binaries. Previously the default binary was 1.16.0 and `binary: "node-tls-client"` was 1.18.0. What you'll notice:
+>
+> - **The default profile's fingerprint changes.** `chrome_150` and `chrome_150_psk` now send the trust-anchors extension (51764), as Chrome 150 does. JA4 goes from `t13d1516h2_8daaf6152771_806a8c22fdea` to `t13d1517h2_8daaf6152771_cb7bf5808d99`, the same as `chrome_152`.
+> - **Characters a URL can't carry raw are percent-encoded in query strings**, as browsers do: `?scope=openid offline_access` is sent as `?scope=openid%20offline_access`. Before, they were sent raw, and servers usually answered 400.
+> - With the default binary, `disableSessionTickets` and `trustAnchorsPayload` now take effect; 1.16.0 ignored them.
+
+### Additions
+
+- **New client profiles:** `chrome_154`, `chrome_154_psk` and `safari_27_2` (desktop Safari 27.2). `chrome_154(_psk)` is `chrome_152(_psk)` with the trust-anchors extension sorted, as Chrome 154 and later send it, so its bytes no longer change from one process to the next; pair it with a current Chrome `User-Agent`. A native library older than 1.18.1 doesn't know these names and uses its default profile (`chrome_150`) instead, without an error. This can happen when `initTLS()` warns that it's using a previously cached library.
+
 # 2.2.0 (November 5, 2026)
 
 > [!IMPORTANT]

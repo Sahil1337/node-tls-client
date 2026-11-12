@@ -26,7 +26,7 @@ Our build starts the request inside the library and returns at once. Waiting for
 | Requests running at once   | up to `UV_THREADPOOL_SIZE`       | every request you start              |
 | `UV_THREADPOOL_SIZE`       | sets the speed limit             | doesn't matter                       |
 | `initTLS({ concurrency })` | caps requests in flight          | ignored, with a warning              |
-| tls-client version         | newest official release (1.16.0) | newest upstream version tag (1.18.0) |
+| tls-client version         | newest official release (1.18.1) | newest upstream version tag (1.18.1) |
 
 Against a server that answers in 50 ms, 64 requests in flight reach 1,207 requests per second instead of 385, and 5,000 started at once finish in 0.26 s instead of 13 s. Charts and all results are on [Performance](/performance).
 

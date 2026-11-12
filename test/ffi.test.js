@@ -9,7 +9,7 @@ test.before(async () => {
   await initTLS();
 });
 test.after(async () => {
-  await destroyTLS();
+  await destroyTLS().catch(() => {});
   await server.close();
 });
 

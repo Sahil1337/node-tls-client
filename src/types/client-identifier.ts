@@ -33,6 +33,8 @@ export enum ClientIdentifier {
   chrome_150_psk = "chrome_150_PSK",
   chrome_152 = "chrome_152",
   chrome_152_psk = "chrome_152_PSK",
+  chrome_154 = "chrome_154",
+  chrome_154_psk = "chrome_154_PSK",
 
   // Brave versions
   brave_146 = "brave_146",
@@ -41,6 +43,7 @@ export enum ClientIdentifier {
   // Safari versions
   safari_15_6_1 = "safari_15_6_1",
   safari_16_0 = "safari_16_0",
+  safari_27_2 = "safari_27_2",
   safari_ipad_15_6 = "safari_ipad_15_6",
   safari_ios_15_5 = "safari_ios_15_5",
   safari_ios_15_6 = "safari_ios_15_6",
